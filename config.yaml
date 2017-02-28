@@ -1,0 +1,16 @@
+dataStore:
+  name: dataStore
+  properties:
+    dataStoreType:
+      name: dataStoreType
+      value: InMemoryDataStore
+      description: blah
+      sensitive: false
+keyStore:
+  name: keyStore
+  properties:
+    keyStoreType:
+      name: keyStoreType
+      value: InMemoryKeyStore
+      description: blah
+      sensitive: false
