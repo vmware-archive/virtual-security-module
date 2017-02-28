@@ -3,6 +3,7 @@
 # virtual-security-module
 
 ## Overview
+VSM (Virtual Secure Module) helps organizations to keep secrets (e.g. credentials) secure and manage their lifecycle.
 
 ## Try it out
 
