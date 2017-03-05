@@ -25,6 +25,9 @@ func TestMain(m *testing.M) {
 	}
 	defer sm.Close()
 
+	apiTestSetup()
+	defer apiTestCleanup()
+	
 	os.Exit(m.Run())
 }
 
@@ -44,9 +47,6 @@ func testCreateAndGetSecret(t *testing.T, id string) {
 	}
 	expirationTime := time.Now().Add(duration)
 
-	if id == "" {
-		id = "id0"
-	}
 	se := &model.SecretEntry{
 		Id: id,
 		SecretData: []byte("secret0"),
@@ -70,6 +70,10 @@ func testCreateAndGetSecret(t *testing.T, id string) {
 	if err != nil {
 		t.Fatalf("Failed to get secret for id %v: %v", id2, err)
 		return
+	}
+	
+	if id == "" {
+		se.Id = id2
 	}
 	if !reflect.DeepEqual(se, se2) {
 		t.Fatalf("Created and retrieved secrets are different: %v %v", se, se2)
