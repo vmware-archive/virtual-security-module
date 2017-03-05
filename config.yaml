@@ -1,3 +1,46 @@
+server:
+  name: server
+  properties:
+    http:
+      name: http
+      value: true 
+      description: enable http
+      sensitive: false
+    httpPort:
+      name: httpPort
+      value: 8080
+      description: http port
+      sensitive: false
+    https:
+      name: https
+      value: true 
+      description: enable https
+      sensitive: false
+    httpsPort:
+      name: httpsPort
+      value: 8443
+      description: https port
+      sensitive: false
+    caCert:
+      name: caCert
+      value: certs/test-root-cert.pem
+      description: certificate file of the root CA
+      sensitive: false
+    caKey:
+      name: caKey
+      value: certs/test-root-key.pem
+      description: key file of the root CA
+      sensitive: false
+    serverCert:
+      name: serverCert
+      value: certs/test-server-cert.pem
+      description: certificate file of the server
+      sensitive: false
+    serverKey:
+      name: serverKey
+      value: certs/test-server-key.pem
+      description: key file of the server
+      sensitive: false
 dataStore:
   name: dataStore
   properties:

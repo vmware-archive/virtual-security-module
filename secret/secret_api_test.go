@@ -1,6 +1,6 @@
 // Copyright © 2017 VMware, Inc. All Rights Reserved.
 // SPDX-License-Identifier: BSD-2-Clause
-package server
+package secret
 
 import (
 	"bytes"
@@ -8,40 +8,36 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"reflect"
 	"testing"
 	"time"
 
-	"github.com/vmware/virtual-security-module/config"
 	"github.com/vmware/virtual-security-module/model"
+	"github.com/naoina/denco"
 )
 
-var srv *Server
-var testPort = ":8090"
-var testRootUrl = fmt.Sprintf("http://localhost%v", testPort)
+var ts *httptest.Server
 
-func TestMain(m *testing.M) {
-	cfg := config.GenerateTestConfig()
-
-	srv = New()
-	if err := srv.Init(cfg); err != nil {
-		fmt.Printf("Failed to initialize server: %v\n", err)
+func apiTestSetup() {
+	mux := denco.NewMux()
+	handlers := sm.RegisterEndpoints(mux)
+	handler, err := mux.Build(handlers)
+	if err != nil {
+		fmt.Printf("Failed to create RESTful API: %v", err)
 		os.Exit(1)
 	}
-	defer srv.Close()
+	
+	ts = httptest.NewServer(handler)
+}
 
-	go srv.ListenAndServe(testPort)
-	defer srv.Close()
-	duration, _ := time.ParseDuration("1s")
-	// give server an opportunity to listen before executing tests
-	time.Sleep(duration)
-
-	os.Exit(m.Run())
+func apiTestCleanup() {
+	ts.Close()
 }
 
 func TestAPICreateAndGetSecretProvidedId(t *testing.T) {
-	testAPICreateAndGetSecret(t, "id1")
+	testAPICreateAndGetSecret(t, "api-id0")
 }
 
 func TestAPICreateAndGetSecret(t *testing.T) {
@@ -53,9 +49,6 @@ func testAPICreateAndGetSecret(t *testing.T, id string) {
 	duration, _ := time.ParseDuration("1h")
 	expirationTime := time.Now().Add(duration)
 
-	if id == "" {
-		id = "id0"
-	}
 	se := &model.SecretEntry{
 		Id: id,
 		SecretData: []byte("secret0"),
@@ -70,7 +63,7 @@ func testAPICreateAndGetSecret(t *testing.T, id string) {
 		return
 	}
 
-	testUrl := fmt.Sprintf("%v/secrets", testRootUrl)
+	testUrl := fmt.Sprintf("%v/secrets", ts.URL)
 	resp, err := http.Post(testUrl, "application/json", bytes.NewBuffer(body))
 	if err != nil {
 		t.Fatalf("Failed to create secret: %v", err)
@@ -99,7 +92,7 @@ func testAPICreateAndGetSecret(t *testing.T, id string) {
 	}
 
 	// step 2: get created secret by id and compare to originally created secret
-	testUrl = fmt.Sprintf("%v/secrets/%v", testRootUrl, creationResponse.Id)
+	testUrl = fmt.Sprintf("%v/secrets/%v", ts.URL, creationResponse.Id)
 	resp2, err := http.Get(testUrl)
 	if err != nil {
 		t.Fatalf("Failed to get secret with id %v: %v", creationResponse.Id, err)
@@ -124,6 +117,9 @@ func testAPICreateAndGetSecret(t *testing.T, id string) {
 		return
 	}
 
+	if id == "" {
+		se.Id = creationResponse.Id
+	}
 	if !reflect.DeepEqual(se, &se2) {
 		t.Fatalf("Created and retrieved secrets are different: %v %v", se, se2)
 		return

@@ -29,7 +29,7 @@ install-deps: check-go-version
 	$(GO) get -u gopkg.in/yaml.v2
 	
 build: check-go-version fmt vet
-	$(GO) build ...
+	$(GO) build ./...
 	$(GO) build -o $(DST_DIR)/$(TARGET)
 
 vet:
