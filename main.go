@@ -27,6 +27,5 @@ func main() {
 	defer server.Close()
 
 	// create RESTful api surface and listen
-	addr := ":8080"
-	log.Fatal(server.ListenAndServe(addr))
+	log.Fatal(server.ListenAndServe())
 }
