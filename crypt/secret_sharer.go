@@ -2,66 +2,65 @@ package crypt
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"errors"
 	"math/big"
-	"crypto/sha256"
 )
 
 type SecretSharer struct {
 	Field *big.Int
-	n int
-	k int
+	n     int
+	k     int
 }
 
 type SecretShare struct {
-	Index int
-	Value *big.Int
-	Field *big.Int
+	Index   int
+	Value   *big.Int
+	Field   *big.Int
 	Version int
 }
 
 func factorial(n int) *big.Int {
-	Current := new(big.Int).SetInt64(1)
-	
+	current := big.NewInt(1)
+
 	for i := 2; i <= n; i++ {
-		Current.Mul(Current, big.NewInt(int64(i)))
+		current.Mul(current, big.NewInt(int64(i)))
 	}
-	return Current
+	return current
 }
 
-func secret_sharer_create_randfield(numBits int, n int, k int) *SecretSharer {
+func NewSecretSharerRandField(numBits int, n int, k int) *SecretSharer {
 	ss := new(SecretSharer)
-	ss.Field = securerandom_rand_prime(numBits)
+	ss.Field = randPrime(numBits)
 	ss.n = n
 	ss.k = k
 	return ss
 }
 
-func secret_sharer_create(Field *big.Int, n int, k int) *SecretSharer {
+func NewSecretSharer(field *big.Int, n int, k int) *SecretSharer {
 	ss := new(SecretSharer)
-	ss.Field = new(big.Int).Set(Field)
+	ss.Field = big.NewInt(0).Set(field)
 	ss.n = n
 	ss.k = k
 	return ss
 }
 
-func secret_sharer_break_secret(s *SecretSharer, secret []byte) []*SecretShare {
-	bin := make([]byte, len(secret) + sha256.Size)
-	copy(bin[:len(secret)], secret)
+func (s *SecretSharer) breakSecret(secret []byte) []*SecretShare {
+	bin := make([]byte, len(secret)+sha256.Size)
+	copy(bin, secret)
 	sha := sha256.Sum256(secret)
 	copy(bin[len(secret):], sha[:])
-	bn := new(big.Int)
-	bn.SetBytes(bin)
-	
-	Poly := polynomial_create(bn, s.k - 1, s.Field)
-	
+	bn := big.NewInt(0).SetBytes(bin)
+
+	poly := NewPolynomial(bn, s.k-1, s.Field)
+
 	res := make([]*SecretShare, s.n)
-	
+
 	for i := 1; i <= s.n; i++ {
 		// Create shares
-		res[i - 1] = secret_share_create(i, polynomial_get(Poly, int64(i)), 1, s.Field)
+		res[i-1] = NewSecretShare(i, poly.Get(int64(i)), 1, s.Field)
 	}
-	
+
 	return res
 }
 
@@ -69,15 +68,16 @@ func lambda(index int64, i int, x_values []int, k int, field *big.Int) *big.Rat 
 	resN := int64(1)
 	resD := int64(1)
 	xi := int64(x_values[i])
-	
+
 	for j := 0; j < k; j++ {
-		if j == i { continue }
+		if j == i {
+			continue
+		}
 		xk := int64(x_values[j])
 		resN = (resN * (index - xk))
 		resD = (resD * (xi - xk))
 	}
-	res := new(big.Rat)
-	res.SetFrac64(resN, resD)
+	res := big.NewRat(resN, resD)
 	return res
 }
 
@@ -90,25 +90,28 @@ func integrate(index int64, shares []*SecretShare, k int, field *big.Int) (*big.
 
 	res := big.NewRat(0, 1)
 	for i := 0; i < k; i++ {
-		lambda_res := lambda(index, i, x_values, k, field);
+		lambda_res := lambda(index, i, x_values, k, field)
 		share := big.NewRat(0, 1).SetInt(shares[i].Value)
 		lambda_res.Mul(lambda_res, share)
 		res.Add(res, lambda_res)
 	}
-	
+
 	if !res.IsInt() {
 		// Integration failed, as the result is not an integer
 		return nil, errors.New("Share integration failed")
 	}
-	
+
 	num := res.Num()
 	num.Mod(num, field)
-	
+
 	return num, nil
 }
 
-func secret_sharer_reconstruct_secret(s *SecretSharer, shares []*SecretShare) ([]byte, error) {
+func (s *SecretSharer) reconstructSecret(shares []*SecretShare) ([]byte, error) {
 	// Check that all shares have the same field
+	if len(shares) < 2 {
+		return nil, errors.New("Expected at least two shares")
+	}
 	field := shares[0].Field
 
 	for i := 1; i < len(shares); i++ {
@@ -127,7 +130,7 @@ func secret_sharer_reconstruct_secret(s *SecretSharer, shares []*SecretShare) ([
 	bin := resnum.Bytes()
 
 	// Verification
-	if (len(bin) <= sha256.Size) {
+	if len(bin) <= sha256.Size {
 		// Error: Return value is too short
 		return nil, errors.New("Reconstruction result is too short")
 	}
@@ -137,7 +140,7 @@ func secret_sharer_reconstruct_secret(s *SecretSharer, shares []*SecretShare) ([
 	data := bin[:reslen]
 	newHash := sha256.Sum256(data)
 
-	if (!bytes.Equal(hash, newHash[:])) {
+	if !bytes.Equal(hash, newHash[:]) {
 		// Error: Hash does not match
 		return nil, errors.New("Reconstruction result is wrong")
 	}
@@ -145,13 +148,11 @@ func secret_sharer_reconstruct_secret(s *SecretSharer, shares []*SecretShare) ([
 	return data, nil
 }
 
-func secret_share_create(index int, value *big.Int, version int, field *big.Int) *SecretShare {
+func NewSecretShare(index int, value *big.Int, version int, field *big.Int) *SecretShare {
 	s := new(SecretShare)
 	s.Index = index
-	s.Value = new(big.Int)
-	s.Value.Set(value)
-	s.Field = new(big.Int)
-	s.Field.Set(field)
+	s.Value = big.NewInt(0).Set(value)
+	s.Field = big.NewInt(0).Set(field)
 	s.Version = version
 	return s
 }

@@ -5,12 +5,12 @@ import (
 	"math/big"
 )
 
-func securerandom_rand_int(Limit *big.Int) *big.Int {
+func randInt(Limit *big.Int) *big.Int {
 	Res, _ := rand.Int(rand.Reader, Limit)
 	return Res
 }
 
-func securerandom_rand_prime(NumBits int) *big.Int {
+func randPrime(NumBits int) *big.Int {
 	Res, _ := rand.Prime(rand.Reader, NumBits)
 	return Res
 }
