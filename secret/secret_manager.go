@@ -58,16 +58,24 @@ func (secretManager *SecretManager) CreateSecret(secretEntry *model.SecretEntry)
 		return "", err
 	}
 
+	id := secretEntry.Id
+	
 	// create new entry id unless one has been provided by the client
-	if secretEntry.Id == "" {
-		secretEntry.Id = util.NewUUID()
+	if id == "" {
+		id = util.NewUUID()
+	}
+	
+	se := &model.SecretEntry{
+		Id: id,
+		SecretData: encryptedSecretData,
+		OwnerEntryId: secretEntry.OwnerEntryId,
+		NamespaceEntryId: secretEntry.NamespaceEntryId,
+		ExpirationTime: secretEntry.ExpirationTime,
+		AuthorizationPolicyIds: secretEntry.AuthorizationPolicyIds,
 	}
 
-	// override secret data with encrypted data
-	secretEntry.SecretData = encryptedSecretData
-
 	// create a data store entry and save it
-	dataStoreEntry, err := vds.SecretEntryToDataStoreEntry(secretEntry)
+	dataStoreEntry, err := vds.SecretEntryToDataStoreEntry(se)
 	if err != nil {
 		return "", err
 	}
@@ -76,11 +84,11 @@ func (secretManager *SecretManager) CreateSecret(secretEntry *model.SecretEntry)
 	}
 
 	// persist key using virtual key store
-	if err := secretManager.keyStore.Write(secretEntry.Id, key); err != nil {
+	if err := secretManager.keyStore.Write(id, key); err != nil {
 		return "", err
 	}
 
-	return secretEntry.Id, nil
+	return id, nil
 }
 
 func (secretManager *SecretManager) GetSecret(secretId string) (*model.SecretEntry, error) {
@@ -95,7 +103,7 @@ func (secretManager *SecretManager) GetSecret(secretId string) (*model.SecretEnt
 	if err != nil {
 		return nil, err
 	}
-
+	
 	// reduce key exposure due to memory compromize / leak
 	defer util.Memzero(key)
 
