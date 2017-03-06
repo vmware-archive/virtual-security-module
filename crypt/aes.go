@@ -1,3 +1,5 @@
+// Copyright © 2017 VMware, Inc. All Rights Reserved.
+// SPDX-License-Identifier: BSD-2-Clause
 package crypt
 
 import (
@@ -9,13 +11,14 @@ import (
 	"encoding/binary"
 	"crypto/sha256"
 	"bytes"
+	"errors"
 )
 
-func createKey() []byte {
-	return randPrime(256).Bytes()
+func GenerateKey() ([]byte, error) {
+	return randPrime(256).Bytes(), nil
 }
 
-func encrypt(key []byte, data []byte) []byte {
+func Encrypt(data []byte, key []byte) ([]byte, error) {
 	// Compute hash
 	sha := sha256.Sum256(data)
 
@@ -37,31 +40,31 @@ func encrypt(key []byte, data []byte) []byte {
 	// Create cipher
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	// Add random IV to ciphertext
 	ciphertext := make([]byte, aes.BlockSize+len(data))
 	iv := ciphertext[:aes.BlockSize]
 	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	// Encrypt
 	mode := cipher.NewCBCEncrypter(block, iv)
 	mode.CryptBlocks(ciphertext[aes.BlockSize:], data)
 
-	return ciphertext
+	return ciphertext, nil
 }
 
-func decrypt(key []byte, ciphertext []byte) []byte {
+func Decrypt(ciphertext []byte, key []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	if len(ciphertext) < aes.BlockSize {
-		panic("ciphertext too short")
+		return nil, errors.New("ciphertext too short")
 	}
 	iv := ciphertext[:aes.BlockSize]
 	ciphertext = ciphertext[aes.BlockSize:]
@@ -75,7 +78,7 @@ func decrypt(key []byte, ciphertext []byte) []byte {
 
 	size := binary.BigEndian.Uint32(plaintext[:4])
 	if len(plaintext) < (4 + int(size) + sha256.Size) {
-		panic(fmt.Sprintf("result too short (size=%d, len=%d)", size, len(plaintext)))
+		return nil, errors.New(fmt.Sprintf("result too short (size=%d, len=%d)", size, len(plaintext)))
 	}
 	
 	data := plaintext[4:4+size]
@@ -83,8 +86,8 @@ func decrypt(key []byte, ciphertext []byte) []byte {
 	
 	newSha := sha256.Sum256(data)
 	if !bytes.Equal(sha, newSha[:]) {
-		panic("Hash does not match")
+		return nil, errors.New("Hash does not match")
 	}
 	
-	return data
+	return data, nil
 }

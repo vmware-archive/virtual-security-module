@@ -1,3 +1,5 @@
+// Copyright © 2017 VMware, Inc. All Rights Reserved.
+// SPDX-License-Identifier: BSD-2-Clause
 package crypt
 
 import (
@@ -8,7 +10,7 @@ import (
 )
 
 type SecretSharer struct {
-	Field *big.Int
+	field *big.Int
 	n     int
 	k     int
 }
@@ -31,7 +33,7 @@ func factorial(n int) *big.Int {
 
 func NewSecretSharerRandField(numBits int, n int, k int) *SecretSharer {
 	ss := new(SecretSharer)
-	ss.Field = randPrime(numBits)
+	ss.field = randPrime(numBits)
 	ss.n = n
 	ss.k = k
 	return ss
@@ -39,7 +41,7 @@ func NewSecretSharerRandField(numBits int, n int, k int) *SecretSharer {
 
 func NewSecretSharer(field *big.Int, n int, k int) *SecretSharer {
 	ss := new(SecretSharer)
-	ss.Field = big.NewInt(0).Set(field)
+	ss.field = big.NewInt(0).Set(field)
 	ss.n = n
 	ss.k = k
 	return ss
@@ -52,13 +54,13 @@ func (s *SecretSharer) breakSecret(secret []byte) []*SecretShare {
 	copy(bin[len(secret):], sha[:])
 	bn := big.NewInt(0).SetBytes(bin)
 
-	poly := NewPolynomial(bn, s.k-1, s.Field)
+	poly := NewPolynomial(bn, s.k-1, s.field)
 
 	res := make([]*SecretShare, s.n)
 
 	for i := 1; i <= s.n; i++ {
 		// Create shares
-		res[i-1] = NewSecretShare(i, poly.Get(int64(i)), 1, s.Field)
+		res[i-1] = NewSecretShare(i, poly.Get(int64(i)), 1, s.field)
 	}
 
 	return res

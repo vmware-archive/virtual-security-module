@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-2-Clause
 package crypt
 
+/*
 func GenerateKey() ([]byte, error) {
 	return []byte("dummy-key"), nil
 }
@@ -13,6 +14,7 @@ func Encrypt(data []byte, key []byte) ([]byte, error) {
 func Decrypt(data []byte, key []byte) ([]byte, error) {
 	return data, nil
 }
+*/
 
 func BreakSecret(secret []byte, nGenerators int, minShares int) ([][]byte, error) {
 	return [][]byte{}, nil

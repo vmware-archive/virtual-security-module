@@ -1,3 +1,5 @@
+// Copyright © 2017 VMware, Inc. All Rights Reserved.
+// SPDX-License-Identifier: BSD-2-Clause
 package crypt
 
 import (
@@ -5,12 +7,12 @@ import (
 	"math/big"
 )
 
-func randInt(Limit *big.Int) *big.Int {
-	Res, _ := rand.Int(rand.Reader, Limit)
-	return Res
+func randInt(limit *big.Int) *big.Int {
+	res, _ := rand.Int(rand.Reader, limit)
+	return res
 }
 
-func randPrime(NumBits int) *big.Int {
-	Res, _ := rand.Prime(rand.Reader, NumBits)
-	return Res
+func randPrime(numBits int) *big.Int {
+	res, _ := rand.Prime(rand.Reader, numBits)
+	return res
 }

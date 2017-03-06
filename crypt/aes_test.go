@@ -1,3 +1,5 @@
+// Copyright © 2017 VMware, Inc. All Rights Reserved.
+// SPDX-License-Identifier: BSD-2-Clause
 package crypt
 
 import (
@@ -10,15 +12,21 @@ func TestAES(t *testing.T) {
 	data := "this is some long message we would like to encrypt and then decrypt"
 	bin := []byte(data)
 	
-	key := createKey()
+	key, _ := GenerateKey()
 	
-	encrypted := encrypt(key, bin)
+	encrypted, err := Encrypt(bin, key)
+	if err != nil {
+		t.Fatal(err)
+	}
 	
 	if bytes.Equal(bin, encrypted) {
 		t.Fatal("Encrypted is same as input")
 	}
 	
-	decrypted := decrypt(key, encrypted)
+	decrypted, err := Decrypt(encrypted, key)
+	if err != nil {
+		t.Fatal(err)
+	}
 	
 	if !bytes.Equal(decrypted, bin) {
 		t.Fatalf("Decrypted data differs from input (expected: %v, actual: %v)", bin, decrypted)
