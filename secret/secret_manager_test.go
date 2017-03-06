@@ -34,7 +34,6 @@ func TestMain(m *testing.M) {
 func TestCreateAndGetSecretProvidedId(t *testing.T) {
 	testCreateAndGetSecret(t, "id1")
 }
-
 func TestCreateAndGetSecret(t *testing.T) {
 	testCreateAndGetSecret(t, "")
 }

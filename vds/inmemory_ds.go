@@ -46,7 +46,16 @@ func (ds *InMemoryDS) WriteEntry(entry *DataStoreEntry) error {
 	ds.mutex.Lock()
 	defer ds.mutex.Unlock()
 
-	ds.entryMap[entry.Id] = entry
+	buf := make([]byte, len(entry.Data))
+	copy(buf, entry.Data)
+	
+	dsEntry := &DataStoreEntry{
+		Id: entry.Id,
+		Data: buf,
+		MetaData: entry.MetaData,
+	}
+	
+	ds.entryMap[entry.Id] = dsEntry
 
 	return nil
 }
@@ -59,8 +68,17 @@ func (ds *InMemoryDS) ReadEntry(entryId string) (*DataStoreEntry, error) {
 	if !ok {
 		return nil, fmt.Errorf("Entry with id %v not found", entryId)
 	}
+	
+	buf := make([]byte, len(entry.Data))
+	copy(buf, entry.Data)
+	
+	dsEntry := &DataStoreEntry{
+		Id: entry.Id,
+		Data: buf,
+		MetaData: entry.MetaData,
+	}
 
-	return entry, nil
+	return dsEntry, nil
 }
 
 func (ds *InMemoryDS) DeleteEntry(entryId string) error {

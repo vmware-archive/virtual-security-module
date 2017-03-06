@@ -14,11 +14,11 @@ import (
 	"errors"
 )
 
-func GenerateKey() ([]byte, error) {
+func generateKeyAES() ([]byte, error) {
 	return randPrime(256).Bytes(), nil
 }
 
-func Encrypt(data []byte, key []byte) ([]byte, error) {
+func encryptAES(data []byte, key []byte) ([]byte, error) {
 	// Compute hash
 	sha := sha256.Sum256(data)
 
@@ -57,7 +57,7 @@ func Encrypt(data []byte, key []byte) ([]byte, error) {
 	return ciphertext, nil
 }
 
-func Decrypt(ciphertext []byte, key []byte) ([]byte, error) {
+func decryptAES(ciphertext []byte, key []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
