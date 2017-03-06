@@ -11,7 +11,7 @@ func Encrypt(data []byte, key []byte) ([]byte, error) {
 }
 
 func Decrypt(data []byte, key []byte) ([]byte, error) {
-	return decryptAES(ciphertext, key)
+	return decryptAES(data, key)
 }
 
 func BreakSecret(secret []byte, nGenerators int, minShares int) ([][]byte, error) {
