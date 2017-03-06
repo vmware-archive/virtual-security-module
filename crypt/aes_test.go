@@ -7,7 +7,7 @@ import (
 )
 
 func TestAES(t *testing.T) {
-	data := "1234"//"this is some long message we would like to encrypt and then decrypt"
+	data := "this is some long message we would like to encrypt and then decrypt"
 	bin := []byte(data)
 	
 	key := createKey()
