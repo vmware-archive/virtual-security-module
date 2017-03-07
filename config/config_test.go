@@ -13,18 +13,15 @@ func TestSaveAndLoad(t *testing.T) {
 	cfgFile := "test_config.yaml"
 	if err := Save(cfg, cfgFile); err != nil {
 		t.Fatalf("Failed to save config file %v: %v", cfgFile, err)
-		return
 	}
 	defer os.Remove(cfgFile)
 
 	cfg2, err := Load(cfgFile)
 	if err != nil {
 		t.Fatalf("Failed to load config file %v: %v", cfgFile, err)
-		return
 	}
 
 	if !reflect.DeepEqual(cfg, cfg2) {
 		t.Fatalf("Saved and loaded configs are different: %v %v", cfg, cfg2)
-		return
 	}
 }

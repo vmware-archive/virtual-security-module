@@ -42,7 +42,6 @@ func testCreateAndGetSecret(t *testing.T, id string) {
 	duration, err := time.ParseDuration("1h")
 	if err != nil {
 		t.Fatalf("failed to parse duration: %v", err)
-		return
 	}
 	expirationTime := time.Now().Add(duration)
 
@@ -58,17 +57,14 @@ func testCreateAndGetSecret(t *testing.T, id string) {
 	id2, err := sm.CreateSecret(se)
 	if err != nil {
 		t.Fatalf("Failed to create secret: %v", err)
-		return
 	}
 	if len(id2) == 0 {
 		t.Fatalf("Failed to create secret: returned id is empty")
-		return
 	}
 
 	se2, err := sm.GetSecret(id2)
 	if err != nil {
 		t.Fatalf("Failed to get secret for id %v: %v", id2, err)
-		return
 	}
 	
 	if id == "" {
@@ -76,6 +72,5 @@ func testCreateAndGetSecret(t *testing.T, id string) {
 	}
 	if !reflect.DeepEqual(se, se2) {
 		t.Fatalf("Created and retrieved secrets are different: %v %v", se, se2)
-		return
 	}
 }

@@ -3,5 +3,9 @@
 package model
 
 type CreationResponse struct {
-	Id string							`json:"id"`
+	Id string			`json:"id"`
+}
+
+type LoginRequest struct {
+	Username string		`json:"username"`
 }
