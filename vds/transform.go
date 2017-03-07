@@ -56,3 +56,38 @@ func DataStoreEntryToSecretEntry(dataStoreEntry *DataStoreEntry) (*model.SecretE
 
 	return secretEntry, nil
 }
+
+func UserEntryToDataStoreEntry(userEntry *model.UserEntry) (*DataStoreEntry, error) {
+	metaData := &MetaData{
+		OwnerEntryId: userEntry.Id,
+		NamespaceEntryId: "", // TODO: replace with built-in "users" namspace id
+	}
+
+	metaDataBytes, err := json.Marshal(metaData)
+	if err != nil {
+		return nil, err
+	}
+
+	dataStoreEntry := &DataStoreEntry{
+		Id: userEntry.Id,
+		Data: []byte(userEntry.Username),
+		MetaData: string(metaDataBytes),
+	}
+
+	return dataStoreEntry, nil
+}
+
+func DataStoreEntryToUsertEntry(dataStoreEntry *DataStoreEntry) (*model.UserEntry, error) {
+	var metaData MetaData
+	
+	if err := json.Unmarshal([]byte(dataStoreEntry.MetaData), &metaData); err != nil {
+		return nil, err
+	}
+
+	userEntry := &model.UserEntry{
+		Id: dataStoreEntry.Id,
+		Username: string(dataStoreEntry.Data),
+	}
+
+	return userEntry, nil
+}

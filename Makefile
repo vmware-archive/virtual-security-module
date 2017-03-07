@@ -10,25 +10,18 @@ PKG_DIR := $(GOPATH)/pkg
 BIN_DIR := $(GOPATH)/bin
 DST_DIR := $(GOPATH)/dist
 
-GO_VERSION := "1.7.5"
-
 GO_ENV := GOPATH=$(GOPATH)
 GO := $(GO_ENV) go
 
-default: check-go-version build
+default: build
 
-check-go-version:
-	if ! go version | grep $(GO_VERSION); then \
-		echo "Please make sure you use go $(GO_VERSION)"; \
-		exit 1; \
-	fi
-
-install-deps: check-go-version
+install-deps:
 	$(GO) get -u github.com/satori/go.uuid
 	$(GO) get -u github.com/naoina/denco
 	$(GO) get -u gopkg.in/yaml.v2
+	$(GO) get -u github.com/dgrijalva/jwt-go
 	
-build: check-go-version fmt vet
+build: fmt vet
 	$(GO) build ./...
 	$(GO) build -o $(DST_DIR)/$(TARGET)
 
@@ -38,7 +31,7 @@ vet:
 fmt:
 	$(GO) fmt .
 
-cross: check-go-version fmt vet
+cross: fmt vet
 	for os in $(OS); do \
 		for arch in $(ARCH); do \
 			suffix=""; \

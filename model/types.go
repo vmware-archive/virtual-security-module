@@ -8,7 +8,7 @@ import (
 
 type UserEntry struct {
 	Id string
-	UserId string
+	Username string
 	RoleEntryIds []string
 }
 
