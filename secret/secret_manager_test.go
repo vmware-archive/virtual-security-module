@@ -11,15 +11,29 @@ import (
 
 	"github.com/vmware/virtual-security-module/config"
 	"github.com/vmware/virtual-security-module/model"
+	"github.com/vmware/virtual-security-module/vds"
+	"github.com/vmware/virtual-security-module/vks"
 )
 
 var sm *SecretManager
 
 func TestMain(m *testing.M) {
 	cfg := config.GenerateTestConfig()
-
+	
+	ds, err := vds.GetDataStoreFromConfig(cfg)
+	if err != nil {
+		fmt.Printf("Failed to get data store from config: %v\n", err)
+		os.Exit(1)
+	}
+	
+	ks, err := vks.GetKeyStoreFromConfig(cfg)
+	if err != nil {
+		fmt.Printf("Failed to get key store from config: %v\n", err)
+		os.Exit(1)
+	}
+	
 	sm = New()
-	if err := sm.Init(cfg); err != nil {
+	if err := sm.Init(cfg, ds, ks); err != nil {
 		fmt.Printf("Failed to initialize secret manager: %v\n", err)
 		os.Exit(1)
 	}
@@ -39,18 +53,12 @@ func TestCreateAndGetSecret(t *testing.T) {
 }
 
 func testCreateAndGetSecret(t *testing.T, id string) {
-	duration, err := time.ParseDuration("1h")
-	if err != nil {
-		t.Fatalf("failed to parse duration: %v", err)
-	}
-	expirationTime := time.Now().Add(duration)
-
 	se := &model.SecretEntry{
 		Id: id,
 		SecretData: []byte("secret0"),
 		OwnerEntryId: "user0",
 		NamespaceEntryId: "root",
-		ExpirationTime: expirationTime,
+		ExpirationTime: time.Now().Add(time.Hour),
 		AuthorizationPolicyIds: []string{},
 	}
 

@@ -46,8 +46,7 @@ func TestAPICreateAndGetSecret(t *testing.T) {
 
 func testAPICreateAndGetSecret(t *testing.T, id string) {
 	// step 1: create and send secret creation request
-	duration, _ := time.ParseDuration("1h")
-	expirationTime := time.Now().Add(duration)
+	expirationTime := time.Now().Add(time.Hour)
 
 	se := &model.SecretEntry{
 		Id: id,
