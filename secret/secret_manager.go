@@ -26,8 +26,11 @@ func (secretManager *SecretManager) Type() string {
 	return "SecretManager"
 }
 
-func (secretManager *SecretManager) Init(configItems map[string]*config.ConfigItem) error {
-	return secretManager.initFromConfig(configItems)
+func (secretManager *SecretManager) Init(configItems map[string]*config.ConfigItem, ds vds.DataStoreAdapter, ks vks.KeyStoreAdapter) error {
+	secretManager.dataStore = ds
+	secretManager.keyStore = ks
+	
+	return nil
 }
 
 func (secretManager *SecretManager) Close() error {
@@ -121,59 +124,4 @@ func (secretManager *SecretManager) GetSecret(secretId string) (*model.SecretEnt
 	secretEntry.SecretData = decryptedData
 
 	return secretEntry, nil
-}
-
-func (secretManager *SecretManager) initFromConfig(configItems map[string]*config.ConfigItem) error {
-	if err := secretManager.initDataStoreFromConfig(configItems); err != nil {
-		return err
-	}
-	if err := secretManager.initKeyStoreFromConfig(configItems); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (secretManager *SecretManager) initDataStoreFromConfig(configItems map[string]*config.ConfigItem) error {
-	dsConfigItem, ok := configItems[vds.PropertyNameDataStore]
-	if !ok {
-		return fmt.Errorf("Mandatory config item %v is missing in config", vds.PropertyNameDataStore)
-	}
-	dsTypeProperty, ok := dsConfigItem.Properties[vds.PropertyNameDataStoreType]
-	if !ok {
-		return fmt.Errorf("Mandatory config property %v is missing in config", vds.PropertyNameDataStoreType)
-	}
-	dsAdapter, err := vds.DataStoreRegistrar.Get(dsTypeProperty.Value)
-	if err != nil {
-		return err
-	}
-	if err := dsAdapter.Init(dsConfigItem.Properties); err != nil {
-		return err
-	}
-
-	secretManager.dataStore = dsAdapter
-
-	return nil
-}
-
-func (secretManager *SecretManager) initKeyStoreFromConfig(configItems map[string]*config.ConfigItem) error {
-	ksConfigItem, ok := configItems[vks.PropertyNameKeyStore]
-	if !ok {
-		return fmt.Errorf("Mandatory config item %v is missing in config", vks.PropertyNameKeyStore)
-	}
-	ksTypeProperty, ok := ksConfigItem.Properties[vks.PropertyNameKeyStoreType]
-	if !ok {
-		return fmt.Errorf("Mandatory config property %v is missing in config", vks.PropertyNameKeyStoreType)
-	}
-	ksAdapter, err := vks.KeyStoreRegistrar.Get(ksTypeProperty.Value)
-	if err != nil {
-		return err
-	}
-	if err := ksAdapter.Init(ksConfigItem.Properties); err != nil {
-		return err
-	}
-
-	secretManager.keyStore = ksAdapter
-
-	return nil
 }

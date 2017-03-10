@@ -8,4 +8,9 @@ type CreationResponse struct {
 
 type LoginRequest struct {
 	Username string		`json:"username"`
+	Challenge string	`json:"challenge"`
+}
+
+type ChallengeResponse struct {
+	Challenge string	`json:"challenge"`
 }

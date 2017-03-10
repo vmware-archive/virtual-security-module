@@ -9,8 +9,11 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/vmware/virtual-security-module/authn"
 	"github.com/vmware/virtual-security-module/config"
 	"github.com/vmware/virtual-security-module/secret"
+	"github.com/vmware/virtual-security-module/vds"
+	"github.com/vmware/virtual-security-module/vks"
 	"github.com/naoina/denco"
 )
 
@@ -31,7 +34,7 @@ const (
 
 type Module interface {
 	Type() string
-	Init(map[string]*config.ConfigItem) error
+	Init(map[string]*config.ConfigItem, vds.DataStoreAdapter, vks.KeyStoreAdapter) error
 	RegisterEndpoints(mux *denco.Mux) []denco.Handler
 	Close() error
 }
@@ -52,10 +55,15 @@ type Server struct {
 	httpPort int
 	httpsPort int
 	tlsConfig *TlsConfig
+	dataStore vds.DataStoreAdapter
+	keyStore vks.KeyStoreAdapter
 }
 
 func New() *Server {
-	modules := []Module{secret.New()}
+	modules := []Module{
+		secret.New(),
+		authn.New(),
+	}
 
 	return &Server{
 		modules: modules,
@@ -63,8 +71,18 @@ func New() *Server {
 }
 
 func (server *Server) Init(configItems map[string]*config.ConfigItem) error {
+	// data store and key store need to be initialized first, as the modules
+	// need them.
+	if err := server.initDataStoreFromConfig(configItems); err != nil {
+		return err
+	}
+	if err := server.initKeyStoreFromConfig(configItems); err != nil {
+		return err
+	}
+	
+	// initialize modules
 	for _, module := range server.modules {
-		err := module.Init(configItems)
+		err := module.Init(configItems, server.dataStore, server.keyStore)
 		if err != nil {
 			return err
 		}
@@ -72,9 +90,32 @@ func (server *Server) Init(configItems map[string]*config.ConfigItem) error {
 		fmt.Printf("module %v: initialized\n", module.Type())
 	}
 	
+	// initialize rest of server
 	if err:= server.initSelfFromConfig(configItems); err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func (server *Server) initDataStoreFromConfig(configItems map[string]*config.ConfigItem) error {
+	dsAdapter, err := vds.GetDataStoreFromConfig(configItems)
+	if err != nil {
+		return err
+	}
+	
+	server.dataStore = dsAdapter
+
+	return nil
+}
+
+func (server *Server) initKeyStoreFromConfig(configItems map[string]*config.ConfigItem) error {
+	ksAdapter, err := vks.GetKeyStoreFromConfig(configItems)
+	if err != nil {
+		return err
+	}
+	
+	server.keyStore = ksAdapter
 
 	return nil
 }

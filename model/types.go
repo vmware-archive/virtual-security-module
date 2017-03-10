@@ -7,8 +7,8 @@ import (
 )
 
 type UserEntry struct {
-	Id string
 	Username string
+	Credentials []byte
 	RoleEntryIds []string
 }
 
