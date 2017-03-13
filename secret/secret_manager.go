@@ -3,8 +3,6 @@
 package secret
 
 import (
-	"fmt"
-
 	"github.com/vmware/virtual-security-module/config"
 	"github.com/vmware/virtual-security-module/crypt"
 	"github.com/vmware/virtual-security-module/model"
@@ -42,14 +40,14 @@ func (secretManager *SecretManager) CreateSecret(secretEntry *model.SecretEntry)
 	if secretEntry.Id != "" {
 		_, err := secretManager.dataStore.ReadEntry(secretEntry.Id)
 		if err == nil {
-			return "", fmt.Errorf("Id %v already exists", secretEntry.Id)
+			return "", util.ErrAlreadyExists
 		}
 	}
 
 	// generate encryption key for secret
 	key, err := crypt.GenerateKey()
 	if err != nil {
-		return "", err
+		return "", util.ErrInternal
 	}
 
 	// reduce key exposure due to memory compromize / leak
@@ -58,7 +56,7 @@ func (secretManager *SecretManager) CreateSecret(secretEntry *model.SecretEntry)
 	// encrypt secret data using key
 	encryptedSecretData, err := crypt.Encrypt(secretEntry.SecretData, key)
 	if err != nil {
-		return "", err
+		return "", util.ErrInternal
 	}
 
 	id := secretEntry.Id
@@ -113,7 +111,7 @@ func (secretManager *SecretManager) GetSecret(secretId string) (*model.SecretEnt
 	// decrypt secret data using key
 	decryptedData, err := crypt.Decrypt(dataStoreEntry.Data, key)
 	if err != nil {
-		return nil, err
+		return nil, util.ErrInternal
 	}
 
 	// transform data store entry to secret entry and set decrypted data

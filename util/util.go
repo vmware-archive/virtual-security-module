@@ -20,13 +20,24 @@ func NewUUID() string {
 	return uuid.NewV4().String()
 }
 
-func WriteErrorResponse(w http.ResponseWriter, e error, statusCode int) {
-	b, _ := json.Marshal(e.Error())
-	http.Error(w, string(b), statusCode)
+func WriteErrorResponse(w http.ResponseWriter, e error) {
+	w.WriteHeader(HttpStatus(e))
+	if err := json.NewEncoder(w).Encode(e.Error()); err != nil {
+		fmt.Printf("WARNING: failed to encode error %v: %v\n", e, err)
+	}
+}
+
+func WriteErrorStatus(w http.ResponseWriter, e error) {
+	w.WriteHeader(HttpStatus(e))
 }
 
 func WriteResponse(w http.ResponseWriter, v interface{}, statusCode int) {
 	w.WriteHeader(statusCode)
-	b, _ := json.Marshal(v)
-	fmt.Fprintf(w, "%v", string(b))
+	if err := json.NewEncoder(w).Encode(v); err != nil {
+		fmt.Printf("WARNING: failed to encode %v: %v\n", v, err)
+	}
+}
+
+func WriteStatus(w http.ResponseWriter, statusCode int) {
+	w.WriteHeader(statusCode)
 }

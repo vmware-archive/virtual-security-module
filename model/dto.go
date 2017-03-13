@@ -11,6 +11,6 @@ type LoginRequest struct {
 	Challenge string	`json:"challenge"`
 }
 
-type ChallengeResponse struct {
-	Challenge string	`json:"challenge"`
+type LoginResponse struct {
+	ChallengeOrToken string	`json:"challengeOrToken"`
 }

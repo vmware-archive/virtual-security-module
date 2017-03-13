@@ -5,12 +5,13 @@ package authn
 import (
 	"crypto/rand"
 	"crypto/rsa"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"os"
+	"reflect"
 	"testing"
 
-	"github.com/vmware/virtual-security-module/config"
 	"github.com/vmware/virtual-security-module/model"
 	"github.com/vmware/virtual-security-module/vds"
 	"github.com/vmware/virtual-security-module/vks"
@@ -18,46 +19,146 @@ import (
 
 var p *BuiltinProvider
 
-func TestMain(m *testing.M) {
-	cfg := config.GenerateTestConfig()
-	
-	ds, err := vds.GetDataStoreFromConfig(cfg)
-	if err != nil {
-		fmt.Printf("Failed to get data store from config: %v\n", err)
-		os.Exit(1)
-	}
-	
-	ks, err := vks.GetKeyStoreFromConfig(cfg)
-	if err != nil {
-		fmt.Printf("Failed to get key store from config: %v\n", err)
-		os.Exit(1)
-	}
-	
+func builtinProviderTestSetup() {
 	p = NewBuiltinProvider()
-	if err := p.Init(nil, ds, ks); err != nil {
+	if err := p.Init(nil, vds.New(), vks.New()); err != nil {
 		fmt.Printf("Failed to initialize builtin provider: %v\n", err)
 		os.Exit(1)
 	}
+}
 
-	/*
-	apiTestSetup()
-	defer apiTestCleanup()
-	*/
-	
-	os.Exit(m.Run())
+func builtinProviderTestCleanup() {
+	p = nil
 }
 
 func TestCreateUserAndLogin(t *testing.T) {
-	// create a user
 	username := "testuser-0"
+	_, privateKey , err := createUser(username)
+	if err != nil {
+		t.Fatalf("Failed to create user: %v", err)
+	}
+	
+	_, err = login(username, privateKey, false)
+	if err != nil {
+		t.Fatalf("Failed to login: %v", err)
+	}
+	
+	if err := p.DeleteUser(username); err != nil {
+		t.Fatalf("Failed to delete user: %v", err)
+	}
+}
+
+func TestLoginWrongCredentials(t *testing.T) {
+	username := "testuser-0"
+	_, _, err := createUser(username)
+	if err != nil {
+		t.Fatalf("Failed to create user: %v", err)
+	}
+	
+	_, err = login(username, nil, false)
+	if err == nil {
+		t.Fatalf("Succeeded to login without the private key")
+	}
+	
+	if err := p.DeleteUser(username); err != nil {
+		t.Fatalf("Failed to delete user: %v", err)
+	}
+}
+
+func TestLoginNonExistentUser(t *testing.T) {
+	username0 := "testuser-0"
+	username1 := "testuser-1"
+	
+	_, privateKey, err := createUser(username0)
+	if err != nil {
+		t.Fatalf("Failed to create user: %v", err)
+	}
+	
+	_, err = login(username1, privateKey, false)
+	if err == nil {
+		t.Fatalf("Succeeded to login with non existent user")
+	}
+	
+	if err := p.DeleteUser(username0); err != nil {
+		t.Fatalf("Failed to delete user: %v", err)
+	}
+}
+
+func TestLoginCredentialsOfAnotherUser(t *testing.T) {
+	username0 := "testuser-0"
+	username1 := "testuser-1"
+	
+	_, _, err := createUser(username0)
+	if err != nil {
+		t.Fatalf("Failed to create user: %v", err)
+	}
+	
+	_, privateKey1, err := createUser(username1)
+	if err != nil {
+		t.Fatalf("Failed to create user: %v", err)
+	}
+	
+	_, err = login(username0, privateKey1, false)
+	if err == nil {
+		t.Fatalf("Succeeded to login with credentials of a different user")
+	}
+	
+	if err := p.DeleteUser(username0); err != nil {
+		t.Fatalf("Failed to delete user: %v", err)
+	}
+	
+	if err := p.DeleteUser(username1); err != nil {
+		t.Fatalf("Failed to delete user: %v", err)
+	}
+}
+
+func TestLoginSkipFirstPhase(t *testing.T) {
+	username := "testuser-0"
+	_, privateKey , err := createUser(username)
+	if err != nil {
+		t.Fatalf("Failed to create user: %v", err)
+	}
+	
+	_, err = login(username, privateKey, true)
+	if err == nil {
+		t.Fatalf("Succeeded to login despite skipping first phase")
+	}
+	
+	if err := p.DeleteUser(username); err != nil {
+		t.Fatalf("Failed to delete user: %v", err)
+	}
+}
+
+func TestCreateUserAndGet(t *testing.T) {
+	username := "testuser-0"
+	ue, _ , err := createUser(username)
+	if err != nil {
+		t.Fatalf("Failed to create user: %v", err)
+	}
+	
+	ue2, err := p.GetUser(username)
+	if err != nil {
+		t.Fatalf("Failed to get user: %v", err)
+	}
+	
+	if !reflect.DeepEqual(ue, ue2) {
+		t.Fatalf("Created and retrieved users are different: %v %v", ue, ue2)
+	}
+	
+	if err := p.DeleteUser(username); err != nil {
+		t.Fatalf("Failed to delete user: %v", err)
+	}
+}
+
+func createUser(username string) (*model.UserEntry, *rsa.PrivateKey, error) {
 	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
-		t.Fatalf("Failed to generate key pair: %v", err)
+		return nil, nil, err
 	}
 	
 	creds, err := json.Marshal(privateKey.PublicKey)
 	if err != nil {
-		t.Fatalf("Failed to marshal public key: %v", err)
+		return nil, nil, err
 	}
 
 	ue := &model.UserEntry{
@@ -67,51 +168,60 @@ func TestCreateUserAndLogin(t *testing.T) {
 
 	id, err := p.CreateUser(ue)
 	if err != nil {
-		t.Fatalf("Failed to create user: %v", err)
+		return nil, nil, err
 	}
 	if len(id) == 0 {
-		t.Fatalf("Failed to create secret: returned id is empty")
+		fmt.Errorf("Failed to create user %v: returned id is empty", username)
 	}
 	
+	return ue, privateKey, nil
+}
+
+func login(username string, privateKey *rsa.PrivateKey, skipFirstPhase bool) (string, error) {
 	// login - first pass: get a challenge
 	loginRequest := &model.LoginRequest{
 		Username: username,
 	}
-	encryptedChallenge, err := p.Login(loginRequest)
-	if err != nil {
-		t.Fatalf("Failed to login - first phase: %v", err)
+	
+	encryptedChallenge := []byte{}
+	if !skipFirstPhase {
+		var err error
+		encodedChallenge, err := p.Login(loginRequest)
+		if err != nil {
+			return "", err
+		}
+		
+		encryptedChallenge, err = base64.StdEncoding.DecodeString(encodedChallenge)
+		if err != nil {
+			return "", err
+		}
 	}
 	
 	// decrypt challenge using private key
-	challenge, err := rsa.DecryptPKCS1v15(nil, privateKey, []byte(encryptedChallenge))
+	pk := privateKey
+	if pk == nil {
+		// no private key is given - generate a fake one for testing
+		var err error
+		pk, err = rsa.GenerateKey(rand.Reader, 2048)
+		if err != nil {
+			return "", err
+		}
+	}
+	challenge, err := rsa.DecryptPKCS1v15(nil, pk, encryptedChallenge)
 	if err != nil {
-		t.Fatalf("Failed to decrypt challenge using private key: %v", err)
+		return "", err
 	}
 	
 	// login - second phase: send the decrypted challenge
 	loginRequest.Challenge = string(challenge)
 	token, err := p.Login(loginRequest)
 	if err != nil {
-		t.Fatalf("Failed to login - second phase: %v", err)
+		return "", err
 	}
 	
 	if len(token) == 0 {
-		t.Fatalf("Failed to login - second phase: returned token is empty", err)
+		return "", fmt.Errorf("Failed to login - second phase: returned token is empty")
 	}
-}
-
-func TestLoginWrongCredentials(t *testing.T) {
-	// TODO
-}
-
-func TestLoginNonExistentUser(t *testing.T) {
-	// TODO
-}
-
-func TestLoginCredentialsOfAnotherUser(t *testing.T) {
-	// TODO
-}
-
-func TestLoginSkipFirstPhase(t *testing.T) {
-	// TODO
+	
+	return token, nil
 }

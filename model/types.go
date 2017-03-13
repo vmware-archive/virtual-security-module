@@ -7,32 +7,32 @@ import (
 )
 
 type UserEntry struct {
-	Username string
-	Credentials []byte
-	RoleEntryIds []string
+	Username string						`json:"username"`
+	Credentials []byte					`json:"credentials"`
+	RoleEntryIds []string				`json:"roleEntryIds"`
 }
 
 type RoleEntry struct {
-	Id string
-	Label string
-	UserEntryIds []string
+	Id string							`json:"id"`
+	Label string						`json:"label"`
+	UserEntryIds []string				`json:"userEntryIds"`
 }
 
 type SecretEntry struct {
-	Id string
-	SecretData []byte
-	OwnerEntryId string
-	NamespaceEntryId string
-	ExpirationTime time.Time
-	AuthorizationPolicyIds []string
+	Id string							`json:"id"`
+	SecretData []byte					`json:"secretData"`
+	OwnerEntryId string					`json:"ownerEntryId"`
+	NamespaceEntryId string				`json:"namespaceEntryId"`
+	ExpirationTime time.Time			`json:"expirationTime"`
+	AuthorizationPolicyIds []string		`json:"authorizationPolicyIds"`
 }
 
 type NamespaceEntry struct {
-	Id string
-	PathElement string
-	OwnerEntryId string
-	ParentNamespaceEntryId string
-	AuthorizationPolicyIds []string
+	Id string							`json:"id"`
+	PathElement string					`json:"pathElement"`
+	OwnerEntryId string					`json:"ownerEntryId"`
+	ParentNamespaceEntryId string		`json:"parentNamespaceId"`
+	AuthorizationPolicyIds []string		`json:"authorizationPolicyIds"`
 }
 
 const (
@@ -42,13 +42,13 @@ const (
 	OpDelete = "D"
 )
 type Operation struct {
-	label string
+	Label string						`json:"label"`
 }
 
 type AuthorizationPolicyEntry struct {
-	Id string
-	Name string
-	RoleEntryIds []string
-	AllowedOperations []Operation
-	OwnerEntryId string
+	Id string							`json:"id"`
+	Name string							`json:"name"`
+	RoleEntryIds []string				`json:"roleEntryIds"`
+	AllowedOperations []Operation		`json:"allowedOperations"`
+	OwnerEntryId string					`json:"ownerEntryId"`
 }

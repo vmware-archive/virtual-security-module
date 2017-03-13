@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/vmware/virtual-security-module/model"
+	"github.com/vmware/virtual-security-module/util"
 )
 
 type MetaData struct {
@@ -26,7 +27,7 @@ func SecretEntryToDataStoreEntry(secretEntry *model.SecretEntry) (*DataStoreEntr
 
 	metaDataBytes, err := json.Marshal(metaData)
 	if err != nil {
-		return nil, err
+		return nil, util.ErrInternal
 	}
 
 	dataStoreEntry := &DataStoreEntry{
@@ -42,7 +43,7 @@ func DataStoreEntryToSecretEntry(dataStoreEntry *DataStoreEntry) (*model.SecretE
 	var metaData MetaData
 
 	if err := json.Unmarshal([]byte(dataStoreEntry.MetaData), &metaData); err != nil {
-		return nil, err
+		return nil, util.ErrInternal
 	}
 
 	secretEntry := &model.SecretEntry{
@@ -65,7 +66,7 @@ func UserEntryToDataStoreEntry(userEntry *model.UserEntry) (*DataStoreEntry, err
 
 	metaDataBytes, err := json.Marshal(metaData)
 	if err != nil {
-		return nil, err
+		return nil, util.ErrInternal
 	}
 
 	dataStoreEntry := &DataStoreEntry{
@@ -81,7 +82,7 @@ func DataStoreEntryToUserEntry(dataStoreEntry *DataStoreEntry) (*model.UserEntry
 	var metaData MetaData
 	
 	if err := json.Unmarshal([]byte(dataStoreEntry.MetaData), &metaData); err != nil {
-		return nil, err
+		return nil, util.ErrInternal
 	}
 
 	userEntry := &model.UserEntry{

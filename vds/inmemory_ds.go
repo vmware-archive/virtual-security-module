@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/vmware/virtual-security-module/config"
+	"github.com/vmware/virtual-security-module/util"
 )
 
 const dsType = "InMemoryDataStore"
@@ -66,7 +67,7 @@ func (ds *InMemoryDS) ReadEntry(entryId string) (*DataStoreEntry, error) {
 
 	entry, ok := ds.entryMap[entryId]
 	if !ok {
-		return nil, fmt.Errorf("Entry with id %v not found", entryId)
+		return nil, util.ErrNotFound
 	}
 	
 	buf := make([]byte, len(entry.Data))
@@ -87,7 +88,7 @@ func (ds *InMemoryDS) DeleteEntry(entryId string) error {
 
 	_, ok := ds.entryMap[entryId]
 	if !ok {
-		return fmt.Errorf("Entry with id %v not found", entryId)
+		return util.ErrNotFound
 	}
 
 	delete(ds.entryMap, entryId)

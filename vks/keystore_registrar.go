@@ -3,7 +3,7 @@
 package vks
 
 import (
-	"fmt"
+	"github.com/vmware/virtual-security-module/util"
 )
 
 // singleton registrar for key store types
@@ -22,7 +22,7 @@ func newRegistrar() *keyStoreRegistrar {
 func (ksRegistrar *keyStoreRegistrar) Register(ksType string, ksAdapter KeyStoreAdapter) error {
 	_, ok := ksRegistrar.keyStores[ksType]
 	if ok {
-		return fmt.Errorf("key store of type %v already registered", ksType)
+		return util.ErrAlreadyExists
 	}
 
 	ksRegistrar.keyStores[ksType] = ksAdapter
@@ -33,7 +33,7 @@ func (ksRegistrar *keyStoreRegistrar) Register(ksType string, ksAdapter KeyStore
 func (ksRegistrar *keyStoreRegistrar) Unregister(ksType string) error {
 	_, ok := ksRegistrar.keyStores[ksType]
 	if !ok {
-		return fmt.Errorf("key store of type %v not registered", ksType)
+		return util.ErrNotFound
 	}
 
 	delete(ksRegistrar.keyStores, ksType)
@@ -51,7 +51,7 @@ func (ksRegistrar *keyStoreRegistrar) Get(ksType string) (KeyStoreAdapter, error
 	ksAdapter, ok := ksRegistrar.keyStores[ksType]
 
 	if !ok {
-		return nil, fmt.Errorf("key store of type %v not registered", ksType)
+		return nil, util.ErrNotFound
 	}
 
 	return ksAdapter, nil

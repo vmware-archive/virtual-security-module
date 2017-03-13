@@ -10,7 +10,6 @@
 package authn
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/vmware/virtual-security-module/model"
@@ -28,41 +27,93 @@ func (authnManager *AuthnManager) RegisterEndpoints(mux *denco.Mux) []denco.Hand
 	createUser := func(w http.ResponseWriter, r *http.Request, params denco.Params) {
 		userEntry, err := model.ExtractAndValidateUserEntry(r)
 		if err != nil {
-			util.WriteErrorResponse(w, err, http.StatusBadRequest)
+			util.WriteErrorResponse(w, err)
 			return
 		}
 
 		id, err := authnManager.CreateUser(userEntry)
+		if err != nil {
+			util.WriteErrorResponse(w, err)	
+		}
+		
 		util.WriteResponse(w, &model.CreationResponse{Id: id}, http.StatusCreated)
+	}
+	
+	// swagger:route GET /users/{username} users GetUser
+	//
+	// Returns a user's info
+	//
+	//	Responses:
+	//		200: UserEntryResponse
+	getUser := func(w http.ResponseWriter, r *http.Request, params denco.Params) {
+		username := params.Get("username")
+		if username == "" {
+			util.WriteErrorResponse(w, util.ErrInputValidation)
+			return
+		}
+
+		ue, err := authnManager.GetUser(username)
+		if err != nil {
+			util.WriteErrorResponse(w, err)	
+		}
+		
+		util.WriteResponse(w, ue, http.StatusOK)
+	}
+	
+	// swagger:route DELETE /users/{username} users CreateUser
+	//
+	// Deletes a user
+	//
+	//	Responses:
+	//		204
+	deleteUser := func(w http.ResponseWriter, r *http.Request, params denco.Params) {
+		username := params.Get("username")
+		if username == "" {
+			util.WriteErrorResponse(w, util.ErrInputValidation)
+			return
+		}
+
+		err := authnManager.DeleteUser(username)
+		if err != nil {
+			util.WriteErrorStatus(w, err)	
+		}
+		
+		util.WriteStatus(w, http.StatusNoContent)
 	}
 
 	// swagger:route POST /login users Login
 	//
-	// Retrieves a secret
+	// Log-in. Expected to be invoked twice by a client:
+	//     First phase: client provides the username and gets back a challenge,
+	//          decrypted by the user's public key
+	//     Second phase: client decrypts the challenge with the user's private
+	//          key and provides it with the request; and gets a token
 	//
 	// 	Responses:
-	//		200: LoginResponse
+	//		200: LoginResp
 	login := func(w http.ResponseWriter, r *http.Request, params denco.Params) {
 		loginRequest, err := model.ExtractAndValidateLoginRequest(r)
 		if err != nil {
-			util.WriteErrorResponse(w, err, http.StatusBadRequest)
+			util.WriteErrorResponse(w, err)
 			return
 		}
 
-	    challenge, err := authnManager.Login(loginRequest)
+	    challengeOrToken, err := authnManager.Login(loginRequest)
 	    if err != nil {
-			util.WriteResponse(w, fmt.Errorf("login failed: %v", err), http.StatusForbidden)
+			util.WriteErrorResponse(w, err)
 			return
 	    }
 
-		challengeResponse := &model.ChallengeResponse {
-			Challenge: challenge,
+		loginResponse := &model.LoginResponse {
+			ChallengeOrToken: challengeOrToken,
 		}
-	    util.WriteResponse(w, challengeResponse, http.StatusOK)
+	    util.WriteResponse(w, loginResponse, http.StatusOK)
 	}
 
 	handlers := []denco.Handler{
         mux.POST("/users", createUser),
+        mux.GET("/users/:username", getUser),
+        mux.Handler("DELETE", "/users/:username", deleteUser),
         mux.POST("/login", login),
     }
 
@@ -83,8 +134,14 @@ type UserCreationResponse struct {
 	}
 }
 
-// swagger:response LoginResponse
-type LoginResponse struct {
+// swagger:response UserEntryResponse
+type UserEntryResponse struct {
 	// in:body
-	ChallengeResponse model.ChallengeResponse
+	UserEntry model.UserEntry
+}
+
+// swagger:response LoginResp
+type LoginResp struct {
+	// in:body
+	LoginResp model.LoginResponse
 }

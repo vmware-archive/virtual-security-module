@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -56,13 +55,14 @@ func testAPICreateAndGetSecret(t *testing.T, id string) {
 		ExpirationTime: expirationTime,
 		AuthorizationPolicyIds: []string{},
 	}
-	body, err := json.Marshal(se)
+	body := new(bytes.Buffer)
+    err := json.NewEncoder(body).Encode(se)
 	if err != nil {
 		t.Fatalf("failed to marshal se %v: %v", se, err)
 	}
 
 	testUrl := fmt.Sprintf("%v/secrets", ts.URL)
-	resp, err := http.Post(testUrl, "application/json", bytes.NewBuffer(body))
+	resp, err := http.Post(testUrl, "application/json", body)
 	if err != nil {
 		t.Fatalf("Failed to create secret: %v", err)
 	}
@@ -72,14 +72,11 @@ func testAPICreateAndGetSecret(t *testing.T, id string) {
 		t.Fatalf("Response status is different than 201 StatusCreated: %v", resp.Status)
 	}
 
-	creationResponseBuf, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		t.Fatalf("Failed to read secret creation response: %v", err)
-	}
 	var creationResponse model.CreationResponse
-	if err = json.Unmarshal(creationResponseBuf, &creationResponse); err != nil {
+	if err = json.NewDecoder(resp.Body).Decode(&creationResponse); err != nil {
 		t.Fatalf("Failed to parse secret creation response: %v", err)
 	}
+	
 	if len(creationResponse.Id) == 0 {
 		t.Fatalf("Failed to create secret: returned id is empty")
 	}
@@ -96,13 +93,8 @@ func testAPICreateAndGetSecret(t *testing.T, id string) {
 		t.Fatalf("Response status is different than 200 StatusOK: %v", resp2.Status)
 	}
 
-	getResponseBuf, err := ioutil.ReadAll(resp2.Body)
-	if err != nil {
-		t.Fatalf("Failed to read get secret response: %v", err)
-	}
-
 	var se2 model.SecretEntry
-	if err = json.Unmarshal(getResponseBuf, &se2); err != nil {
+	if err = json.NewDecoder(resp2.Body).Decode(&se2); err != nil {
 		t.Fatalf("Failed to parse get secret response: %v", err)
 	}
 
