@@ -14,7 +14,7 @@ func TestPolynomial(t *testing.T) {
 	field.SetString("1066340417491710595814572169", 10)
 	poly := NewPolynomial(secret, degree, field)
 
-	for x := 0; x < 100000; x++ {
+	for x := 0; x < 100; x++ {
 		v := poly.Get(int64(x))
 		v1 := big.NewInt(0)
 		for i := 0; i <= poly.Degree; i++ {
