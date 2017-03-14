@@ -14,7 +14,7 @@ func TestSecretSharer(t *testing.T) {
 	n := 10
 	k := 3
 
-	ss := NewSecretSharerRandField(2048, n, k)
+	ss := NewSecretSharerRandField(1024, n, k)
 
 	shares := ss.breakSecret(secret)
 
