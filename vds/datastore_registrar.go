@@ -3,7 +3,7 @@
 package vds
 
 import (
-	"fmt"
+	"github.com/vmware/virtual-security-module/util"
 )
 
 // singleton registrar for data store types
@@ -22,7 +22,7 @@ func newRegistrar() *dataStoreRegistrar {
 func (dsRegistrar *dataStoreRegistrar) Register(dsType string, dsAdapter DataStoreAdapter) error {
 	_, ok := dsRegistrar.dataStores[dsType]
 	if ok {
-		return fmt.Errorf("data store of type %v already registered", dsType)
+		return util.ErrAlreadyExists
 	}
 
 	dsRegistrar.dataStores[dsType] = dsAdapter
@@ -33,7 +33,7 @@ func (dsRegistrar *dataStoreRegistrar) Register(dsType string, dsAdapter DataSto
 func (dsRegistrar *dataStoreRegistrar) Unregister(dsType string) error {
 	_, ok := dsRegistrar.dataStores[dsType]
 	if !ok {
-		return fmt.Errorf("data store of type %v not registered", dsType)
+		return util.ErrNotFound
 	}
 
 	delete(dsRegistrar.dataStores, dsType)
@@ -51,7 +51,7 @@ func (dsRegistrar *dataStoreRegistrar) Get(dsType string) (DataStoreAdapter, err
 	dsAdapter, ok := dsRegistrar.dataStores[dsType]
 
 	if !ok {
-		return nil, fmt.Errorf("data store of type %v not registered", dsType)
+		return nil, util.ErrNotFound
 	}
 
 	return dsAdapter, nil

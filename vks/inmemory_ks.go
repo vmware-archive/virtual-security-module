@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/vmware/virtual-security-module/config"
+	"github.com/vmware/virtual-security-module/util"
 )
 
 const ksType = "InMemoryKeyStore"
@@ -59,7 +60,7 @@ func (ks *InMemoryKS) Read(alias string) ([]byte, error) {
 
 	key, ok := ks.keyMap[alias]
 	if !ok {
-		return nil, fmt.Errorf("Key with alias %v not found", alias)
+		return nil, util.ErrNotFound
 	}
 	
 	buf := make([]byte, len(key))
@@ -74,7 +75,7 @@ func (ks *InMemoryKS) Delete(alias string) error {
 
 	_, ok := ks.keyMap[alias]
 	if !ok {
-		return fmt.Errorf("Key with alias %v not found", alias)
+		return util.ErrNotFound
 	}
 
 	delete(ks.keyMap, alias)

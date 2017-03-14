@@ -21,6 +21,8 @@ type AuthnProvider interface {
 	Authenticated(r *http.Request) (username string, e error)
 	Login(l *model.LoginRequest) (token string, e error)
 	CreateUser(*model.UserEntry) (string, error)
+	DeleteUser(username string) error
+	GetUser(username string) (*model.UserEntry, error)
 	Type() string
 }
 
@@ -62,4 +64,12 @@ func (authnManager *AuthnManager) Login(l *model.LoginRequest) (string, error) {
 
 func (authnManager *AuthnManager) CreateUser(userEntry *model.UserEntry) (string, error) {
 	return authnManager.authnProvider.CreateUser(userEntry)
+}
+
+func (authnManager *AuthnManager) DeleteUser(username string) error {
+	return authnManager.authnProvider.DeleteUser(username)
+}
+
+func (authnManager *AuthnManager) GetUser(username string) (*model.UserEntry, error) {
+	return authnManager.authnProvider.GetUser(username)
 }

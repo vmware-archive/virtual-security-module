@@ -10,7 +10,6 @@
 package secret
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/vmware/virtual-security-module/model"
@@ -28,7 +27,7 @@ func (secretManager *SecretManager) RegisterEndpoints(mux *denco.Mux) []denco.Ha
 	createSecret := func(w http.ResponseWriter, r *http.Request, params denco.Params) {
 		secretEntry, err := model.ExtractAndValidateSecretEntry(r)
 		if err != nil {
-			util.WriteErrorResponse(w, err, http.StatusBadRequest)
+			util.WriteErrorResponse(w, err)
 			return
 		}
 
@@ -45,13 +44,13 @@ func (secretManager *SecretManager) RegisterEndpoints(mux *denco.Mux) []denco.Ha
 	getSecret := func(w http.ResponseWriter, r *http.Request, params denco.Params) {
 		id := params.Get("id")
 		if id == "" {
-			util.WriteResponse(w, fmt.Errorf("Internal Error: failed to retrieve secret id from request path"), http.StatusInternalServerError)
+			util.WriteErrorResponse(w, util.ErrInputValidation)
 			return
 		}
 
 	    secretEntry, err := secretManager.GetSecret(id)
 	    if err != nil {
-		util.WriteResponse(w, fmt.Errorf("Failed to retrieve secret entry for id %v: %v", id, err), http.StatusNotFound)
+			util.WriteErrorResponse(w, util.ErrInputValidation)
 			return
 	    }
 
