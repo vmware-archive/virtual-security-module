@@ -10,8 +10,10 @@ import (
 	"github.com/vmware/virtual-security-module/config"
 )
 
-var s *Server
-var tCfg map[string]*config.ConfigItem
+var (
+	s *Server
+	tCfg map[string]*config.ConfigItem
+)
 
 func TestMain(m *testing.M) {
 	tCfg = config.GenerateTestConfig()
