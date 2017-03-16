@@ -4,20 +4,20 @@ package server
 
 import (
 	"fmt"
-	"testing"
 	"os"
-	
+	"testing"
+
 	"github.com/vmware/virtual-security-module/config"
 )
 
 var (
-	s *Server
+	s    *Server
 	tCfg map[string]*config.ConfigItem
 )
 
 func TestMain(m *testing.M) {
 	tCfg = config.GenerateTestConfig()
-	
+
 	s = New()
 	if err := s.Init(tCfg); err != nil {
 		fmt.Printf("Failed to initialize server: %v\n", err)
@@ -27,6 +27,6 @@ func TestMain(m *testing.M) {
 
 	apiTestSetup()
 	defer apiTestCleanup()
-	
+
 	os.Exit(m.Run())
 }

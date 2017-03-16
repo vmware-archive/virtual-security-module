@@ -3,13 +3,13 @@
 package config
 
 type ConfigProperty struct {
-	Name string
-	Value string
+	Name        string
+	Value       string
 	Description string
-	Sensitive bool
+	Sensitive   bool
 }
 
 type ConfigItem struct {
-	Name string
+	Name       string
 	Properties map[string]*ConfigProperty
 }

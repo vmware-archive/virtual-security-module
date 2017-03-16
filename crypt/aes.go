@@ -3,15 +3,15 @@
 package crypt
 
 import (
+	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
-	"io"
-	"fmt"
-	"encoding/binary"
 	"crypto/sha256"
-	"bytes"
+	"encoding/binary"
 	"errors"
+	"fmt"
+	"io"
 )
 
 func generateKeyAES() ([]byte, error) {
@@ -31,7 +31,7 @@ func encryptAES(data []byte, key []byte) ([]byte, error) {
 	data = append(data, sha[:]...)
 
 	// Padding
-	if len(data) % aes.BlockSize != 0 {
+	if len(data)%aes.BlockSize != 0 {
 		// TODO: This padding is simple padding, might not be the most secure way to do that
 		toadd := aes.BlockSize - (len(data) % aes.BlockSize)
 		data = append(data, make([]byte, toadd)...)
@@ -80,14 +80,14 @@ func decryptAES(ciphertext []byte, key []byte) ([]byte, error) {
 	if len(plaintext) < (4 + int(size) + sha256.Size) {
 		return nil, errors.New(fmt.Sprintf("result too short (size=%d, len=%d)", size, len(plaintext)))
 	}
-	
-	data := plaintext[4:4+size]
-	sha := plaintext[4+size:4+size+sha256.Size]
-	
+
+	data := plaintext[4 : 4+size]
+	sha := plaintext[4+size : 4+size+sha256.Size]
+
 	newSha := sha256.Sum256(data)
 	if !bytes.Equal(sha, newSha[:]) {
 		return nil, errors.New("Hash does not match")
 	}
-	
+
 	return data, nil
 }

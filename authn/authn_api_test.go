@@ -4,10 +4,10 @@ package authn
 
 import (
 	"bytes"
-	"encoding/base64"
-	"encoding/json"
 	"crypto/rand"
 	"crypto/rsa"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -15,8 +15,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/vmware/virtual-security-module/model"
 	"github.com/naoina/denco"
+	"github.com/vmware/virtual-security-module/model"
 )
 
 var ts *httptest.Server
@@ -29,7 +29,7 @@ func apiTestSetup() {
 		fmt.Printf("Failed to create RESTful API: %v", err)
 		os.Exit(1)
 	}
-	
+
 	ts = httptest.NewServer(handler)
 }
 
@@ -39,16 +39,16 @@ func apiTestCleanup() {
 
 func TestAPICreateUserAndLogin(t *testing.T) {
 	username := "testuser-0"
-	_, privateKey , err := apiCreateUser(username)
+	_, privateKey, err := apiCreateUser(username)
 	if err != nil {
 		t.Fatalf("Failed to create user: %v", err)
 	}
-	
+
 	_, err = apiLogin(username, privateKey)
 	if err != nil {
 		t.Fatalf("Failed to login: %v", err)
 	}
-	
+
 	if err := apiDeleteUser(username); err != nil {
 		t.Fatalf("Failed to delete user: %v", err)
 	}
@@ -56,20 +56,20 @@ func TestAPICreateUserAndLogin(t *testing.T) {
 
 func TestAPICreateUserAndGet(t *testing.T) {
 	username := "testuser-0"
-	ue, _ , err := apiCreateUser(username)
+	ue, _, err := apiCreateUser(username)
 	if err != nil {
 		t.Fatalf("Failed to create user: %v", err)
 	}
-	
+
 	ue2, err := apiGetUser(username)
 	if err != nil {
 		t.Fatalf("Failed to get user: %v", err)
 	}
-	
+
 	if !reflect.DeepEqual(ue, ue2) {
 		t.Fatalf("Created and retrieved users are different: %v %v", ue, ue2)
 	}
-	
+
 	if err := apiDeleteUser(username); err != nil {
 		t.Fatalf("Failed to delete user: %v", err)
 	}
@@ -80,19 +80,19 @@ func apiCreateUser(username string) (*model.UserEntry, *rsa.PrivateKey, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	
+
 	creds, err := json.Marshal(privateKey.PublicKey)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	ue := &model.UserEntry{
-		Username: username,
+		Username:    username,
 		Credentials: creds,
 	}
 
 	body := new(bytes.Buffer)
-    err = json.NewEncoder(body).Encode(ue)
+	err = json.NewEncoder(body).Encode(ue)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -115,7 +115,7 @@ func apiCreateUser(username string) (*model.UserEntry, *rsa.PrivateKey, error) {
 	if len(creationResponse.Id) == 0 {
 		return nil, nil, fmt.Errorf("returned id is empty")
 	}
-	
+
 	return ue, privateKey, nil
 }
 
@@ -134,7 +134,7 @@ func apiDeleteUser(username string) error {
 	if resp.StatusCode != http.StatusNoContent {
 		return fmt.Errorf("Response status is different than 204 StatusNoContent: %v", resp.Status)
 	}
-	
+
 	return nil
 }
 
@@ -149,7 +149,7 @@ func apiGetUser(username string) (*model.UserEntry, error) {
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("Response status is different than 200 StatusOK: %v", resp.Status)
 	}
-	
+
 	var userEntry model.UserEntry
 	if err = json.NewDecoder(resp.Body).Decode(&userEntry); err != nil {
 		return nil, err
@@ -157,7 +157,7 @@ func apiGetUser(username string) (*model.UserEntry, error) {
 	if username != userEntry.Username {
 		return nil, fmt.Errorf("returned username %v is different than expect: %v", userEntry.Username, username)
 	}
-	
+
 	return &userEntry, nil
 }
 
@@ -166,13 +166,13 @@ func apiLogin(username string, privateKey *rsa.PrivateKey) (string, error) {
 	loginRequest := &model.LoginRequest{
 		Username: username,
 	}
-	
+
 	body := new(bytes.Buffer)
-    err := json.NewEncoder(body).Encode(loginRequest)
+	err := json.NewEncoder(body).Encode(loginRequest)
 	if err != nil {
 		return "", err
 	}
-	
+
 	testUrl := fmt.Sprintf("%v/login", ts.URL)
 	resp, err := http.Post(testUrl, "application/json", body)
 	if err != nil {
@@ -192,26 +192,26 @@ func apiLogin(username string, privateKey *rsa.PrivateKey) (string, error) {
 		return "", fmt.Errorf("returned challenge is empty")
 	}
 	encodedChallenge := loginResponse.ChallengeOrToken
-	
+
 	encryptedChallenge, err := base64.StdEncoding.DecodeString(encodedChallenge)
 	if err != nil {
 		return "", err
 	}
-			
+
 	// decrypt challenge using private key
 	challenge, err := rsa.DecryptPKCS1v15(nil, privateKey, []byte(encryptedChallenge))
 	if err != nil {
 		return "", err
 	}
-	
+
 	// login - second phase: send the decrypted challenge
 	loginRequest.Challenge = string(challenge)
 	body = new(bytes.Buffer)
-    err = json.NewEncoder(body).Encode(loginRequest)
+	err = json.NewEncoder(body).Encode(loginRequest)
 	if err != nil {
 		return "", err
 	}
-	
+
 	resp, err = http.Post(testUrl, "application/json", body)
 	if err != nil {
 		return "", err
@@ -226,10 +226,10 @@ func apiLogin(username string, privateKey *rsa.PrivateKey) (string, error) {
 	if err = json.NewDecoder(resp.Body).Decode(&tokenResponse); err != nil {
 		return "", err
 	}
-	
+
 	if len(tokenResponse.ChallengeOrToken) == 0 {
 		return "", fmt.Errorf("returned token is empty")
 	}
-	
+
 	return tokenResponse.ChallengeOrToken, nil
 }

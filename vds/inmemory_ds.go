@@ -22,11 +22,11 @@ func init() {
 // Useful for testing. Not recommended for production!!
 type InMemoryDS struct {
 	entryMap map[string]*DataStoreEntry
-	mutex sync.Mutex
+	mutex    sync.Mutex
 }
 
 func New() *InMemoryDS {
-	return &InMemoryDS {
+	return &InMemoryDS{
 		entryMap: make(map[string]*DataStoreEntry),
 	}
 }
@@ -49,13 +49,13 @@ func (ds *InMemoryDS) WriteEntry(entry *DataStoreEntry) error {
 
 	buf := make([]byte, len(entry.Data))
 	copy(buf, entry.Data)
-	
+
 	dsEntry := &DataStoreEntry{
-		Id: entry.Id,
-		Data: buf,
+		Id:       entry.Id,
+		Data:     buf,
 		MetaData: entry.MetaData,
 	}
-	
+
 	ds.entryMap[entry.Id] = dsEntry
 
 	return nil
@@ -69,13 +69,13 @@ func (ds *InMemoryDS) ReadEntry(entryId string) (*DataStoreEntry, error) {
 	if !ok {
 		return nil, util.ErrNotFound
 	}
-	
+
 	buf := make([]byte, len(entry.Data))
 	copy(buf, entry.Data)
-	
+
 	dsEntry := &DataStoreEntry{
-		Id: entry.Id,
-		Data: buf,
+		Id:       entry.Id,
+		Data:     buf,
 		MetaData: entry.MetaData,
 	}
 

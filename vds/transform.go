@@ -11,17 +11,17 @@ import (
 )
 
 type MetaData struct {
-	OwnerEntryId string
-	NamespaceEntryId string
-	ExpirationTime time.Time
+	OwnerEntryId           string
+	NamespaceEntryId       string
+	ExpirationTime         time.Time
 	AuthorizationPolicyIds []string
 }
 
 func SecretEntryToDataStoreEntry(secretEntry *model.SecretEntry) (*DataStoreEntry, error) {
 	metaData := &MetaData{
-		OwnerEntryId: secretEntry.OwnerEntryId,
-		NamespaceEntryId: secretEntry.NamespaceEntryId,
-		ExpirationTime: secretEntry.ExpirationTime,
+		OwnerEntryId:           secretEntry.OwnerEntryId,
+		NamespaceEntryId:       secretEntry.NamespaceEntryId,
+		ExpirationTime:         secretEntry.ExpirationTime,
 		AuthorizationPolicyIds: secretEntry.AuthorizationPolicyIds,
 	}
 
@@ -31,8 +31,8 @@ func SecretEntryToDataStoreEntry(secretEntry *model.SecretEntry) (*DataStoreEntr
 	}
 
 	dataStoreEntry := &DataStoreEntry{
-		Id: secretEntry.Id,
-		Data: secretEntry.SecretData,
+		Id:       secretEntry.Id,
+		Data:     secretEntry.SecretData,
 		MetaData: string(metaDataBytes),
 	}
 
@@ -47,11 +47,11 @@ func DataStoreEntryToSecretEntry(dataStoreEntry *DataStoreEntry) (*model.SecretE
 	}
 
 	secretEntry := &model.SecretEntry{
-		Id: dataStoreEntry.Id,
-		SecretData: dataStoreEntry.Data,
-		OwnerEntryId: metaData.OwnerEntryId,
-		NamespaceEntryId: metaData.NamespaceEntryId,
-		ExpirationTime: metaData.ExpirationTime,
+		Id:                     dataStoreEntry.Id,
+		SecretData:             dataStoreEntry.Data,
+		OwnerEntryId:           metaData.OwnerEntryId,
+		NamespaceEntryId:       metaData.NamespaceEntryId,
+		ExpirationTime:         metaData.ExpirationTime,
 		AuthorizationPolicyIds: metaData.AuthorizationPolicyIds,
 	}
 
@@ -60,7 +60,7 @@ func DataStoreEntryToSecretEntry(dataStoreEntry *DataStoreEntry) (*model.SecretE
 
 func UserEntryToDataStoreEntry(userEntry *model.UserEntry) (*DataStoreEntry, error) {
 	metaData := &MetaData{
-		OwnerEntryId: userEntry.Username,
+		OwnerEntryId:     userEntry.Username,
 		NamespaceEntryId: "", // TODO: replace with built-in "users" namspace id
 	}
 
@@ -70,8 +70,8 @@ func UserEntryToDataStoreEntry(userEntry *model.UserEntry) (*DataStoreEntry, err
 	}
 
 	dataStoreEntry := &DataStoreEntry{
-		Id: userEntry.Username,
-		Data: []byte(userEntry.Credentials),
+		Id:       userEntry.Username,
+		Data:     []byte(userEntry.Credentials),
 		MetaData: string(metaDataBytes),
 	}
 
@@ -80,13 +80,13 @@ func UserEntryToDataStoreEntry(userEntry *model.UserEntry) (*DataStoreEntry, err
 
 func DataStoreEntryToUserEntry(dataStoreEntry *DataStoreEntry) (*model.UserEntry, error) {
 	var metaData MetaData
-	
+
 	if err := json.Unmarshal([]byte(dataStoreEntry.MetaData), &metaData); err != nil {
 		return nil, util.ErrInternal
 	}
 
 	userEntry := &model.UserEntry{
-		Username: dataStoreEntry.Id,
+		Username:    dataStoreEntry.Id,
 		Credentials: dataStoreEntry.Data,
 	}
 

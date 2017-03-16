@@ -3,14 +3,14 @@
 package model
 
 type CreationResponse struct {
-	Id string			`json:"id"`
+	Id string `json:"id"`
 }
 
 type LoginRequest struct {
-	Username string		`json:"username"`
-	Challenge string	`json:"challenge"`
+	Username  string `json:"username"`
+	Challenge string `json:"challenge"`
 }
 
 type LoginResponse struct {
-	ChallengeOrToken string	`json:"challengeOrToken"`
+	ChallengeOrToken string `json:"challengeOrToken"`
 }

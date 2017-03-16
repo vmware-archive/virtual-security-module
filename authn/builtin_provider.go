@@ -11,14 +11,14 @@ import (
 	"net/http"
 	"strings"
 	"time"
-	
+
 	"github.com/dgrijalva/jwt-go"
 	"github.com/vmware/virtual-security-module/config"
 	"github.com/vmware/virtual-security-module/crypt"
 	"github.com/vmware/virtual-security-module/model"
+	"github.com/vmware/virtual-security-module/util"
 	"github.com/vmware/virtual-security-module/vds"
 	"github.com/vmware/virtual-security-module/vks"
-	"github.com/vmware/virtual-security-module/util"
 )
 
 const pType = "Builtin"
@@ -30,15 +30,14 @@ func init() {
 }
 
 type BuiltinProvider struct {
-	dataStore vds.DataStoreAdapter
-	keyStore vks.KeyStoreAdapter
+	dataStore       vds.DataStoreAdapter
+	keyStore        vks.KeyStoreAdapter
 	tokenSigningKey []byte
-	challenges map[string]*BuiltinChallenge
+	challenges      map[string]*BuiltinChallenge
 }
 
 func NewBuiltinProvider() *BuiltinProvider {
-	return &BuiltinProvider{
-	}
+	return &BuiltinProvider{}
 }
 
 func (p *BuiltinProvider) Init(configProps map[string]*config.ConfigProperty, ds vds.DataStoreAdapter, ks vks.KeyStoreAdapter) error {
@@ -46,12 +45,12 @@ func (p *BuiltinProvider) Init(configProps map[string]*config.ConfigProperty, ds
 	if err != nil {
 		return err
 	}
-	
+
 	p.dataStore = ds
 	p.keyStore = ks
 	p.tokenSigningKey = tokenSigningKey
 	p.challenges = make(map[string]*BuiltinChallenge)
-	
+
 	return nil
 }
 
@@ -59,46 +58,46 @@ func (p *BuiltinProvider) Authenticated(r *http.Request) (username string, e err
 	if r.Header == nil {
 		return "", util.ErrInputValidation
 	}
-	
+
 	authHeader := r.Header.Get(HeaderNameAuth)
 	if authHeader == "" {
 		return "", util.ErrInputValidation
 	}
-	
+
 	schemaAndToken := strings.Fields(authHeader)
 	if len(schemaAndToken) != 2 {
 		return "", util.ErrInputValidation
 	}
-	
+
 	tokenString := schemaAndToken[1]
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-	    // Verifying that the signing alg is what we used
-	    if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-	        return nil, util.ErrInputValidation
-	    }
-		
+		// Verifying that the signing alg is what we used
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, util.ErrInputValidation
+		}
+
 		return p.tokenSigningKey, nil
 	})
-	
+
 	if err != nil || !token.Valid {
 		return "", util.ErrInputValidation
 	}
-	
+
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
 		return "", util.ErrInputValidation
 	}
-	
+
 	nameClaim, ok := claims["name"]
 	if !ok {
 		return "", util.ErrInputValidation
 	}
-	
+
 	user, ok := nameClaim.(string)
 	if !ok {
 		return "", util.ErrInputValidation
 	}
-	
+
 	return user, nil
 }
 
@@ -107,7 +106,7 @@ func (p *BuiltinProvider) Login(l *model.LoginRequest) (token string, e error) {
 		// first phase of login: generate a challenge from the user's public
 		// key and send to client
 		entryId := l.Username
-		
+
 		dataStoreEntry, err1 := p.dataStore.ReadEntry(entryId)
 		key, err2 := p.keyStore.Read(entryId)
 		if err1 != nil || err2 != nil {
@@ -120,33 +119,33 @@ func (p *BuiltinProvider) Login(l *model.LoginRequest) (token string, e error) {
 			}
 			return fakeChallenge, nil
 		}
-		
+
 		userEntry, err := vds.DataStoreEntryToUserEntry(dataStoreEntry)
 		if err != nil {
 			return "", util.ErrUnauthorized
 		}
-		
+
 		// credentials is the user's public key
 		credentials, err := crypt.Decrypt(userEntry.Credentials, key)
 		if err != nil {
 			return "", util.ErrUnauthorized
 		}
-	
+
 		challenge, err := p.generateChallenge(l.Username, credentials)
 		if err != nil {
 			return "", util.ErrUnauthorized
 		}
-		
+
 		return challenge, nil
 	}
-	
+
 	// second phase of login: verify challenge and generate a token.
 	// the challenge must have been decrypted using the user's private key
 	tokenStr, err := p.verifyChallengeAndGenerateToken(l.Challenge)
 	if err != nil {
 		return "", util.ErrUnauthorized
 	}
-	
+
 	return tokenStr, nil
 }
 
@@ -177,8 +176,8 @@ func (p *BuiltinProvider) CreateUser(userEntry *model.UserEntry) (string, error)
 	}
 
 	ue := &model.UserEntry{
-		Username: userEntry.Username,
-		Credentials: encryptedCredentials,
+		Username:     userEntry.Username,
+		Credentials:  encryptedCredentials,
 		RoleEntryIds: userEntry.RoleEntryIds,
 	}
 
@@ -221,24 +220,24 @@ func (p *BuiltinProvider) GetUser(username string) (*model.UserEntry, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// reduce key exposure due to memory compromize / leak
 	defer util.Memzero(key)
-	
+
 	userEntry, err := vds.DataStoreEntryToUserEntry(dataStoreEntry)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// credentials is the user's public key
 	credentials, err := crypt.Decrypt(userEntry.Credentials, key)
 	if err != nil {
 		return nil, util.ErrInternal
 	}
-	
+
 	ue := &model.UserEntry{
-		Username: userEntry.Username,
-		Credentials: credentials,
+		Username:     userEntry.Username,
+		Credentials:  credentials,
 		RoleEntryIds: userEntry.RoleEntryIds,
 	}
 
@@ -250,7 +249,7 @@ func (p *BuiltinProvider) generateChallenge(username string, publicKeyBytes []by
 	if err := json.Unmarshal(publicKeyBytes, &publicKey); err != nil {
 		return "", err
 	}
-	
+
 	return p.genChallenge(username, &publicKey, false)
 }
 
@@ -259,7 +258,7 @@ func (p *BuiltinProvider) generateFakeChallenge(username string) (string, error)
 	if err != nil {
 		return "", err
 	}
-	
+
 	return p.genChallenge(username, &privateKey.PublicKey, true)
 }
 
@@ -268,24 +267,24 @@ func (p *BuiltinProvider) genChallenge(username string, publicKey *rsa.PublicKey
 	if err != nil {
 		return "", err
 	}
-	
+
 	b, err := challenge.Encode()
 	if err != nil {
 		return "", err
 	}
-	
+
 	cipherText, err := rsa.EncryptPKCS1v15(rand.Reader, publicKey, b)
 	if err != nil {
 		return "", err
 	}
-	
+
 	if !fake {
 		p.challenges[challenge.Uuid] = challenge
 		time.AfterFunc(challenge.GoodUntil.Sub(time.Now()), func() {
-				delete(p.challenges, challenge.Uuid)
-			})
+			delete(p.challenges, challenge.Uuid)
+		})
 	}
-	
+
 	return base64.StdEncoding.EncodeToString(cipherText), nil
 }
 
@@ -297,29 +296,29 @@ func (p *BuiltinProvider) verifyChallengeAndGenerateToken(challengeStr string) (
 	if err := challenge.Decode([]byte(challengeStr)); err != nil {
 		return "", err
 	}
-	
+
 	if challenge.Uuid == "" {
 		return "", fmt.Errorf("challenge id is empty")
 	}
-	
+
 	originalChallenge, ok := p.challenges[challenge.Uuid]
 	if !ok {
 		return "", fmt.Errorf("challenge id not found")
 	}
-	
+
 	if !originalChallenge.Equal(challenge) || originalChallenge.Expired() {
 		return "", fmt.Errorf("challenge mismatch")
 	}
-	
+
 	delete(p.challenges, challenge.Uuid)
-	
+
 	t := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-	    "name": challenge.Username,
+		"name": challenge.Username,
 	})
 	tString, err := t.SignedString(p.tokenSigningKey)
 	if err != nil {
 		return "", err
 	}
-	
+
 	return tString, nil
 }

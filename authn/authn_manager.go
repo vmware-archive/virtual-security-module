@@ -4,7 +4,7 @@ package authn
 
 import (
 	"net/http"
-	
+
 	"github.com/vmware/virtual-security-module/config"
 	"github.com/vmware/virtual-security-module/model"
 	"github.com/vmware/virtual-security-module/util"
@@ -14,7 +14,7 @@ import (
 
 const (
 	HeaderNameAuth = "Authorization"
-	LoginPath = "/login"
+	LoginPath      = "/login"
 )
 
 type AuthnProvider interface {
@@ -30,7 +30,7 @@ type AuthnProvider interface {
 var authnProviderRegistry map[string]AuthnProvider = make(map[string]AuthnProvider)
 
 type AuthnManager struct {
-	whitelist map[string]bool
+	whitelist     map[string]bool
 	authnProvider AuthnProvider
 }
 
@@ -47,11 +47,11 @@ func (authnManager *AuthnManager) Init(configItems map[string]*config.ConfigItem
 	if err := authnProvider.Init(nil, ds, ks); err != nil {
 		return err
 	}
-	
+
 	authnManager.authnProvider = authnProvider
-	
-	authnManager.whitelist = map[string]bool{ LoginPath: true }
-	
+
+	authnManager.whitelist = map[string]bool{LoginPath: true}
+
 	return nil
 }
 
@@ -65,13 +65,13 @@ func (authNManager *AuthnManager) HandlePre(w http.ResponseWriter, r *http.Reque
 	if ok {
 		return true
 	}
-	
+
 	_, err := authNManager.authnProvider.Authenticated(r)
 	if err != nil {
 		util.WriteErrorStatus(w, util.ErrUnauthorized)
 		return false
 	}
-	
+
 	return true
 }
 

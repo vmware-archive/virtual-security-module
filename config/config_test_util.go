@@ -18,25 +18,25 @@ func GenerateTestConfig() map[string]*ConfigItem {
 	propName = "keyStoreType"
 	item.Properties[propName] = GetConfigProperty(propName, "InMemoryKeyStore", "in memory keystore", false)
 	configItems[itemName] = item
-	
+
 	// server
 	itemName = "server"
 	item = GetConfigItem(itemName)
-	
+
 	propName = "http"
 	item.Properties[propName] = GetConfigProperty(propName, "true", "enable http", false)
-	
+
 	propName = "httpPort"
 	item.Properties[propName] = GetConfigProperty(propName, "8090", "http port", false)
-	
+
 	propName = "rootInitPubKey"
 	item.Properties[propName] = GetConfigProperty(propName, "../certs/test-root-init-public.pem",
 		"public key file of the root user during intialization of a new server", false)
-	
+
 	propName = "rootInitPriKey"
 	item.Properties[propName] = GetConfigProperty(propName, "../certs/test-root-init-private.pem",
 		"*** for testing only: private key file of the root user during intialization of a new server ***", false)
-	
+
 	configItems[itemName] = item
 
 	return configItems
@@ -44,16 +44,16 @@ func GenerateTestConfig() map[string]*ConfigItem {
 
 func GetConfigItem(name string) *ConfigItem {
 	return &ConfigItem{
-		Name: name,
+		Name:       name,
 		Properties: make(map[string]*ConfigProperty),
 	}
 }
 
 func GetConfigProperty(name, val, desc string, sensitive bool) *ConfigProperty {
 	return &ConfigProperty{
-		Name: name,
-		Value: val,
+		Name:        name,
+		Value:       val,
 		Description: desc,
-		Sensitive: sensitive,
+		Sensitive:   sensitive,
 	}
 }

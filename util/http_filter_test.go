@@ -17,7 +17,7 @@ func TestJustHandler(t *testing.T) {
 	excercisePipeline(pipeline)
 	if !testMainHandlerSet() {
 		t.Fatalf("main handler expected to be invoked")
-	}	
+	}
 }
 
 func TestPreDropper(t *testing.T) {
@@ -50,7 +50,7 @@ func TestOppositePrePost(t *testing.T) {
 	if !testCounterZero() {
 		t.Fatalf("counter expected to be zero")
 	}
-	
+
 }
 
 func testMainHandlerSet() bool {
@@ -63,13 +63,13 @@ func testCounterZero() bool {
 
 func getMainHandler() http.Handler {
 	mainHandlerSet = false
-	return http.HandlerFunc(func (w http.ResponseWriter, r *http.Request) {
-		mainHandlerSet = true				
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mainHandlerSet = true
 	})
 }
 
 type httpFilterHelper struct {
-	preFunc func(w http.ResponseWriter, r *http.Request) bool
+	preFunc  func(w http.ResponseWriter, r *http.Request) bool
 	postFunc func(w http.ResponseWriter, r *http.Request) bool
 }
 
@@ -82,7 +82,7 @@ func (fh *httpFilterHelper) HandlePost(w http.ResponseWriter, r *http.Request) b
 }
 
 func getPreDropper() PreHttpFilter {
-	return &httpFilterHelper {
+	return &httpFilterHelper{
 		preFunc: func(w http.ResponseWriter, r *http.Request) bool {
 			return false
 		},
@@ -91,7 +91,7 @@ func getPreDropper() PreHttpFilter {
 }
 
 func getPostDropper() PostHttpFilter {
-	return &httpFilterHelper {
+	return &httpFilterHelper{
 		preFunc: nil,
 		postFunc: func(w http.ResponseWriter, r *http.Request) bool {
 			return false
@@ -100,7 +100,7 @@ func getPostDropper() PostHttpFilter {
 }
 
 func getOppositePrePost(amount int) *httpFilterHelper {
-	return &httpFilterHelper {
+	return &httpFilterHelper{
 		preFunc: func(w http.ResponseWriter, r *http.Request) bool {
 			counter += amount
 			return true

@@ -13,7 +13,7 @@ import (
 
 type SecretManager struct {
 	dataStore vds.DataStoreAdapter
-	keyStore vks.KeyStoreAdapter
+	keyStore  vks.KeyStoreAdapter
 }
 
 func New() *SecretManager {
@@ -27,7 +27,7 @@ func (secretManager *SecretManager) Type() string {
 func (secretManager *SecretManager) Init(configItems map[string]*config.ConfigItem, ds vds.DataStoreAdapter, ks vks.KeyStoreAdapter) error {
 	secretManager.dataStore = ds
 	secretManager.keyStore = ks
-	
+
 	return nil
 }
 
@@ -60,18 +60,18 @@ func (secretManager *SecretManager) CreateSecret(secretEntry *model.SecretEntry)
 	}
 
 	id := secretEntry.Id
-	
+
 	// create new entry id unless one has been provided by the client
 	if id == "" {
 		id = util.NewUUID()
 	}
-	
+
 	se := &model.SecretEntry{
-		Id: id,
-		SecretData: encryptedSecretData,
-		OwnerEntryId: secretEntry.OwnerEntryId,
-		NamespaceEntryId: secretEntry.NamespaceEntryId,
-		ExpirationTime: secretEntry.ExpirationTime,
+		Id:                     id,
+		SecretData:             encryptedSecretData,
+		OwnerEntryId:           secretEntry.OwnerEntryId,
+		NamespaceEntryId:       secretEntry.NamespaceEntryId,
+		ExpirationTime:         secretEntry.ExpirationTime,
 		AuthorizationPolicyIds: secretEntry.AuthorizationPolicyIds,
 	}
 
@@ -104,7 +104,7 @@ func (secretManager *SecretManager) GetSecret(secretId string) (*model.SecretEnt
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// reduce key exposure due to memory compromize / leak
 	defer util.Memzero(key)
 

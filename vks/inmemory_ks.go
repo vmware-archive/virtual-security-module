@@ -22,11 +22,11 @@ func init() {
 // Useful for testing. Not recommended for production!!
 type InMemoryKS struct {
 	keyMap map[string][]byte
-	mutex sync.Mutex
+	mutex  sync.Mutex
 }
 
 func New() *InMemoryKS {
-	return &InMemoryKS {
+	return &InMemoryKS{
 		keyMap: make(map[string][]byte),
 	}
 }
@@ -62,7 +62,7 @@ func (ks *InMemoryKS) Read(alias string) ([]byte, error) {
 	if !ok {
 		return nil, util.ErrNotFound
 	}
-	
+
 	buf := make([]byte, len(key))
 	copy(buf, key)
 

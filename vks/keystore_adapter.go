@@ -7,11 +7,11 @@ import (
 )
 
 const (
-	PropertyNameKeyStore = "keyStore"
-	PropertyNameKeyStoreType = "keyStoreType";
-	PropertyNameKeyStoreLocation = "keyStoreLocation";
-	PropertyNameKeyStoreCredentials = "keyStoreCredentials";
-	PropertyNameOutOfBandInit = "keyStoreOutOfBandInit";
+	PropertyNameKeyStore            = "keyStore"
+	PropertyNameKeyStoreType        = "keyStoreType"
+	PropertyNameKeyStoreLocation    = "keyStoreLocation"
+	PropertyNameKeyStoreCredentials = "keyStoreCredentials"
+	PropertyNameOutOfBandInit       = "keyStoreOutOfBandInit"
 )
 
 type KeyStoreAdapter interface {
