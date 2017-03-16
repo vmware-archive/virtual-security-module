@@ -13,8 +13,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/vmware/virtual-security-module/model"
 	"github.com/naoina/denco"
+	"github.com/vmware/virtual-security-module/model"
 )
 
 var ts *httptest.Server
@@ -27,7 +27,7 @@ func apiTestSetup() {
 		fmt.Printf("Failed to create RESTful API: %v", err)
 		os.Exit(1)
 	}
-	
+
 	ts = httptest.NewServer(handler)
 }
 
@@ -48,15 +48,15 @@ func testAPICreateAndGetSecret(t *testing.T, id string) {
 	expirationTime := time.Now().Add(time.Hour)
 
 	se := &model.SecretEntry{
-		Id: id,
-		SecretData: []byte("secret0"),
-		OwnerEntryId: "user0",
-		NamespaceEntryId: "root",
-		ExpirationTime: expirationTime,
+		Id:                     id,
+		SecretData:             []byte("secret0"),
+		OwnerEntryId:           "user0",
+		NamespaceEntryId:       "root",
+		ExpirationTime:         expirationTime,
 		AuthorizationPolicyIds: []string{},
 	}
 	body := new(bytes.Buffer)
-    err := json.NewEncoder(body).Encode(se)
+	err := json.NewEncoder(body).Encode(se)
 	if err != nil {
 		t.Fatalf("failed to marshal se %v: %v", se, err)
 	}
@@ -76,7 +76,7 @@ func testAPICreateAndGetSecret(t *testing.T, id string) {
 	if err = json.NewDecoder(resp.Body).Decode(&creationResponse); err != nil {
 		t.Fatalf("Failed to parse secret creation response: %v", err)
 	}
-	
+
 	if len(creationResponse.Id) == 0 {
 		t.Fatalf("Failed to create secret: returned id is empty")
 	}

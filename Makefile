@@ -1,14 +1,15 @@
 ARCH := amd64 386
 OS := linux darwin windows
 
-TARGET := "vsmd"
-DOC := "swagger.json"
+TARGET := vsmd
+DOC := swagger.json
 
-CURRENT_DIR := $(shell pwd)
-GOPATH := $(abspath $(CURRENT_DIR)/../../../../)
-PKG_DIR := $(GOPATH)/pkg
-BIN_DIR := $(GOPATH)/bin
-DST_DIR := $(GOPATH)/dist
+PROJECT_DIR := $(shell pwd)
+GOPATH := $(abspath $(PROJECT_DIR)/../../../../)
+GO_VERSION := "1.8"
+PKG_DIR := $(PROJECT_DIR)/pkg
+BIN_DIR := $(PROJECT_DIR)/bin
+DIST_DIR := $(PROJECT_DIR)/dist
 
 GO_ENV := GOPATH=$(GOPATH)
 GO := $(GO_ENV) go
@@ -23,13 +24,13 @@ install-deps:
 	
 build: fmt vet
 	$(GO) build ./...
-	$(GO) build -o $(DST_DIR)/$(TARGET)
+	$(GO) build -o $(DIST_DIR)/$(TARGET)
 
 vet:
-	$(GO) vet .
+	$(GO) vet ./...
 
 fmt:
-	$(GO) fmt .
+	$(GO) fmt ./...
 
 cross: fmt vet
 	for os in $(OS); do \
@@ -51,5 +52,4 @@ doc-serve:
 
 clean:
 	$(GO) clean .
-	rm -rf $(DST_DIR) $(BIN_DIR) $(PKG_DIR)
-	rm $(DOC)
+	rm -rf $(DIST_DIR) $(BIN_DIR) $(PKG_DIR)

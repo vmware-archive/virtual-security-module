@@ -13,9 +13,9 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/naoina/denco"
 	"github.com/vmware/virtual-security-module/model"
 	"github.com/vmware/virtual-security-module/util"
-	"github.com/naoina/denco"
 )
 
 func (secretManager *SecretManager) RegisterEndpoints(mux *denco.Mux) []denco.Handler {
@@ -55,23 +55,23 @@ func (secretManager *SecretManager) RegisterEndpoints(mux *denco.Mux) []denco.Ha
 			return
 		}
 
-	    secretEntry, err := secretManager.GetSecret(id)
-	    if err != nil {
+		secretEntry, err := secretManager.GetSecret(id)
+		if err != nil {
 			if e := util.WriteErrorResponse(w, util.ErrInputValidation); e != nil {
 				log.Printf("failed to write error response: %v\n", e)
-			} 
+			}
 			return
-	    }
+		}
 
-	    if e := util.WriteResponse(w, secretEntry, http.StatusOK); e != nil {
-	    	log.Printf("failed to write response: %v\n", e)
-	    }
+		if e := util.WriteResponse(w, secretEntry, http.StatusOK); e != nil {
+			log.Printf("failed to write response: %v\n", e)
+		}
 	}
 
 	handlers := []denco.Handler{
-        mux.POST("/secrets", createSecret),
-        mux.GET("/secrets/:id", getSecret),
-    }
+		mux.POST("/secrets", createSecret),
+		mux.GET("/secrets/:id", getSecret),
+	}
 
 	return handlers
 }
