@@ -171,7 +171,7 @@ func createUser(username string) (*model.UserEntry, *rsa.PrivateKey, error) {
 		return nil, nil, err
 	}
 	if len(id) == 0 {
-		fmt.Errorf("Failed to create user %v: returned id is empty", username)
+		return nil, nil, fmt.Errorf("Failed to create user %v: returned id is empty", username)
 	}
 	
 	return ue, privateKey, nil

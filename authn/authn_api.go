@@ -10,6 +10,7 @@
 package authn
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/vmware/virtual-security-module/model"
@@ -27,16 +28,22 @@ func (authnManager *AuthnManager) RegisterEndpoints(mux *denco.Mux) []denco.Hand
 	createUser := func(w http.ResponseWriter, r *http.Request, params denco.Params) {
 		userEntry, err := model.ExtractAndValidateUserEntry(r)
 		if err != nil {
-			util.WriteErrorResponse(w, err)
+			if e := util.WriteErrorResponse(w, err); e != nil {
+				log.Printf("failed to write error response: %v\n", e)
+			}
 			return
 		}
 
 		id, err := authnManager.CreateUser(userEntry)
 		if err != nil {
-			util.WriteErrorResponse(w, err)	
+			if e := util.WriteErrorResponse(w, err); e != nil {
+				log.Printf("failed to write error response: %v\n", e)
+			}	
 		}
 		
-		util.WriteResponse(w, &model.CreationResponse{Id: id}, http.StatusCreated)
+		if e := util.WriteResponse(w, &model.CreationResponse{Id: id}, http.StatusCreated); e != nil {
+			log.Printf("failed to write response: %v\n", e)
+		}
 	}
 	
 	// swagger:route GET /users/{username} users GetUser
@@ -48,16 +55,22 @@ func (authnManager *AuthnManager) RegisterEndpoints(mux *denco.Mux) []denco.Hand
 	getUser := func(w http.ResponseWriter, r *http.Request, params denco.Params) {
 		username := params.Get("username")
 		if username == "" {
-			util.WriteErrorResponse(w, util.ErrInputValidation)
+			if e := util.WriteErrorResponse(w, util.ErrInputValidation); e != nil {
+				log.Printf("failed to write error response: %v\n", e)
+			}
 			return
 		}
 
 		ue, err := authnManager.GetUser(username)
 		if err != nil {
-			util.WriteErrorResponse(w, err)	
+			if e := util.WriteErrorResponse(w, err); e != nil {
+				log.Printf("failed to write error response: %v\n", e)
+			}
 		}
 		
-		util.WriteResponse(w, ue, http.StatusOK)
+		if e := util.WriteResponse(w, ue, http.StatusOK); e != nil {
+			log.Printf("failed to write response: %v\n", e)
+		}
 	}
 	
 	// swagger:route DELETE /users/{username} users CreateUser
@@ -69,13 +82,15 @@ func (authnManager *AuthnManager) RegisterEndpoints(mux *denco.Mux) []denco.Hand
 	deleteUser := func(w http.ResponseWriter, r *http.Request, params denco.Params) {
 		username := params.Get("username")
 		if username == "" {
-			util.WriteErrorResponse(w, util.ErrInputValidation)
+			if e := util.WriteErrorResponse(w, util.ErrInputValidation); e != nil {
+				log.Printf("failed to write error response: %v\n", e)
+			}
 			return
 		}
 
 		err := authnManager.DeleteUser(username)
 		if err != nil {
-			util.WriteErrorStatus(w, err)	
+			util.WriteErrorStatus(w, err)
 		}
 		
 		util.WriteStatus(w, http.StatusNoContent)
@@ -94,20 +109,26 @@ func (authnManager *AuthnManager) RegisterEndpoints(mux *denco.Mux) []denco.Hand
 	login := func(w http.ResponseWriter, r *http.Request, params denco.Params) {
 		loginRequest, err := model.ExtractAndValidateLoginRequest(r)
 		if err != nil {
-			util.WriteErrorResponse(w, err)
+			if e := util.WriteErrorResponse(w, err); e != nil {
+				log.Printf("failed to write error response: %v\n", e)
+			}
 			return
 		}
 
 	    challengeOrToken, err := authnManager.Login(loginRequest)
 	    if err != nil {
-			util.WriteErrorResponse(w, err)
+			if e := util.WriteErrorResponse(w, err); e != nil {
+				log.Printf("failed to write error response: %v\n", e)
+			}
 			return
 	    }
 
 		loginResponse := &model.LoginResponse {
 			ChallengeOrToken: challengeOrToken,
 		}
-	    util.WriteResponse(w, loginResponse, http.StatusOK)
+	    if e := util.WriteResponse(w, loginResponse, http.StatusOK); e != nil {
+	    	log.Printf("failed to write response: %v\n", e)
+	    }
 	}
 
 	handlers := []denco.Handler{

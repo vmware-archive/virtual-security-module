@@ -76,8 +76,8 @@ func (p *BuiltinProvider) Authenticated(r *http.Request) (username string, e err
 	    if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 	        return nil, util.ErrInputValidation
 	    }
-	
-	    return p.tokenSigningKey, nil
+		
+		return p.tokenSigningKey, nil
 	})
 	
 	if err != nil || !token.Valid {
