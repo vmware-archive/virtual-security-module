@@ -10,6 +10,7 @@
 package secret
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/vmware/virtual-security-module/model"
@@ -27,12 +28,16 @@ func (secretManager *SecretManager) RegisterEndpoints(mux *denco.Mux) []denco.Ha
 	createSecret := func(w http.ResponseWriter, r *http.Request, params denco.Params) {
 		secretEntry, err := model.ExtractAndValidateSecretEntry(r)
 		if err != nil {
-			util.WriteErrorResponse(w, err)
+			if e := util.WriteErrorResponse(w, err); e != nil {
+				log.Printf("failed to write error response: %v\n", e)
+			}
 			return
 		}
 
 		id, err := secretManager.CreateSecret(secretEntry)
-		util.WriteResponse(w, &model.CreationResponse{Id: id}, http.StatusCreated)
+		if e := util.WriteResponse(w, &model.CreationResponse{Id: id}, http.StatusCreated); e != nil {
+			log.Printf("failed to write response: %v\n", e)
+		}
 	}
 
 	// swagger:route GET /{id} secrets GetSecret
@@ -44,17 +49,23 @@ func (secretManager *SecretManager) RegisterEndpoints(mux *denco.Mux) []denco.Ha
 	getSecret := func(w http.ResponseWriter, r *http.Request, params denco.Params) {
 		id := params.Get("id")
 		if id == "" {
-			util.WriteErrorResponse(w, util.ErrInputValidation)
+			if e := util.WriteErrorResponse(w, util.ErrInputValidation); e != nil {
+				log.Printf("failed to write error response: %v\n", e)
+			}
 			return
 		}
 
 	    secretEntry, err := secretManager.GetSecret(id)
 	    if err != nil {
-			util.WriteErrorResponse(w, util.ErrInputValidation)
+			if e := util.WriteErrorResponse(w, util.ErrInputValidation); e != nil {
+				log.Printf("failed to write error response: %v\n", e)
+			} 
 			return
 	    }
 
-	    util.WriteResponse(w, secretEntry, http.StatusOK)
+	    if e := util.WriteResponse(w, secretEntry, http.StatusOK); e != nil {
+	    	log.Printf("failed to write response: %v\n", e)
+	    }
 	}
 
 	handlers := []denco.Handler{

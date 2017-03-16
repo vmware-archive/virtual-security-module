@@ -3,6 +3,7 @@
 package server
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -11,7 +12,9 @@ import (
 
 	"github.com/vmware/virtual-security-module/authn"
 	"github.com/vmware/virtual-security-module/config"
+	"github.com/vmware/virtual-security-module/model"
 	"github.com/vmware/virtual-security-module/secret"
+	"github.com/vmware/virtual-security-module/util"
 	"github.com/vmware/virtual-security-module/vds"
 	"github.com/vmware/virtual-security-module/vks"
 	"github.com/naoina/denco"
@@ -27,6 +30,7 @@ const (
 	PropertyNameServerKey = "serverKey";
 	PropertyNameHttpPort = "httpPort";
 	PropertyNameHttpsPort = "httpsPort";
+	PropertyNameRootInitPubKey = "rootInitPubKey"
 	
 	DefaultHttpPort = 8080
 	DefaultHttpsPort = 443
@@ -48,6 +52,8 @@ type TlsConfig struct {
 
 type Server struct {
 	modules []Module
+	authnManager *authn.AuthnManager
+	httpPipeline http.Handler
 	httpServer *http.Server
 	httpsServer *http.Server
 	useHttp bool
@@ -60,13 +66,15 @@ type Server struct {
 }
 
 func New() *Server {
+	authnManager := authn.New()
 	modules := []Module{
 		secret.New(),
-		authn.New(),
+		authnManager,
 	}
 
 	return &Server{
 		modules: modules,
+		authnManager: authnManager,
 	}
 }
 
@@ -126,91 +134,122 @@ func (server *Server) initSelfFromConfig(configItems map[string]*config.ConfigIt
 		return fmt.Errorf("Mandatory config item %v is missing in config", PropertyNameServer)
 	}
 	
+	var err error
+	useHttp := false
 	httpProperty, ok := serverConfigItem.Properties[PropertyNameHttp]
-	if !ok {
-		return fmt.Errorf("Mandatory config property %v is missing in config", PropertyNameHttp)
-	}
-	useHttp, err := strconv.ParseBool(httpProperty.Value)
-	if err != nil {
-		return fmt.Errorf("Failed to parse config property %v: %v", PropertyNameHttp, err)
-	}
-	server.useHttp = useHttp
-	if useHttp {
-		httpPortProperty, ok := serverConfigItem.Properties[PropertyNameHttpPort]
-		server.httpPort = DefaultHttpPort
-		if ok {
-			httpPort, err := strconv.Atoi(httpPortProperty.Value)
-			if err != nil {
-				return fmt.Errorf("Failed to parse config property %v: %v", PropertyNameHttpPort, err)
+	if ok {
+		useHttp, err = strconv.ParseBool(httpProperty.Value)
+		if err != nil {
+			return fmt.Errorf("Failed to parse config property %v: %v", PropertyNameHttp, err)
+		}
+		server.useHttp = useHttp
+		if useHttp {
+			httpPortProperty, ok := serverConfigItem.Properties[PropertyNameHttpPort]
+			server.httpPort = DefaultHttpPort
+			if ok {
+				httpPort, err := strconv.Atoi(httpPortProperty.Value)
+				if err != nil {
+					return fmt.Errorf("Failed to parse config property %v: %v", PropertyNameHttpPort, err)
+				}
+				server.httpPort = httpPort
 			}
-			server.httpPort = httpPort
 		}
 	}
 	
+	useHttps := false
 	httpsProperty, ok := serverConfigItem.Properties[PropertyNameHttps]
-	if !ok {
-		return fmt.Errorf("Mandatory config property %v is missing in config", PropertyNameHttps)
-	}
-	useHttps, err := strconv.ParseBool(httpsProperty.Value)
-	if err != nil {
-		return fmt.Errorf("Failed to parse config property %v: %v", PropertyNameHttps, err)
-	}
-	server.useHttps = useHttps
-	if useHttps {
-		httpsPortProperty, ok := serverConfigItem.Properties[PropertyNameHttpsPort]
-		server.httpsPort = DefaultHttpsPort
-		if ok {
-			httpsPort, err := strconv.Atoi(httpsPortProperty.Value)
-			if err != nil {
-				return fmt.Errorf("Failed to parse config property %v: %v", PropertyNameHttpsPort, err)
-			}
-			server.httpsPort = httpsPort
+	if ok {
+		useHttps, err = strconv.ParseBool(httpsProperty.Value)
+		if err != nil {
+			return fmt.Errorf("Failed to parse config property %v: %v", PropertyNameHttps, err)
 		}
+		server.useHttps = useHttps
+		if useHttps {
+			httpsPortProperty, ok := serverConfigItem.Properties[PropertyNameHttpsPort]
+			server.httpsPort = DefaultHttpsPort
+			if ok {
+				httpsPort, err := strconv.Atoi(httpsPortProperty.Value)
+				if err != nil {
+					return fmt.Errorf("Failed to parse config property %v: %v", PropertyNameHttpsPort, err)
+				}
+				server.httpsPort = httpsPort
+			}
+		}	
 	}
 	
 	if !useHttp && !useHttps {
-		return fmt.Errorf("Both http and https are disabled")
+		return fmt.Errorf("http and/or https need to be enabled")
 	}
 	
-	caCertProperty, ok := serverConfigItem.Properties[PropertyNameCACert]
-	if !ok {
-		return fmt.Errorf("Mandatory config property %v is missing in config", PropertyNameCACert)
-	}
-	caKeyProperty, ok := serverConfigItem.Properties[PropertyNameCAKey]
-	if !ok {
-		return fmt.Errorf("Mandatory config property %v is missing in config", PropertyNameCAKey)
-	}
-	serverCertProperty, ok := serverConfigItem.Properties[PropertyNameServerCert]
-	if !ok {
-		return fmt.Errorf("Mandatory config property %v is missing in config", PropertyNameServerCert)
-	}
-	serverKeyProperty, ok := serverConfigItem.Properties[PropertyNameServerKey]
-	if !ok {
-		return fmt.Errorf("Mandatory config property %v is missing in config", PropertyNameServerKey)
+	if useHttps {
+		caCertProperty, ok := serverConfigItem.Properties[PropertyNameCACert]
+		if !ok {
+			return fmt.Errorf("Mandatory config property %v is missing in config", PropertyNameCACert)
+		}
+		caKeyProperty, ok := serverConfigItem.Properties[PropertyNameCAKey]
+		if !ok {
+			return fmt.Errorf("Mandatory config property %v is missing in config", PropertyNameCAKey)
+		}
+		serverCertProperty, ok := serverConfigItem.Properties[PropertyNameServerCert]
+		if !ok {
+			return fmt.Errorf("Mandatory config property %v is missing in config", PropertyNameServerCert)
+		}
+		serverKeyProperty, ok := serverConfigItem.Properties[PropertyNameServerKey]
+		if !ok {
+			return fmt.Errorf("Mandatory config property %v is missing in config", PropertyNameServerKey)
+		}
+		
+		server.tlsConfig = &TlsConfig{
+			caCertFile: caCertProperty.Value,
+			caKeyFile: caKeyProperty.Value,
+			serverCertFile: serverCertProperty.Value,
+			serverKeyFile: serverKeyProperty.Value, 
+		}	
 	}
 	
-	server.tlsConfig = &TlsConfig{
-		caCertFile: caCertProperty.Value,
-		caKeyFile: caKeyProperty.Value,
-		serverCertFile: serverCertProperty.Value,
-		serverKeyFile: serverKeyProperty.Value, 
+	if _, err := server.authnManager.GetUser("root"); err != nil {
+		rootInitPubKeyProperty, ok := serverConfigItem.Properties[PropertyNameRootInitPubKey]
+		if !ok {
+			return fmt.Errorf("Mandatory config property for root initialization %v is missing in config", PropertyNameRootInitPubKey)
+		}
+		if e := server.initRootUser(rootInitPubKeyProperty); e != nil {
+			return fmt.Errorf("Failed to initialize root user: %v", e)
+		}
 	}
 
 	return nil
 }
 
-func (server *Server) ListenAndServe() error {
-	mux := denco.NewMux()
-	handlers := server.registerEndpoints(mux)
-	handler, err := mux.Build(handlers)
+func (server *Server) initRootUser(rootInitPubKeyProperty *config.ConfigProperty) error {
+	rsaPubKey, err := util.ReadRSAPublicKey(rootInitPubKeyProperty.Value)
 	if err != nil {
-		return fmt.Errorf("Failed to create RESTful API: %v", err)
+		return fmt.Errorf("Root initialization failed: %v", err)
+	}
+	
+	creds, err := json.Marshal(rsaPubKey)
+	if err != nil {
+		return fmt.Errorf("Root initialization failed: %v", err)
 	}
 
+	ue := &model.UserEntry{
+		Username: "root",
+		Credentials: creds,
+	}
+
+	_, err = server.authnManager.CreateUser(ue)
+	
+	return err
+}
+
+func (server *Server) ListenAndServe() error {
+	if err := server.initHttpPipeline(); err != nil {
+		return err
+	}
+	
 	var wg sync.WaitGroup
 	if (server.useHttp) {
 		addr := fmt.Sprintf(":%v", server.httpPort)
-		server.httpServer = &http.Server{Addr: addr, Handler: handler}
+		server.httpServer = &http.Server{Addr: addr, Handler: server.httpPipeline}
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -221,7 +260,7 @@ func (server *Server) ListenAndServe() error {
 	
 	if (server.useHttps) {
 		addr := fmt.Sprintf(":%v", server.httpsPort)
-		server.httpsServer = &http.Server{Addr: addr, Handler: handler}
+		server.httpsServer = &http.Server{Addr: addr, Handler: server.httpPipeline}
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -231,6 +270,21 @@ func (server *Server) ListenAndServe() error {
 	}
 	
 	wg.Wait()
+	
+	return nil
+}
+
+func (server *Server) initHttpPipeline() error {
+	mux := denco.NewMux()
+	handlers := server.registerEndpoints(mux)
+	mainHandler, err := mux.Build(handlers)
+	if err != nil {
+		return fmt.Errorf("Failed to create RESTful API: %v", err)
+	}
+	
+	filterManager := util.NewHttpFilterManager()	
+	filterManager.AddPreFilter(server.authnManager)
+	server.httpPipeline = filterManager.BuildPipeline(mainHandler)
 	
 	return nil
 }

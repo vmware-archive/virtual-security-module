@@ -3,8 +3,12 @@
 package util
 
 import (
+	"crypto/rsa"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/satori/go.uuid"
@@ -20,24 +24,63 @@ func NewUUID() string {
 	return uuid.NewV4().String()
 }
 
-func WriteErrorResponse(w http.ResponseWriter, e error) {
+func WriteErrorResponse(w http.ResponseWriter, e error) error {
 	w.WriteHeader(HttpStatus(e))
-	if err := json.NewEncoder(w).Encode(e.Error()); err != nil {
-		fmt.Printf("WARNING: failed to encode error %v: %v\n", e, err)
-	}
+	return json.NewEncoder(w).Encode(e.Error())
 }
 
 func WriteErrorStatus(w http.ResponseWriter, e error) {
 	w.WriteHeader(HttpStatus(e))
 }
 
-func WriteResponse(w http.ResponseWriter, v interface{}, statusCode int) {
+func WriteResponse(w http.ResponseWriter, v interface{}, statusCode int) error {
 	w.WriteHeader(statusCode)
-	if err := json.NewEncoder(w).Encode(v); err != nil {
-		fmt.Printf("WARNING: failed to encode %v: %v\n", v, err)
-	}
+	return json.NewEncoder(w).Encode(v)
 }
 
 func WriteStatus(w http.ResponseWriter, statusCode int) {
 	w.WriteHeader(statusCode)
+}
+
+func ReadRSAPublicKey(filename string) (*rsa.PublicKey, error) {
+	b, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to read public key from file %v: %v", filename, err)
+	}
+	
+	block, _ := pem.Decode(b)
+	if block == nil || block.Type != "PUBLIC KEY" {
+		return nil, fmt.Errorf("Failed to decode public key from file %v", filename)
+	}
+
+	pubKey, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to parse public key from file %v: %v", filename, err)
+	}
+	
+	rsaPubKey, ok := pubKey.(*rsa.PublicKey)
+	if !ok {
+		return nil, fmt.Errorf("Public key from file %v is not a RSA public key", filename)
+	}
+	
+	return rsaPubKey, nil
+}
+
+func ReadRSAPrivateKey(filename string) (*rsa.PrivateKey, error) {
+	b, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to read private key from file %v: %v", filename, err)
+	}
+	
+	block, _ := pem.Decode(b)
+	if block == nil {
+		return nil, fmt.Errorf("Failed to decode private key from file %v", filename)
+	}
+
+	privKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to parse private key from file %v: %v", filename, err)
+	}
+	
+	return privKey, nil
 }

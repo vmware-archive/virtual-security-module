@@ -41,6 +41,11 @@ server:
       value: certs/test-server-key.pem
       description: key file of the server
       sensitive: false
+    rootInitPubKey:
+      name: rootInitPubKey
+      value: certs/test-root-init-public.pem
+      description: public key file of the root user during intialization of a new server
+      sensitive: false
 dataStore:
   name: dataStore
   properties:

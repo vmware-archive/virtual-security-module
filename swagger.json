@@ -1,10 +1,10 @@
 {
   "swagger": "2.0",
   "info": {
-    "description": "Secret Lifecycle Management API",
-    "title": "Secret Management API"
+    "description": "User Management and Authentication API",
+    "title": "Authentication API"
   },
-  "basePath": "/secrets",
+  "basePath": "/",
   "paths": {
     "/": {
       "post": {
@@ -29,6 +29,71 @@
         }
       }
     },
+    "/login": {
+      "post": {
+        "description": "First phase: client provides the username and gets back a challenge,\ndecrypted by the user's public key\nSecond phase: client decrypts the challenge with the user's private\nkey and provides it with the request; and gets a token",
+        "tags": [
+          "users"
+        ],
+        "summary": "Log-in. Expected to be invoked twice by a client:",
+        "operationId": "Login",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/LoginResp"
+          }
+        }
+      }
+    },
+    "/users": {
+      "post": {
+        "description": "Deletes a user",
+        "tags": [
+          "users"
+        ],
+        "operationId": "CreateUser",
+        "parameters": [
+          {
+            "name": "UserEntry",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/UserEntry"
+            }
+          }
+        ],
+        "responses": {}
+      }
+    },
+    "/users/{username}": {
+      "get": {
+        "description": "Returns a user's info",
+        "tags": [
+          "users"
+        ],
+        "operationId": "GetUser",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/UserEntryResponse"
+          }
+        }
+      },
+      "delete": {
+        "description": "Deletes a user",
+        "tags": [
+          "users"
+        ],
+        "operationId": "CreateUser",
+        "parameters": [
+          {
+            "name": "UserEntry",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/UserEntry"
+            }
+          }
+        ],
+        "responses": {}
+      }
+    },
     "/{id}": {
       "get": {
         "description": "Retrieves a secret",
@@ -45,37 +110,84 @@
     }
   },
   "definitions": {
+    "LoginResponse": {
+      "type": "object",
+      "properties": {
+        "challengeOrToken": {
+          "type": "string",
+          "x-go-name": "ChallengeOrToken"
+        }
+      },
+      "x-go-package": "github.com/vmware/virtual-security-module/model"
+    },
     "SecretEntry": {
       "type": "object",
       "properties": {
-        "AuthorizationPolicyIds": {
+        "authorizationPolicyIds": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "x-go-name": "AuthorizationPolicyIds"
         },
-        "ExpirationTime": {},
-        "Id": {
-          "type": "string"
+        "expirationTime": {
+          "x-go-name": "ExpirationTime"
         },
-        "NamespaceEntryId": {
-          "type": "string"
+        "id": {
+          "type": "string",
+          "x-go-name": "Id"
         },
-        "OwnerEntryId": {
-          "type": "string"
+        "namespaceEntryId": {
+          "type": "string",
+          "x-go-name": "NamespaceEntryId"
         },
-        "SecretData": {
+        "ownerEntryId": {
+          "type": "string",
+          "x-go-name": "OwnerEntryId"
+        },
+        "secretData": {
           "type": "array",
           "items": {
             "type": "integer",
             "format": "uint8"
-          }
+          },
+          "x-go-name": "SecretData"
+        }
+      },
+      "x-go-package": "github.com/vmware/virtual-security-module/model"
+    },
+    "UserEntry": {
+      "type": "object",
+      "properties": {
+        "credentials": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint8"
+          },
+          "x-go-name": "Credentials"
+        },
+        "roleEntryIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "RoleEntryIds"
+        },
+        "username": {
+          "type": "string",
+          "x-go-name": "Username"
         }
       },
       "x-go-package": "github.com/vmware/virtual-security-module/model"
     }
   },
   "responses": {
+    "LoginResp": {
+      "schema": {
+        "$ref": "#/definitions/LoginResponse"
+      }
+    },
     "SecretCreationResponse": {
       "schema": {
         "type": "object",
@@ -89,6 +201,21 @@
     "SecretEntryResponse": {
       "schema": {
         "$ref": "#/definitions/SecretEntry"
+      }
+    },
+    "UserCreationResponse": {
+      "schema": {
+        "type": "object",
+        "properties": {
+          "UserId": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "UserEntryResponse": {
+      "schema": {
+        "$ref": "#/definitions/UserEntry"
       }
     }
   }

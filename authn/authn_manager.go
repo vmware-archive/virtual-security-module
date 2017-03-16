@@ -7,6 +7,7 @@ import (
 	
 	"github.com/vmware/virtual-security-module/config"
 	"github.com/vmware/virtual-security-module/model"
+	"github.com/vmware/virtual-security-module/util"
 	"github.com/vmware/virtual-security-module/vds"
 	"github.com/vmware/virtual-security-module/vks"
 )
@@ -29,7 +30,7 @@ type AuthnProvider interface {
 var authnProviderRegistry map[string]AuthnProvider = make(map[string]AuthnProvider)
 
 type AuthnManager struct {
-	whitelist []string
+	whitelist map[string]bool
 	authnProvider AuthnProvider
 }
 
@@ -49,13 +50,29 @@ func (authnManager *AuthnManager) Init(configItems map[string]*config.ConfigItem
 	
 	authnManager.authnProvider = authnProvider
 	
-	authnManager.whitelist = []string{ LoginPath }
+	authnManager.whitelist = map[string]bool{ LoginPath: true }
 	
 	return nil
 }
 
 func (authNManager *AuthnManager) Close() error {
 	return nil
+}
+
+func (authNManager *AuthnManager) HandlePre(w http.ResponseWriter, r *http.Request) bool {
+	path := r.URL.Path
+	_, ok := authNManager.whitelist[path]
+	if ok {
+		return true
+	}
+	
+	_, err := authNManager.authnProvider.Authenticated(r)
+	if err != nil {
+		util.WriteErrorStatus(w, util.ErrUnauthorized)
+		return false
+	}
+	
+	return true
 }
 
 func (authnManager *AuthnManager) Login(l *model.LoginRequest) (string, error) {
