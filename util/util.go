@@ -47,7 +47,7 @@ func ReadRSAPublicKey(filename string) (*rsa.PublicKey, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Failed to read public key from file %v: %v", filename, err)
 	}
-	
+
 	block, _ := pem.Decode(b)
 	if block == nil || block.Type != "PUBLIC KEY" {
 		return nil, fmt.Errorf("Failed to decode public key from file %v", filename)
@@ -57,12 +57,12 @@ func ReadRSAPublicKey(filename string) (*rsa.PublicKey, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Failed to parse public key from file %v: %v", filename, err)
 	}
-	
+
 	rsaPubKey, ok := pubKey.(*rsa.PublicKey)
 	if !ok {
 		return nil, fmt.Errorf("Public key from file %v is not a RSA public key", filename)
 	}
-	
+
 	return rsaPubKey, nil
 }
 
@@ -71,7 +71,7 @@ func ReadRSAPrivateKey(filename string) (*rsa.PrivateKey, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Failed to read private key from file %v: %v", filename, err)
 	}
-	
+
 	block, _ := pem.Decode(b)
 	if block == nil {
 		return nil, fmt.Errorf("Failed to decode private key from file %v", filename)
@@ -81,6 +81,6 @@ func ReadRSAPrivateKey(filename string) (*rsa.PrivateKey, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Failed to parse private key from file %v: %v", filename, err)
 	}
-	
+
 	return privKey, nil
 }

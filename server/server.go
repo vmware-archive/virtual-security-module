@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/naoina/denco"
 	"github.com/vmware/virtual-security-module/authn"
 	"github.com/vmware/virtual-security-module/config"
 	"github.com/vmware/virtual-security-module/model"
@@ -17,22 +18,21 @@ import (
 	"github.com/vmware/virtual-security-module/util"
 	"github.com/vmware/virtual-security-module/vds"
 	"github.com/vmware/virtual-security-module/vks"
-	"github.com/naoina/denco"
 )
 
 const (
-	PropertyNameServer = "server"
-	PropertyNameHttp = "http";
-	PropertyNameHttps = "https";
-	PropertyNameCACert = "caCert";
-	PropertyNameCAKey = "caKey";
-	PropertyNameServerCert = "serverCert";
-	PropertyNameServerKey = "serverKey";
-	PropertyNameHttpPort = "httpPort";
-	PropertyNameHttpsPort = "httpsPort";
+	PropertyNameServer         = "server"
+	PropertyNameHttp           = "http"
+	PropertyNameHttps          = "https"
+	PropertyNameCACert         = "caCert"
+	PropertyNameCAKey          = "caKey"
+	PropertyNameServerCert     = "serverCert"
+	PropertyNameServerKey      = "serverKey"
+	PropertyNameHttpPort       = "httpPort"
+	PropertyNameHttpsPort      = "httpsPort"
 	PropertyNameRootInitPubKey = "rootInitPubKey"
-	
-	DefaultHttpPort = 8080
+
+	DefaultHttpPort  = 8080
 	DefaultHttpsPort = 443
 )
 
@@ -44,25 +44,25 @@ type Module interface {
 }
 
 type TlsConfig struct {
-	caCertFile string
-	caKeyFile string
+	caCertFile     string
+	caKeyFile      string
 	serverCertFile string
-	serverKeyFile string	
+	serverKeyFile  string
 }
 
 type Server struct {
-	modules []Module
+	modules      []Module
 	authnManager *authn.AuthnManager
 	httpPipeline http.Handler
-	httpServer *http.Server
-	httpsServer *http.Server
-	useHttp bool
-	useHttps bool
-	httpPort int
-	httpsPort int
-	tlsConfig *TlsConfig
-	dataStore vds.DataStoreAdapter
-	keyStore vks.KeyStoreAdapter
+	httpServer   *http.Server
+	httpsServer  *http.Server
+	useHttp      bool
+	useHttps     bool
+	httpPort     int
+	httpsPort    int
+	tlsConfig    *TlsConfig
+	dataStore    vds.DataStoreAdapter
+	keyStore     vks.KeyStoreAdapter
 }
 
 func New() *Server {
@@ -73,7 +73,7 @@ func New() *Server {
 	}
 
 	return &Server{
-		modules: modules,
+		modules:      modules,
 		authnManager: authnManager,
 	}
 }
@@ -87,7 +87,7 @@ func (server *Server) Init(configItems map[string]*config.ConfigItem) error {
 	if err := server.initKeyStoreFromConfig(configItems); err != nil {
 		return err
 	}
-	
+
 	// initialize modules
 	for _, module := range server.modules {
 		err := module.Init(configItems, server.dataStore, server.keyStore)
@@ -97,9 +97,9 @@ func (server *Server) Init(configItems map[string]*config.ConfigItem) error {
 
 		fmt.Printf("module %v: initialized\n", module.Type())
 	}
-	
+
 	// initialize rest of server
-	if err:= server.initSelfFromConfig(configItems); err != nil {
+	if err := server.initSelfFromConfig(configItems); err != nil {
 		return err
 	}
 
@@ -111,7 +111,7 @@ func (server *Server) initDataStoreFromConfig(configItems map[string]*config.Con
 	if err != nil {
 		return err
 	}
-	
+
 	server.dataStore = dsAdapter
 
 	return nil
@@ -122,7 +122,7 @@ func (server *Server) initKeyStoreFromConfig(configItems map[string]*config.Conf
 	if err != nil {
 		return err
 	}
-	
+
 	server.keyStore = ksAdapter
 
 	return nil
@@ -133,7 +133,7 @@ func (server *Server) initSelfFromConfig(configItems map[string]*config.ConfigIt
 	if !ok {
 		return fmt.Errorf("Mandatory config item %v is missing in config", PropertyNameServer)
 	}
-	
+
 	var err error
 	useHttp := false
 	httpProperty, ok := serverConfigItem.Properties[PropertyNameHttp]
@@ -155,7 +155,7 @@ func (server *Server) initSelfFromConfig(configItems map[string]*config.ConfigIt
 			}
 		}
 	}
-	
+
 	useHttps := false
 	httpsProperty, ok := serverConfigItem.Properties[PropertyNameHttps]
 	if ok {
@@ -174,13 +174,13 @@ func (server *Server) initSelfFromConfig(configItems map[string]*config.ConfigIt
 				}
 				server.httpsPort = httpsPort
 			}
-		}	
+		}
 	}
-	
+
 	if !useHttp && !useHttps {
 		return fmt.Errorf("http and/or https need to be enabled")
 	}
-	
+
 	if useHttps {
 		caCertProperty, ok := serverConfigItem.Properties[PropertyNameCACert]
 		if !ok {
@@ -198,15 +198,15 @@ func (server *Server) initSelfFromConfig(configItems map[string]*config.ConfigIt
 		if !ok {
 			return fmt.Errorf("Mandatory config property %v is missing in config", PropertyNameServerKey)
 		}
-		
+
 		server.tlsConfig = &TlsConfig{
-			caCertFile: caCertProperty.Value,
-			caKeyFile: caKeyProperty.Value,
+			caCertFile:     caCertProperty.Value,
+			caKeyFile:      caKeyProperty.Value,
 			serverCertFile: serverCertProperty.Value,
-			serverKeyFile: serverKeyProperty.Value, 
-		}	
+			serverKeyFile:  serverKeyProperty.Value,
+		}
 	}
-	
+
 	if _, err := server.authnManager.GetUser("root"); err != nil {
 		rootInitPubKeyProperty, ok := serverConfigItem.Properties[PropertyNameRootInitPubKey]
 		if !ok {
@@ -225,19 +225,19 @@ func (server *Server) initRootUser(rootInitPubKeyProperty *config.ConfigProperty
 	if err != nil {
 		return fmt.Errorf("Root initialization failed: %v", err)
 	}
-	
+
 	creds, err := json.Marshal(rsaPubKey)
 	if err != nil {
 		return fmt.Errorf("Root initialization failed: %v", err)
 	}
 
 	ue := &model.UserEntry{
-		Username: "root",
+		Username:    "root",
 		Credentials: creds,
 	}
 
 	_, err = server.authnManager.CreateUser(ue)
-	
+
 	return err
 }
 
@@ -245,9 +245,9 @@ func (server *Server) ListenAndServe() error {
 	if err := server.initHttpPipeline(); err != nil {
 		return err
 	}
-	
+
 	var wg sync.WaitGroup
-	if (server.useHttp) {
+	if server.useHttp {
 		addr := fmt.Sprintf(":%v", server.httpPort)
 		server.httpServer = &http.Server{Addr: addr, Handler: server.httpPipeline}
 		wg.Add(1)
@@ -257,8 +257,8 @@ func (server *Server) ListenAndServe() error {
 			log.Fatal(server.httpServer.ListenAndServe())
 		}()
 	}
-	
-	if (server.useHttps) {
+
+	if server.useHttps {
 		addr := fmt.Sprintf(":%v", server.httpsPort)
 		server.httpsServer = &http.Server{Addr: addr, Handler: server.httpPipeline}
 		wg.Add(1)
@@ -268,9 +268,9 @@ func (server *Server) ListenAndServe() error {
 			log.Fatal(server.httpsServer.ListenAndServeTLS(server.tlsConfig.caCertFile, server.tlsConfig.caKeyFile))
 		}()
 	}
-	
+
 	wg.Wait()
-	
+
 	return nil
 }
 
@@ -281,11 +281,11 @@ func (server *Server) initHttpPipeline() error {
 	if err != nil {
 		return fmt.Errorf("Failed to create RESTful API: %v", err)
 	}
-	
-	filterManager := util.NewHttpFilterManager()	
+
+	filterManager := util.NewHttpFilterManager()
 	filterManager.AddPreFilter(server.authnManager)
 	server.httpPipeline = filterManager.BuildPipeline(mainHandler)
-	
+
 	return nil
 }
 

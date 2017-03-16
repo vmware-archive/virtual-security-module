@@ -4,18 +4,18 @@ package server
 
 import (
 	"bytes"
-	"encoding/base64"
-	"encoding/json"
 	"crypto/rand"
 	"crypto/rsa"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
 
-	"github.com/vmware/virtual-security-module/util"
 	"github.com/vmware/virtual-security-module/model"
+	"github.com/vmware/virtual-security-module/util"
 )
 
 var ts *httptest.Server
@@ -25,7 +25,7 @@ func apiTestSetup() {
 		fmt.Printf("Failed to init http pipeline: %v", err)
 		os.Exit(1)
 	}
-	
+
 	ts = httptest.NewServer(s.httpPipeline)
 }
 
@@ -35,7 +35,7 @@ func apiTestCleanup() {
 
 func TestCreateWithoutLogin(t *testing.T) {
 	username := "testuser-0"
-	_, _ , err := apiCreateUser(username, "")
+	_, _, err := apiCreateUser(username, "")
 	if err == nil {
 		t.Fatalf("Succeeed to create user without being logged-in")
 	}
@@ -46,27 +46,27 @@ func TestRootLoginCreateUserAndLogin(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Root login failed: %v", err)
 	}
-	
+
 	token, err := apiLogin("root", rootPrivKey)
 	if err != nil {
 		t.Fatalf("Root login failed: %v", err)
 	}
-	
+
 	username := "testuser-0"
-	_, privateKey , err := apiCreateUser(username, token)
+	_, privateKey, err := apiCreateUser(username, token)
 	if err != nil {
 		t.Fatalf("Failed to create user: %v", err)
 	}
-	
+
 	token2, err := apiLogin(username, privateKey)
 	if err != nil {
 		t.Fatalf("Failed to login: %v", err)
 	}
-	
+
 	if token == token2 {
 		t.Fatalf("returned user token is the same as root token")
-	} 
-	
+	}
+
 	if err := apiDeleteUser(username, token2); err != nil {
 		t.Fatalf("Failed to delete user: %v", err)
 	}
@@ -78,40 +78,40 @@ func readTestRootPrivateKey() (*rsa.PrivateKey, error) {
 	if !ok {
 		return nil, fmt.Errorf("item %v is missing from test config", itemName)
 	}
-	
+
 	propertyName := "rootInitPriKey"
 	rootInitPrivateKeyProp, ok := serverConfig.Properties[propertyName]
 	if !ok {
 		return nil, fmt.Errorf("property %v is missing from test config", propertyName)
 	}
-	
-	rootInitPrivateKeyFile := rootInitPrivateKeyProp.Value 
+
+	rootInitPrivateKeyFile := rootInitPrivateKeyProp.Value
 	rsaPrivKey, err := util.ReadRSAPrivateKey(rootInitPrivateKeyFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read root key from file: %v", err)
 	}
-	
+
 	return rsaPrivKey, nil
-} 
+}
 
 func apiCreateUser(username, token string) (*model.UserEntry, *rsa.PrivateKey, error) {
 	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		return nil, nil, err
 	}
-	
+
 	creds, err := json.Marshal(privateKey.PublicKey)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	ue := &model.UserEntry{
-		Username: username,
+		Username:    username,
 		Credentials: creds,
 	}
 
 	body := new(bytes.Buffer)
-    err = json.NewEncoder(body).Encode(ue)
+	err = json.NewEncoder(body).Encode(ue)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -123,8 +123,8 @@ func apiCreateUser(username, token string) (*model.UserEntry, *rsa.PrivateKey, e
 	}
 	req.Header.Set("Content-Type", "application/json")
 	if token != "" {
-		req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", token))	
-	} 
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", token))
+	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, nil, err
@@ -142,7 +142,7 @@ func apiCreateUser(username, token string) (*model.UserEntry, *rsa.PrivateKey, e
 	if len(creationResponse.Id) == 0 {
 		return nil, nil, fmt.Errorf("returned id is empty")
 	}
-	
+
 	return ue, privateKey, nil
 }
 
@@ -153,7 +153,7 @@ func apiDeleteUser(username, token string) error {
 		return err
 	}
 	if token != "" {
-		req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", token))	
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", token))
 	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -164,7 +164,7 @@ func apiDeleteUser(username, token string) error {
 	if resp.StatusCode != http.StatusNoContent {
 		return fmt.Errorf("Response status is different than 204 StatusNoContent: %v", resp.Status)
 	}
-	
+
 	return nil
 }
 
@@ -179,7 +179,7 @@ func apiGetUser(username string) (*model.UserEntry, error) {
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("Response status is different than 200 StatusOK: %v", resp.Status)
 	}
-	
+
 	var userEntry model.UserEntry
 	if err = json.NewDecoder(resp.Body).Decode(&userEntry); err != nil {
 		return nil, err
@@ -187,7 +187,7 @@ func apiGetUser(username string) (*model.UserEntry, error) {
 	if username != userEntry.Username {
 		return nil, fmt.Errorf("returned username %v is different than expect: %v", userEntry.Username, username)
 	}
-	
+
 	return &userEntry, nil
 }
 
@@ -196,13 +196,13 @@ func apiLogin(username string, privateKey *rsa.PrivateKey) (string, error) {
 	loginRequest := &model.LoginRequest{
 		Username: username,
 	}
-	
+
 	body := new(bytes.Buffer)
-    err := json.NewEncoder(body).Encode(loginRequest)
+	err := json.NewEncoder(body).Encode(loginRequest)
 	if err != nil {
 		return "", err
 	}
-	
+
 	testUrl := fmt.Sprintf("%v/login", ts.URL)
 	resp, err := http.Post(testUrl, "application/json", body)
 	if err != nil {
@@ -222,26 +222,26 @@ func apiLogin(username string, privateKey *rsa.PrivateKey) (string, error) {
 		return "", fmt.Errorf("returned challenge is empty")
 	}
 	encodedChallenge := loginResponse.ChallengeOrToken
-	
+
 	encryptedChallenge, err := base64.StdEncoding.DecodeString(encodedChallenge)
 	if err != nil {
 		return "", err
 	}
-			
+
 	// decrypt challenge using private key
 	challenge, err := rsa.DecryptPKCS1v15(nil, privateKey, []byte(encryptedChallenge))
 	if err != nil {
 		return "", err
 	}
-	
+
 	// login - second phase: send the decrypted challenge
 	loginRequest.Challenge = string(challenge)
 	body = new(bytes.Buffer)
-    err = json.NewEncoder(body).Encode(loginRequest)
+	err = json.NewEncoder(body).Encode(loginRequest)
 	if err != nil {
 		return "", err
 	}
-	
+
 	resp, err = http.Post(testUrl, "application/json", body)
 	if err != nil {
 		return "", err
@@ -256,10 +256,10 @@ func apiLogin(username string, privateKey *rsa.PrivateKey) (string, error) {
 	if err = json.NewDecoder(resp.Body).Decode(&tokenResponse); err != nil {
 		return "", err
 	}
-	
+
 	if len(tokenResponse.ChallengeOrToken) == 0 {
 		return "", fmt.Errorf("returned token is empty")
 	}
-	
+
 	return tokenResponse.ChallengeOrToken, nil
 }

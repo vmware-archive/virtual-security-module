@@ -13,9 +13,9 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/naoina/denco"
 	"github.com/vmware/virtual-security-module/model"
 	"github.com/vmware/virtual-security-module/util"
-	"github.com/naoina/denco"
 )
 
 func (authnManager *AuthnManager) RegisterEndpoints(mux *denco.Mux) []denco.Handler {
@@ -38,14 +38,14 @@ func (authnManager *AuthnManager) RegisterEndpoints(mux *denco.Mux) []denco.Hand
 		if err != nil {
 			if e := util.WriteErrorResponse(w, err); e != nil {
 				log.Printf("failed to write error response: %v\n", e)
-			}	
+			}
 		}
-		
+
 		if e := util.WriteResponse(w, &model.CreationResponse{Id: id}, http.StatusCreated); e != nil {
 			log.Printf("failed to write response: %v\n", e)
 		}
 	}
-	
+
 	// swagger:route GET /users/{username} users GetUser
 	//
 	// Returns a user's info
@@ -67,12 +67,12 @@ func (authnManager *AuthnManager) RegisterEndpoints(mux *denco.Mux) []denco.Hand
 				log.Printf("failed to write error response: %v\n", e)
 			}
 		}
-		
+
 		if e := util.WriteResponse(w, ue, http.StatusOK); e != nil {
 			log.Printf("failed to write response: %v\n", e)
 		}
 	}
-	
+
 	// swagger:route DELETE /users/{username} users CreateUser
 	//
 	// Deletes a user
@@ -92,7 +92,7 @@ func (authnManager *AuthnManager) RegisterEndpoints(mux *denco.Mux) []denco.Hand
 		if err != nil {
 			util.WriteErrorStatus(w, err)
 		}
-		
+
 		util.WriteStatus(w, http.StatusNoContent)
 	}
 
@@ -115,28 +115,28 @@ func (authnManager *AuthnManager) RegisterEndpoints(mux *denco.Mux) []denco.Hand
 			return
 		}
 
-	    challengeOrToken, err := authnManager.Login(loginRequest)
-	    if err != nil {
+		challengeOrToken, err := authnManager.Login(loginRequest)
+		if err != nil {
 			if e := util.WriteErrorResponse(w, err); e != nil {
 				log.Printf("failed to write error response: %v\n", e)
 			}
 			return
-	    }
+		}
 
-		loginResponse := &model.LoginResponse {
+		loginResponse := &model.LoginResponse{
 			ChallengeOrToken: challengeOrToken,
 		}
-	    if e := util.WriteResponse(w, loginResponse, http.StatusOK); e != nil {
-	    	log.Printf("failed to write response: %v\n", e)
-	    }
+		if e := util.WriteResponse(w, loginResponse, http.StatusOK); e != nil {
+			log.Printf("failed to write response: %v\n", e)
+		}
 	}
 
 	handlers := []denco.Handler{
-        mux.POST("/users", createUser),
-        mux.GET("/users/:username", getUser),
-        mux.Handler("DELETE", "/users/:username", deleteUser),
-        mux.POST("/login", login),
-    }
+		mux.POST("/users", createUser),
+		mux.GET("/users/:username", getUser),
+		mux.Handler("DELETE", "/users/:username", deleteUser),
+		mux.POST("/login", login),
+	}
 
 	return handlers
 }

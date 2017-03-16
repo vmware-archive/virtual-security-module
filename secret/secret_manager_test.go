@@ -19,19 +19,19 @@ var sm *SecretManager
 
 func TestMain(m *testing.M) {
 	cfg := config.GenerateTestConfig()
-	
+
 	ds, err := vds.GetDataStoreFromConfig(cfg)
 	if err != nil {
 		fmt.Printf("Failed to get data store from config: %v\n", err)
 		os.Exit(1)
 	}
-	
+
 	ks, err := vks.GetKeyStoreFromConfig(cfg)
 	if err != nil {
 		fmt.Printf("Failed to get key store from config: %v\n", err)
 		os.Exit(1)
 	}
-	
+
 	sm = New()
 	if err := sm.Init(cfg, ds, ks); err != nil {
 		fmt.Printf("Failed to initialize secret manager: %v\n", err)
@@ -41,7 +41,7 @@ func TestMain(m *testing.M) {
 
 	apiTestSetup()
 	defer apiTestCleanup()
-	
+
 	os.Exit(m.Run())
 }
 
@@ -54,11 +54,11 @@ func TestCreateAndGetSecret(t *testing.T) {
 
 func testCreateAndGetSecret(t *testing.T, id string) {
 	se := &model.SecretEntry{
-		Id: id,
-		SecretData: []byte("secret0"),
-		OwnerEntryId: "user0",
-		NamespaceEntryId: "root",
-		ExpirationTime: time.Now().Add(time.Hour),
+		Id:                     id,
+		SecretData:             []byte("secret0"),
+		OwnerEntryId:           "user0",
+		NamespaceEntryId:       "root",
+		ExpirationTime:         time.Now().Add(time.Hour),
 		AuthorizationPolicyIds: []string{},
 	}
 
@@ -74,7 +74,7 @@ func testCreateAndGetSecret(t *testing.T, id string) {
 	if err != nil {
 		t.Fatalf("Failed to get secret for id %v: %v", id2, err)
 	}
-	
+
 	if id == "" {
 		se.Id = id2
 	}

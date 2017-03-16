@@ -7,16 +7,16 @@ import (
 )
 
 const (
-	PropertyNameDataStore = "dataStore"
-	PropertyNameDataStoreType = "dataStoreType";
-	PropertyNameDataStoreLocation = "dataStoreLocation";
-	PropertyNameDataStoreCredentials = "dataStoreCredentials";
-	PropertyNameOutOfBandInit = "dataStoreOutOfBandInit";
+	PropertyNameDataStore            = "dataStore"
+	PropertyNameDataStoreType        = "dataStoreType"
+	PropertyNameDataStoreLocation    = "dataStoreLocation"
+	PropertyNameDataStoreCredentials = "dataStoreCredentials"
+	PropertyNameOutOfBandInit        = "dataStoreOutOfBandInit"
 )
 
 type DataStoreEntry struct {
-	Id string
-	Data []byte
+	Id       string
+	Data     []byte
 	MetaData string
 }
 

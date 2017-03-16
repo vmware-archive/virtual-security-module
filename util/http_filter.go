@@ -24,13 +24,13 @@ type PostHttpFilter interface {
 // and can be used to build a request/response pipeline from the filters and
 // a main handler (see BuildPipeline).
 type HttpFilterManager struct {
-	preFilters []PreHttpFilter
+	preFilters  []PreHttpFilter
 	postFilters []PostHttpFilter
 }
 
 func NewHttpFilterManager() *HttpFilterManager {
 	return &HttpFilterManager{
-		preFilters: make([]PreHttpFilter, 0),
+		preFilters:  make([]PreHttpFilter, 0),
 		postFilters: make([]PostHttpFilter, 0),
 	}
 }
@@ -45,9 +45,9 @@ func (fm *HttpFilterManager) BuildPipeline(handler http.Handler) http.Handler {
 				return
 			}
 		}
-		
+
 		handler.ServeHTTP(w, r)
-		
+
 		for i := len(fm.postFilters) - 1; i >= 0; i-- {
 			f := fm.postFilters[i]
 			if !f.HandlePost(w, r) {
