@@ -14,7 +14,13 @@ DIST_DIR := $(PROJECT_DIR)/dist
 GO_ENV := GOPATH=$(GOPATH)
 GO := $(GO_ENV) go
 
-default: build
+default: check-go-version build
+
+check-go-version:
+	if ! go version | grep $(GO_VERSION); then \
+		echo "Please make sure you use go $(GO_VERSION)"; \
+		exit 1; \
+	fi
 
 install-deps:
 	$(GO) get -u github.com/satori/go.uuid
@@ -22,7 +28,7 @@ install-deps:
 	$(GO) get -u gopkg.in/yaml.v2
 	$(GO) get -u github.com/dgrijalva/jwt-go
 	
-build: fmt vet
+build: check-go-version fmt vet
 	$(GO) build ./...
 	$(GO) build -o $(DIST_DIR)/$(TARGET)
 
@@ -32,7 +38,7 @@ vet:
 fmt:
 	$(GO) fmt ./...
 
-cross: fmt vet
+cross: check-go-version fmt vet
 	for os in $(OS); do \
 		for arch in $(ARCH); do \
 			suffix=""; \
