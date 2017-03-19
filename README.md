@@ -41,14 +41,35 @@ Following is a list of high-level capabilities:
 
 ### Build, Test & Run
 
-1. Under your Go workspace create a "src/github.com/vmware" directory.
-2. cd into "src/github.com/vmware" and clone the repo. A "virtual-security-module" directory will be created.
-3. cd into "virtual-security-module"
-4. Before your first build fetch dependencies by running: "make install-deps".
-5. To build run: "make build"
-6. To test run: "make test"
-7. To generate RESTful API docs run: "make doc". A "swagger.json" Swagger spec file will be created.
-8. To start the server run "vsmd" (which was generated in your $GOPATH/dist) 
+1. Under your Go workspace create a **src/github.com/vmware** directory.
+```
+mkdir -p src/github.com/vmware
+```
+2. cd into **src/github.com/vmware** and clone your forked repo.
+```
+git clone https://github.com/$yourusername/virtual-security-module
+```
+3. cd into **virtual-security-module**
+```
+cd virtual-security-module
+```
+4. Before your first build fetch dependencies by running:
+```
+make install-deps
+```
+5. To build run:
+```
+make
+```
+6. To test run:
+```
+make test
+```
+7. To generate RESTful API docs run:
+ ```
+make doc
+```
+To start the server run **./dist/vsmd**
 
 ## Documentation
 
