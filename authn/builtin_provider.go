@@ -312,8 +312,10 @@ func (p *BuiltinProvider) verifyChallengeAndGenerateToken(challengeStr string) (
 
 	delete(p.challenges, challenge.Uuid)
 
+	expirationTime := time.Now().Add(time.Hour)
 	t := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"name": challenge.Username,
+		"exp":  expirationTime.Unix(),
 	})
 	tString, err := t.SignedString(p.tokenSigningKey)
 	if err != nil {

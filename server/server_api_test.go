@@ -168,9 +168,16 @@ func apiDeleteUser(username, token string) error {
 	return nil
 }
 
-func apiGetUser(username string) (*model.UserEntry, error) {
+func apiGetUser(username, token string) (*model.UserEntry, error) {
 	testUrl := fmt.Sprintf("%v/users/%v", ts.URL, username)
-	resp, err := http.Get(testUrl)
+	req, err := http.NewRequest("GET", testUrl, nil)
+	if err != nil {
+		return nil, err
+	}
+	if token != "" {
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", token))
+	}
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
 	}

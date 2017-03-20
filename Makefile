@@ -1,7 +1,8 @@
 ARCH := amd64 386
 OS := linux darwin windows
 
-TARGET := vsmd
+SERVER_TARGET := vsmd
+CLI_TARGET := vsm-cli
 DOC := swagger.json
 
 PROJECT_DIR := $(shell pwd)
@@ -21,10 +22,12 @@ install-deps:
 	$(GO) get -u github.com/naoina/denco
 	$(GO) get -u gopkg.in/yaml.v2
 	$(GO) get -u github.com/dgrijalva/jwt-go
+	$(GO) get -u github.com/spf13/cobra/cobra
 	
 build: fmt vet
 	$(GO) build ./...
-	$(GO) build -o $(DIST_DIR)/$(TARGET)
+	$(GO) build -o $(DIST_DIR)/$(SERVER_TARGET) ./server/main
+	$(GO) build -o $(DIST_DIR)/$(CLI_TARGET) ./cli/main
 
 vet:
 	$(GO) vet ./...
@@ -37,7 +40,7 @@ cross: fmt vet
 		for arch in $(ARCH); do \
 			suffix=""; \
 			[ "$${os}" = "windows" ] && suffix=.exe; \
-			GOOS=$${os} GOARCH=$${arch} $(GO) build -o "$(DIST_DIR)/$(TARGET)_$${os}_$${arch}{suffix}"; \
+			GOOS=$${os} GOARCH=$${arch} $(GO) build -o "$(DIST_DIR)/$(SERVER_TARGET)_$${os}_$${arch}{suffix}"; \
 		done; \
 	done
 
