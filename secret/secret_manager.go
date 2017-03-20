@@ -123,3 +123,15 @@ func (secretManager *SecretManager) GetSecret(secretId string) (*model.SecretEnt
 
 	return secretEntry, nil
 }
+
+func (secretManager *SecretManager) DeleteSecret(secretId string) error {
+	if err := secretManager.dataStore.DeleteEntry(secretId); err != nil {
+		return err
+	}
+
+	if err := secretManager.keyStore.Delete(secretId); err != nil {
+		return err
+	}
+
+	return nil
+}

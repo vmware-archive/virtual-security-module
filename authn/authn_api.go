@@ -39,6 +39,7 @@ func (authnManager *AuthnManager) RegisterEndpoints(mux *denco.Mux) []denco.Hand
 			if e := util.WriteErrorResponse(w, err); e != nil {
 				log.Printf("failed to write error response: %v\n", e)
 			}
+			return
 		}
 
 		if e := util.WriteResponse(w, &model.CreationResponse{Id: id}, http.StatusCreated); e != nil {
@@ -66,6 +67,7 @@ func (authnManager *AuthnManager) RegisterEndpoints(mux *denco.Mux) []denco.Hand
 			if e := util.WriteErrorResponse(w, err); e != nil {
 				log.Printf("failed to write error response: %v\n", e)
 			}
+			return
 		}
 
 		if e := util.WriteResponse(w, ue, http.StatusOK); e != nil {
@@ -73,7 +75,7 @@ func (authnManager *AuthnManager) RegisterEndpoints(mux *denco.Mux) []denco.Hand
 		}
 	}
 
-	// swagger:route DELETE /users/{username} users CreateUser
+	// swagger:route DELETE /users/{username} users DeleteUser
 	//
 	// Deletes a user
 	//
@@ -91,6 +93,7 @@ func (authnManager *AuthnManager) RegisterEndpoints(mux *denco.Mux) []denco.Hand
 		err := authnManager.DeleteUser(username)
 		if err != nil {
 			util.WriteErrorStatus(w, err)
+			return
 		}
 
 		util.WriteStatus(w, http.StatusNoContent)
