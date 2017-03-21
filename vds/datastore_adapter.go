@@ -7,11 +7,8 @@ import (
 )
 
 const (
-	PropertyNameDataStore            = "dataStore"
-	PropertyNameDataStoreType        = "dataStoreType"
-	PropertyNameDataStoreLocation    = "dataStoreLocation"
-	PropertyNameDataStoreCredentials = "dataStoreCredentials"
-	PropertyNameOutOfBandInit        = "dataStoreOutOfBandInit"
+	PropertyNameDataStore     = "dataStore"
+	PropertyNameDataStoreType = "type"
 )
 
 type DataStoreEntry struct {
@@ -21,8 +18,8 @@ type DataStoreEntry struct {
 }
 
 type DataStoreAdapter interface {
-	Init(map[string]*config.ConfigProperty) error
-	CompleteInit(map[string]*config.ConfigProperty) error
+	Init(*config.Config) error
+	CompleteInit(*config.Config) error
 	Initialized() bool
 
 	WriteEntry(entry *DataStoreEntry) error

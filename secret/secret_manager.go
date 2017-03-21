@@ -24,7 +24,7 @@ func (secretManager *SecretManager) Type() string {
 	return "SecretManager"
 }
 
-func (secretManager *SecretManager) Init(configItems map[string]*config.ConfigItem, ds vds.DataStoreAdapter, ks vks.KeyStoreAdapter) error {
+func (secretManager *SecretManager) Init(configuration *config.Config, ds vds.DataStoreAdapter, ks vks.KeyStoreAdapter) error {
 	secretManager.dataStore = ds
 	secretManager.keyStore = ks
 

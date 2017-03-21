@@ -7,25 +7,23 @@ import (
 	"io/ioutil"
 )
 
-var DefaultConfigFile = "config.yaml"
-
-func Load(configFile string) (map[string]*ConfigItem, error) {
-	buf, err := ioutil.ReadFile(configFile)
+func Load(configFile string) (*Config, error) {
+	yamlConfig, err := ioutil.ReadFile(configFile)
 	if err != nil {
 		return nil, err
 	}
 
-	configItems := make(map[string]*ConfigItem)
-	err = yaml.Unmarshal(buf, &configItems)
+	var config Config
+	err = yaml.Unmarshal(yamlConfig, &config)
 	if err != nil {
 		return nil, err
 	}
 
-	return configItems, nil
+	return &config, nil
 }
 
-func Save(configItems map[string]*ConfigItem, configFile string) error {
-	buf, err := yaml.Marshal(configItems)
+func Save(config *Config, configFile string) error {
+	buf, err := yaml.Marshal(config)
 	if err != nil {
 		return err
 	}

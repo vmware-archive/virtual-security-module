@@ -31,11 +31,11 @@ func New() *InMemoryDS {
 	}
 }
 
-func (ds *InMemoryDS) Init(map[string]*config.ConfigProperty) error {
+func (ds *InMemoryDS) Init(*config.Config) error {
 	return nil
 }
 
-func (ds *InMemoryDS) CompleteInit(map[string]*config.ConfigProperty) error {
+func (ds *InMemoryDS) CompleteInit(*config.Config) error {
 	return nil
 }
 
