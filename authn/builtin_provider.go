@@ -40,7 +40,7 @@ func NewBuiltinProvider() *BuiltinProvider {
 	return &BuiltinProvider{}
 }
 
-func (p *BuiltinProvider) Init(configProps map[string]*config.ConfigProperty, ds vds.DataStoreAdapter, ks vks.KeyStoreAdapter) error {
+func (p *BuiltinProvider) Init(config *config.Config, ds vds.DataStoreAdapter, ks vks.KeyStoreAdapter) error {
 	tokenSigningKey, err := crypt.GenerateKey()
 	if err != nil {
 		return err

@@ -37,7 +37,7 @@ func TestCreateWithoutLogin(t *testing.T) {
 	username := "testuser-0"
 	_, _, err := apiCreateUser(username, "")
 	if err == nil {
-		t.Fatalf("Succeeed to create user without being logged-in")
+		t.Fatal("Succeeed to create user without being logged-in")
 	}
 }
 
@@ -64,7 +64,7 @@ func TestRootLoginCreateUserAndLogin(t *testing.T) {
 	}
 
 	if token == token2 {
-		t.Fatalf("returned user token is the same as root token")
+		t.Fatal("returned user token is the same as root token")
 	}
 
 	if err := apiDeleteUser(username, token2); err != nil {
@@ -73,19 +73,7 @@ func TestRootLoginCreateUserAndLogin(t *testing.T) {
 }
 
 func readTestRootPrivateKey() (*rsa.PrivateKey, error) {
-	itemName := "server"
-	serverConfig, ok := tCfg[itemName]
-	if !ok {
-		return nil, fmt.Errorf("item %v is missing from test config", itemName)
-	}
-
-	propertyName := "rootInitPriKey"
-	rootInitPrivateKeyProp, ok := serverConfig.Properties[propertyName]
-	if !ok {
-		return nil, fmt.Errorf("property %v is missing from test config", propertyName)
-	}
-
-	rootInitPrivateKeyFile := rootInitPrivateKeyProp.Value
+	rootInitPrivateKeyFile := tCfg.ServerConfig.RootInitPrivateKey
 	rsaPrivKey, err := util.ReadRSAPrivateKey(rootInitPrivateKeyFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read root key from file: %v", err)

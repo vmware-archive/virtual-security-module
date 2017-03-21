@@ -12,7 +12,7 @@ import (
 
 var (
 	s    *Server
-	tCfg map[string]*config.ConfigItem
+	tCfg *config.Config
 )
 
 func TestMain(m *testing.M) {

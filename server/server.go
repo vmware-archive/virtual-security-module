@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 	"sync"
 
 	"github.com/naoina/denco"
@@ -21,24 +20,17 @@ import (
 )
 
 const (
-	PropertyNameServer         = "server"
-	PropertyNameHttp           = "http"
-	PropertyNameHttps          = "https"
-	PropertyNameCACert         = "caCert"
-	PropertyNameCAKey          = "caKey"
+	DefaultHttpPort            = 8080
+	DefaultHttpsPort           = 443
+	PropertyNameCaCert         = "caCert"
+	PropertyNameCaKey          = "caKey"
 	PropertyNameServerCert     = "serverCert"
-	PropertyNameServerKey      = "serverKey"
-	PropertyNameHttpPort       = "httpPort"
-	PropertyNameHttpsPort      = "httpsPort"
 	PropertyNameRootInitPubKey = "rootInitPubKey"
-
-	DefaultHttpPort  = 8080
-	DefaultHttpsPort = 443
 )
 
 type Module interface {
 	Type() string
-	Init(map[string]*config.ConfigItem, vds.DataStoreAdapter, vks.KeyStoreAdapter) error
+	Init(*config.Config, vds.DataStoreAdapter, vks.KeyStoreAdapter) error
 	RegisterEndpoints(mux *denco.Mux) []denco.Handler
 	Close() error
 }
@@ -78,19 +70,19 @@ func New() *Server {
 	}
 }
 
-func (server *Server) Init(configItems map[string]*config.ConfigItem) error {
+func (server *Server) Init(configuration *config.Config) error {
 	// data store and key store need to be initialized first, as the modules
 	// need them.
-	if err := server.initDataStoreFromConfig(configItems); err != nil {
+	if err := server.initDataStoreFromConfig(configuration); err != nil {
 		return err
 	}
-	if err := server.initKeyStoreFromConfig(configItems); err != nil {
+	if err := server.initKeyStoreFromConfig(configuration); err != nil {
 		return err
 	}
 
 	// initialize modules
 	for _, module := range server.modules {
-		err := module.Init(configItems, server.dataStore, server.keyStore)
+		err := module.Init(configuration, server.dataStore, server.keyStore)
 		if err != nil {
 			return err
 		}
@@ -99,15 +91,15 @@ func (server *Server) Init(configItems map[string]*config.ConfigItem) error {
 	}
 
 	// initialize rest of server
-	if err := server.initSelfFromConfig(configItems); err != nil {
+	if err := server.initSelfFromConfig(configuration); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (server *Server) initDataStoreFromConfig(configItems map[string]*config.ConfigItem) error {
-	dsAdapter, err := vds.GetDataStoreFromConfig(configItems)
+func (server *Server) initDataStoreFromConfig(configuration *config.Config) error {
+	dsAdapter, err := vds.GetDataStoreFromConfig(configuration)
 	if err != nil {
 		return err
 	}
@@ -117,8 +109,8 @@ func (server *Server) initDataStoreFromConfig(configItems map[string]*config.Con
 	return nil
 }
 
-func (server *Server) initKeyStoreFromConfig(configItems map[string]*config.ConfigItem) error {
-	ksAdapter, err := vks.GetKeyStoreFromConfig(configItems)
+func (server *Server) initKeyStoreFromConfig(configuration *config.Config) error {
+	ksAdapter, err := vks.GetKeyStoreFromConfig(configuration)
 	if err != nil {
 		return err
 	}
@@ -128,91 +120,58 @@ func (server *Server) initKeyStoreFromConfig(configItems map[string]*config.Conf
 	return nil
 }
 
-func (server *Server) initSelfFromConfig(configItems map[string]*config.ConfigItem) error {
-	serverConfigItem, ok := configItems[PropertyNameServer]
-	if !ok {
-		return fmt.Errorf("Mandatory config item %v is missing in config", PropertyNameServer)
-	}
-
-	var err error
-	useHttp := false
-	httpProperty, ok := serverConfigItem.Properties[PropertyNameHttp]
-	if ok {
-		useHttp, err = strconv.ParseBool(httpProperty.Value)
-		if err != nil {
-			return fmt.Errorf("Failed to parse config property %v: %v", PropertyNameHttp, err)
-		}
-		server.useHttp = useHttp
-		if useHttp {
-			httpPortProperty, ok := serverConfigItem.Properties[PropertyNameHttpPort]
-			server.httpPort = DefaultHttpPort
-			if ok {
-				httpPort, err := strconv.Atoi(httpPortProperty.Value)
-				if err != nil {
-					return fmt.Errorf("Failed to parse config property %v: %v", PropertyNameHttpPort, err)
-				}
-				server.httpPort = httpPort
-			}
+func (server *Server) initSelfFromConfig(configuration *config.Config) error {
+	server.useHttp = false
+	if configuration.HttpConfig.Enabled {
+		server.useHttp = true
+		httpPort := configuration.HttpConfig.Port
+		server.httpPort = DefaultHttpPort
+		if httpPort != 0 {
+			server.httpPort = httpPort
 		}
 	}
 
-	useHttps := false
-	httpsProperty, ok := serverConfigItem.Properties[PropertyNameHttps]
-	if ok {
-		useHttps, err = strconv.ParseBool(httpsProperty.Value)
-		if err != nil {
-			return fmt.Errorf("Failed to parse config property %v: %v", PropertyNameHttps, err)
+	server.useHttps = false
+	if configuration.HttpsConfig.Enabled {
+		server.useHttps = true
+		httpsPort := configuration.HttpsConfig.Port
+		server.httpsPort = DefaultHttpsPort
+		if httpsPort != 0 {
+			server.httpsPort = httpsPort
 		}
-		server.useHttps = useHttps
-		if useHttps {
-			httpsPortProperty, ok := serverConfigItem.Properties[PropertyNameHttpsPort]
-			server.httpsPort = DefaultHttpsPort
-			if ok {
-				httpsPort, err := strconv.Atoi(httpsPortProperty.Value)
-				if err != nil {
-					return fmt.Errorf("Failed to parse config property %v: %v", PropertyNameHttpsPort, err)
-				}
-				server.httpsPort = httpsPort
-			}
-		}
-	}
 
-	if !useHttp && !useHttps {
-		return fmt.Errorf("http and/or https need to be enabled")
-	}
-
-	if useHttps {
-		caCertProperty, ok := serverConfigItem.Properties[PropertyNameCACert]
-		if !ok {
-			return fmt.Errorf("Mandatory config property %v is missing in config", PropertyNameCACert)
+		if configuration.HttpsConfig.CaCert == "" {
+			return fmt.Errorf("%v cannot be empty", PropertyNameCaCert)
 		}
-		caKeyProperty, ok := serverConfigItem.Properties[PropertyNameCAKey]
-		if !ok {
-			return fmt.Errorf("Mandatory config property %v is missing in config", PropertyNameCAKey)
+		if configuration.HttpsConfig.CaKey == "" {
+			return fmt.Errorf("%v cannot be empty", PropertyNameCaKey)
 		}
-		serverCertProperty, ok := serverConfigItem.Properties[PropertyNameServerCert]
-		if !ok {
-			return fmt.Errorf("Mandatory config property %v is missing in config", PropertyNameServerCert)
+		if configuration.HttpsConfig.ServerCert == "" {
+			return fmt.Errorf("%v cannot be empty", PropertyNameServerCert)
 		}
-		serverKeyProperty, ok := serverConfigItem.Properties[PropertyNameServerKey]
-		if !ok {
-			return fmt.Errorf("Mandatory config property %v is missing in config", PropertyNameServerKey)
+		if configuration.HttpsConfig.ServerCert == "" {
+			return fmt.Errorf("%v cannot be empty", PropertyNameServerCert)
 		}
 
 		server.tlsConfig = &TlsConfig{
-			caCertFile:     caCertProperty.Value,
-			caKeyFile:      caKeyProperty.Value,
-			serverCertFile: serverCertProperty.Value,
-			serverKeyFile:  serverKeyProperty.Value,
+			caCertFile:     configuration.HttpsConfig.CaCert,
+			caKeyFile:      configuration.HttpsConfig.CaKey,
+			serverCertFile: configuration.HttpsConfig.ServerCert,
+			serverKeyFile:  configuration.HttpsConfig.ServerKey,
 		}
 	}
 
+	if !server.useHttp && !server.useHttps {
+		return fmt.Errorf("http and/or https need to be enabled")
+	}
+
 	if _, err := server.authnManager.GetUser("root"); err != nil {
-		rootInitPubKeyProperty, ok := serverConfigItem.Properties[PropertyNameRootInitPubKey]
-		if !ok {
-			return fmt.Errorf("Mandatory config property for root initialization %v is missing in config", PropertyNameRootInitPubKey)
+		rootInitPubKey := configuration.ServerConfig.RootInitPubKey
+		if rootInitPubKey == "" {
+			return fmt.Errorf("%v cannot be empty", PropertyNameRootInitPubKey)
 		}
-		if e := server.initRootUser(rootInitPubKeyProperty); e != nil {
+
+		if e := server.initRootUser(rootInitPubKey); e != nil {
 			return fmt.Errorf("Failed to initialize root user: %v", e)
 		}
 	}
@@ -220,8 +179,8 @@ func (server *Server) initSelfFromConfig(configItems map[string]*config.ConfigIt
 	return nil
 }
 
-func (server *Server) initRootUser(rootInitPubKeyProperty *config.ConfigProperty) error {
-	rsaPubKey, err := util.ReadRSAPublicKey(rootInitPubKeyProperty.Value)
+func (server *Server) initRootUser(rootInitPubKey string) error {
+	rsaPubKey, err := util.ReadRSAPublicKey(rootInitPubKey)
 	if err != nil {
 		return fmt.Errorf("Root initialization failed: %v", err)
 	}

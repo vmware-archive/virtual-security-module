@@ -7,16 +7,13 @@ import (
 )
 
 const (
-	PropertyNameKeyStore            = "keyStore"
-	PropertyNameKeyStoreType        = "keyStoreType"
-	PropertyNameKeyStoreLocation    = "keyStoreLocation"
-	PropertyNameKeyStoreCredentials = "keyStoreCredentials"
-	PropertyNameOutOfBandInit       = "keyStoreOutOfBandInit"
+	PropertyNameKeyStore     = "keyStore"
+	PropertyNameKeyStoreType = "type"
 )
 
 type KeyStoreAdapter interface {
-	Init(map[string]*config.ConfigProperty) error
-	CompleteInit(map[string]*config.ConfigProperty) error
+	Init(*config.Config) error
+	CompleteInit(*config.Config) error
 	Initialized() bool
 
 	Write(alias string, key []byte) error

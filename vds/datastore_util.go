@@ -8,23 +8,23 @@ import (
 	"github.com/vmware/virtual-security-module/config"
 )
 
-func GetDataStoreFromConfig(configItems map[string]*config.ConfigItem) (DataStoreAdapter, error) {
-	dsConfigItem, ok := configItems[PropertyNameDataStore]
-	if !ok {
+func GetDataStoreFromConfig(configuration *config.Config) (DataStoreAdapter, error) {
+	dsConfigItem := configuration.DataStoreConfig
+	if dsConfigItem == (config.DataStoreConfig{}) {
 		return nil, fmt.Errorf("Mandatory config item %v is missing in config", PropertyNameDataStore)
 	}
 
-	dsTypeProperty, ok := dsConfigItem.Properties[PropertyNameDataStoreType]
-	if !ok {
+	dsTypeProperty := dsConfigItem.StoreType
+	if dsTypeProperty == "" {
 		return nil, fmt.Errorf("Mandatory config property %v is missing in config", PropertyNameDataStoreType)
 	}
 
-	dsAdapter, err := DataStoreRegistrar.Get(dsTypeProperty.Value)
+	dsAdapter, err := DataStoreRegistrar.Get(dsTypeProperty)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := dsAdapter.Init(dsConfigItem.Properties); err != nil {
+	if err := dsAdapter.Init(configuration); err != nil {
 		return nil, err
 	}
 

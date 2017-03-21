@@ -2,58 +2,29 @@
 // SPDX-License-Identifier: BSD-2-Clause
 package config
 
-func GenerateTestConfig() map[string]*ConfigItem {
-	configItems := make(map[string]*ConfigItem)
-
-	// data store
-	itemName := "dataStore"
-	item := GetConfigItem(itemName)
-	propName := "dataStoreType"
-	item.Properties[propName] = GetConfigProperty(propName, "InMemoryDataStore", "in memory datastore", false)
-	configItems[itemName] = item
-
-	// key store
-	itemName = "keyStore"
-	item = GetConfigItem(itemName)
-	propName = "keyStoreType"
-	item.Properties[propName] = GetConfigProperty(propName, "InMemoryKeyStore", "in memory keystore", false)
-	configItems[itemName] = item
-
-	// server
-	itemName = "server"
-	item = GetConfigItem(itemName)
-
-	propName = "http"
-	item.Properties[propName] = GetConfigProperty(propName, "true", "enable http", false)
-
-	propName = "httpPort"
-	item.Properties[propName] = GetConfigProperty(propName, "8090", "http port", false)
-
-	propName = "rootInitPubKey"
-	item.Properties[propName] = GetConfigProperty(propName, "../certs/test-root-init-public.pem",
-		"public key file of the root user during intialization of a new server", false)
-
-	propName = "rootInitPriKey"
-	item.Properties[propName] = GetConfigProperty(propName, "../certs/test-root-init-private.pem",
-		"*** for testing only: private key file of the root user during intialization of a new server ***", false)
-
-	configItems[itemName] = item
-
-	return configItems
-}
-
-func GetConfigItem(name string) *ConfigItem {
-	return &ConfigItem{
-		Name:       name,
-		Properties: make(map[string]*ConfigProperty),
+func GenerateTestConfig() *Config {
+	config := &Config{
+		ServerConfig: ServerConfig{
+			HttpConfig: HttpConfig{
+				Enabled: true,
+				Port:    8090,
+			},
+			HttpsConfig: HttpsConfig{
+				CaCert:     "../certs/test-root-cert.pem",
+				CaKey:      "../certs/test-root-key.pem",
+				ServerCert: "../certs/test-server-cert.pem",
+				ServerKey:  "../certs/test-server-key.pem",
+			},
+			RootInitPubKey:     "../certs/test-root-init-public.pem",
+			RootInitPrivateKey: "../certs/test-root-init-private.pem",
+		},
+		DataStoreConfig: DataStoreConfig{
+			StoreType: "InMemoryDataStore",
+		},
+		KeyStoreConfig: KeyStoreConfig{
+			StoreType: "InMemoryKeyStore",
+		},
 	}
-}
 
-func GetConfigProperty(name, val, desc string, sensitive bool) *ConfigProperty {
-	return &ConfigProperty{
-		Name:        name,
-		Value:       val,
-		Description: desc,
-		Sensitive:   sensitive,
-	}
+	return config
 }

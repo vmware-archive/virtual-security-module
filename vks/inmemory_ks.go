@@ -31,11 +31,11 @@ func New() *InMemoryKS {
 	}
 }
 
-func (ks *InMemoryKS) Init(map[string]*config.ConfigProperty) error {
+func (ks *InMemoryKS) Init(*config.Config) error {
 	return nil
 }
 
-func (ks *InMemoryKS) CompleteInit(map[string]*config.ConfigProperty) error {
+func (ks *InMemoryKS) CompleteInit(*config.Config) error {
 	return nil
 }
 

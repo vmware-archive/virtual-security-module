@@ -14,6 +14,7 @@ func TestSaveAndLoad(t *testing.T) {
 	if err := Save(cfg, cfgFile); err != nil {
 		t.Fatalf("Failed to save config file %v: %v", cfgFile, err)
 	}
+
 	defer os.Remove(cfgFile)
 
 	cfg2, err := Load(cfgFile)

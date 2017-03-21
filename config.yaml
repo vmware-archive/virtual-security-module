@@ -1,64 +1,17 @@
 server:
-  name: server
-  properties:
-    http:
-      name: http
-      value: true 
-      description: enable http
-      sensitive: false
-    httpPort:
-      name: httpPort
-      value: 8080
-      description: http port
-      sensitive: false
-    https:
-      name: https
-      value: true 
-      description: enable https
-      sensitive: false
-    httpsPort:
-      name: httpsPort
-      value: 8443
-      description: https port
-      sensitive: false
-    caCert:
-      name: caCert
-      value: certs/test-root-cert.pem
-      description: certificate file of the root CA
-      sensitive: false
-    caKey:
-      name: caKey
-      value: certs/test-root-key.pem
-      description: key file of the root CA
-      sensitive: false
-    serverCert:
-      name: serverCert
-      value: certs/test-server-cert.pem
-      description: certificate file of the server
-      sensitive: false
-    serverKey:
-      name: serverKey
-      value: certs/test-server-key.pem
-      description: key file of the server
-      sensitive: false
-    rootInitPubKey:
-      name: rootInitPubKey
-      value: certs/test-root-init-public.pem
-      description: public key file of the root user during intialization of a new server
-      sensitive: false
+  http:
+    enabled: true
+    port: 8080
+  https:
+    enabled: true
+    port: 8443
+    caCert: certs/test-root-cert.pem
+    caKey:  certs/test-root-key.pem
+    serverCert: certs/test-server-cert.pem
+    serverKey: certs/test-server-key.pem
+  rootInitPubKey: certs/test-root-init-public.pem
+  rootInitPriKey: certs/test-root-init-private.pem
 dataStore:
-  name: dataStore
-  properties:
-    dataStoreType:
-      name: dataStoreType
-      value: InMemoryDataStore
-      description: blah
-      sensitive: false
+  type: InMemoryDataStore
 keyStore:
-  name: keyStore
-  properties:
-    keyStoreType:
-      name: keyStoreType
-      value: InMemoryKeyStore
-      description: blah
-      sensitive: false
+  type: InMemoryKeyStore
