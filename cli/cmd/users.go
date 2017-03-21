@@ -176,7 +176,12 @@ func apiCreateUser(username string, pubKey *rsa.PublicKey) (string, error) {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", Token))
 
-	resp, err := http.DefaultClient.Do(req)
+	client, err := httpClient()
+	if err != nil {
+		return "", err
+	}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return "", err
 	}
@@ -209,7 +214,12 @@ func apiDeleteUser(username string) error {
 	}
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", Token))
 
-	resp, err := http.DefaultClient.Do(req)
+	client, err := httpClient()
+	if err != nil {
+		return err
+	}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -233,7 +243,12 @@ func apiGetUser(username string) (*model.UserEntry, error) {
 		return nil, err
 	}
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", Token))
-	resp, err := http.DefaultClient.Do(req)
+	client, err := httpClient()
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}

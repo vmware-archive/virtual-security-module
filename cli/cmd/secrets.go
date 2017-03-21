@@ -166,7 +166,12 @@ func apiCreateSecret(secretId, secretData string) (string, error) {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", Token))
 
-	resp, err := http.DefaultClient.Do(req)
+	client, err := httpClient()
+	if err != nil {
+		return "", err
+	}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return "", err
 	}
@@ -199,7 +204,12 @@ func apiDeleteSecret(secretId string) error {
 	}
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", Token))
 
-	resp, err := http.DefaultClient.Do(req)
+	client, err := httpClient()
+	if err != nil {
+		return err
+	}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -223,7 +233,13 @@ func apiGetSecret(secretId string) (*model.SecretEntry, error) {
 		return nil, err
 	}
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", Token))
-	resp, err := http.DefaultClient.Do(req)
+
+	client, err := httpClient()
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
