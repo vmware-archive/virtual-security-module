@@ -76,7 +76,18 @@ func apiLogin(username string, privateKey *rsa.PrivateKey) (string, error) {
 	}
 
 	loginUrl := fmt.Sprintf("%v/login", Url)
-	resp, err := http.Post(loginUrl, "application/json", body)
+	req, err := http.NewRequest("POST", loginUrl, body)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client, err := httpClient()
+	if err != nil {
+		return "", err
+	}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return "", err
 	}
@@ -114,7 +125,13 @@ func apiLogin(username string, privateKey *rsa.PrivateKey) (string, error) {
 		return "", err
 	}
 
-	resp, err = http.Post(loginUrl, "application/json", body)
+	req, err = http.NewRequest("POST", loginUrl, body)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err = client.Do(req)
 	if err != nil {
 		return "", err
 	}

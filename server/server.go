@@ -253,7 +253,7 @@ func (server *Server) ListenAndServe() error {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			fmt.Printf("Listening on %v\n", addr)
+			fmt.Printf("(http) Listening on %v\n", addr)
 			log.Fatal(server.httpServer.ListenAndServe())
 		}()
 	}
@@ -264,8 +264,8 @@ func (server *Server) ListenAndServe() error {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			fmt.Printf("Listening on %v\n", addr)
-			log.Fatal(server.httpsServer.ListenAndServeTLS(server.tlsConfig.caCertFile, server.tlsConfig.caKeyFile))
+			fmt.Printf("(https) Listening on %v\n", addr)
+			log.Fatal(server.httpsServer.ListenAndServeTLS(server.tlsConfig.serverCertFile, server.tlsConfig.serverKeyFile))
 		}()
 	}
 
