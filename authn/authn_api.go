@@ -1,7 +1,7 @@
 // Copyright © 2017 VMware, Inc. All Rights Reserved.
 // SPDX-License-Identifier: BSD-2-Clause
 
-// Package classification Authentication API
+// Package classification Virtual Security Module
 //
 // User Management and Authentication API
 //	BasePath: /
@@ -162,6 +162,12 @@ type UserCreationResponse struct {
 type UserEntryResponse struct {
 	// in:body
 	UserEntry model.UserEntry
+}
+
+// swagger:parameters Login
+type LoginParam struct {
+	// in:body
+	LoginReq model.LoginRequest
 }
 
 // swagger:response LoginResp

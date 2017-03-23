@@ -76,10 +76,33 @@ If the server, "vsmd", is already built, you can start it
 ## Browsing the API documentation
 The server supports a RESTful API, which is documented using
 [Swagger](http://swagger.io/). The server's swagger specification file is
-**"swagger.json"**, which resides in the root dir (if it's not there, you need
-to generate it using "make doc"). There are multiple tools for loading and
-browsing a Swagger spec; we've successfully tested the procedure described
-at http://swagger.io/docs/ (look for "Swagger UI Documentation").
+**"swagger.json"**, which resides in the "doc" dir (if it's not there, you
+need to generate it using "make -B doc"). There are multiple tools for loading
+and browsing a Swagger spec; we've successfully tested the procedure described
+at http://swagger.io/docs/ (look for "Swagger UI Documentation"), as follows:
+
+```
+make doc-serve
+```
+
+Will spin up a http server to serve the "swagger.json" file. The port on which
+the server listens on will be printed on the screen:
+
+```
+swagger serve --no-open /.../swagger.json
+2017/03/23 14:09:05 serving docs at http://:::33998/docs
+```
+
+In our example the port number is 33998.
+Now open a web browser and open <swagger-ui-root>/dist/index.html.
+Replace the address at the top according to your port number:
+
+```
+http://localhost:33998/swagger.json
+```
+
+You should see and browse the API documentation.
+
 
 ## Using the cli tool
 The cli tool is called **"vsm-cli"**, and is available in <root-dir>/dist.
