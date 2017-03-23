@@ -3,7 +3,7 @@
 # virtual-security-module
 
 ## Overview
-VSM (Virtual Secure Module) helps organizations to keep secrets (e.g. credentials) secure and manage their lifecycle.
+VSM (Virtual Security Module) helps organizations to keep secrets (e.g. credentials) secure and manage their lifecycle.
 
 Following is a list of high-level capabilities:
  * **Secure Storage of Secrets** - Each secret is encrypted using a generated encryption key which is not persisted anywhere. Instead,
@@ -79,7 +79,7 @@ make doc
 ```
 
 ## Documentation
-The [HOWTO](docs/HOWTO.md) describes how to accomplish some common tasks.
+The [HOWTO](doc/HOWTO.md) describes how to accomplish some common tasks.
 
 ## Releases & Major Branches
 
