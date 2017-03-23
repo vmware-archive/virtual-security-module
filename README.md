@@ -91,3 +91,4 @@ questions about the CLA process, please refer to our [FAQ](https://cla.vmware.co
 refer to [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
+Virtual Security Module is licensed under the [BSD-2 license](https://github.com/vmware/virtual-security-module/blob/master/LICENSE).
