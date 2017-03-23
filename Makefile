@@ -49,11 +49,11 @@ test:
 	$(GO) test ./...
 
 doc:
-	swagger generate spec -o $(DOC)
+	swagger generate spec -o $(DOC) -b ./server/main
 
 doc-serve:
 	swagger serve --no-open $(DOC)
 
 clean:
 	$(GO) clean .
-	rm -rf $(DIST_DIR) $(BIN_DIR) $(PKG_DIR) $(DOC_DIR)
+	rm -rf $(DIST_DIR) $(BIN_DIR) $(PKG_DIR)

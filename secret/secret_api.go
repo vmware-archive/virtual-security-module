@@ -1,10 +1,10 @@
 // Copyright © 2017 VMware, Inc. All Rights Reserved.
 // SPDX-License-Identifier: BSD-2-Clause
 
-// Package classification Secret Management API
+// Package classification Virtual Security Module
 //
 // Secret Lifecycle Management API
-//	BasePath: /secrets
+//	BasePath: /
 //
 // swagger:meta
 package secret
@@ -19,7 +19,7 @@ import (
 )
 
 func (secretManager *SecretManager) RegisterEndpoints(mux *denco.Mux) []denco.Handler {
-	// swagger:route POST / secrets CreateSecret
+	// swagger:route POST /secrets secrets CreateSecret
 	//
 	// Creates a new secret
 	//
@@ -40,7 +40,7 @@ func (secretManager *SecretManager) RegisterEndpoints(mux *denco.Mux) []denco.Ha
 		}
 	}
 
-	// swagger:route GET /{id} secrets GetSecret
+	// swagger:route GET /secrets/{id} secrets GetSecret
 	//
 	// Retrieves a secret
 	//
@@ -68,7 +68,7 @@ func (secretManager *SecretManager) RegisterEndpoints(mux *denco.Mux) []denco.Ha
 		}
 	}
 
-	// swagger:route DELETE /{id} secrets DeleteSecret
+	// swagger:route DELETE /secrets/{id} secrets DeleteSecret
 	//
 	// Deletes a secret
 	//
