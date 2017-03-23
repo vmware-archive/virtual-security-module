@@ -78,8 +78,8 @@ make doc
 ./dist/vsm-cli
 ```
 
-
 ## Documentation
+The [HOWTO](docs/HOWTO.md) describes how to accomplish some common tasks.
 
 ## Releases & Major Branches
 
