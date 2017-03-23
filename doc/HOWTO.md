@@ -5,13 +5,13 @@
 ## Overview
 In this section we're going to provide information about how to accomplish some common tasks with VSM:
 
- * [Configuring the server](configuring-the-server)
- * [Starting the server](starting-the-server)
- * [Browsing the API documentation](browsing-the-api-documentation)
- * [Using the cli tool](using-the-cli-tool)
- * [Logging in](logging-in)
- * [User management](user-management)
- * [Secret management](secret-management)
+ * [Configuring the server](#configuring-the-server)
+ * [Starting the server](#starting-the-server)
+ * [Browsing the API documentation](#browsing-the-api-documentation)
+ * [Using the cli tool](#using-the-cli-tool)
+ * [Logging in](#logging-in)
+ * [User management](#user-management)
+ * [Secret management](#secret-management)
  * placeholder: auto-rotating secrets
  * placeholder: Namespace management
  * placeholder: Authorization policies
@@ -114,7 +114,7 @@ provide an auth token. But to get a token you need to log-in, which we haven't
 cover yet. In the next section we'll show you how to log-in, grab the generated
 token and use it in your further interactions with the server.
 
-## [Logging in]
+## Logging in
 To log-in you need to have an existing user. If you haven't created a user yet,
 that's fine (in fact, you have be logged-in to create a user, so this is kind of
 a recursive problem) - the server has already initialized itself with a root user.
@@ -155,7 +155,7 @@ You will use the token in your further authentication with the server. Try:
 
 You should see the returned root user info.
 
-** User management
+## User management
 Loggin in as root is fine, but it's dangerous - as root you can perform any action on
 any object. So typically root will create additional users and delegate them certain
 permissions. User management allows you to:
@@ -212,7 +212,7 @@ now, so we're actually going to delete the user:
 ./vsm-cli --token $TOKEN users delete test-user
 ```
 
-** Secret Management
+## Secret Management
 In this section we're going to create secrets and manage their life-cycle. Finally!
 
 let's start by creating a secret:
