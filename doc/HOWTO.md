@@ -5,13 +5,13 @@
 ## Overview
 In this section we're going to provide information about how to accomplish some common tasks with VSM:
 
- * [Configuring the server]
- * [Starting the server]
- * [Browsing the API documentation]
- * [Using the cli tool]
- * [Logging in]
- * [User management]
- * [Secret management]
+ * [Configuring the server](configuring-the-server)
+ * [Starting the server](starting-the-server)
+ * [Browsing the API documentation](browsing-the-api-documentation)
+ * [Using the cli tool](using-the-cli-tool)
+ * [Logging in](logging-in)
+ * [User management](user-management)
+ * [Secret management](secret-management)
  * placeholder: auto-rotating secrets
  * placeholder: Namespace management
  * placeholder: Authorization policies

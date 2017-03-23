@@ -3,7 +3,6 @@ OS := linux darwin windows
 
 SERVER_TARGET := vsmd
 CLI_TARGET := vsm-cli
-DOC := swagger.json
 
 PROJECT_DIR := $(shell pwd)
 GOPATH := $(abspath $(PROJECT_DIR)/../../../../)
@@ -11,6 +10,8 @@ GO_VERSION := "1.8"
 PKG_DIR := $(PROJECT_DIR)/pkg
 BIN_DIR := $(PROJECT_DIR)/bin
 DIST_DIR := $(PROJECT_DIR)/dist
+DOC_DIR := $(PROJECT_DIR)/doc
+DOC := $(DOC_DIR)/swagger.json
 
 GO_ENV := GOPATH=$(GOPATH)
 GO := $(GO_ENV) go
@@ -48,11 +49,11 @@ test:
 	$(GO) test ./...
 
 doc:
-	swagger generate spec -o ./$(DOC)
+	swagger generate spec -o $(DOC)
 
 doc-serve:
 	swagger serve --no-open $(DOC)
 
 clean:
 	$(GO) clean .
-	rm -rf $(DIST_DIR) $(BIN_DIR) $(PKG_DIR)
+	rm -rf $(DIST_DIR) $(BIN_DIR) $(PKG_DIR) $(DOC_DIR)
