@@ -35,6 +35,13 @@ func (secretManager *SecretManager) RegisterEndpoints(mux *denco.Mux) []denco.Ha
 		}
 
 		id, err := secretManager.CreateSecret(secretEntry)
+		if err != nil {
+			if e := util.WriteErrorResponse(w, err); e != nil {
+				log.Printf("failed to write error response: %v\n", e)
+			}
+			return
+		}
+
 		if e := util.WriteResponse(w, &model.CreationResponse{Id: id}, http.StatusCreated); e != nil {
 			log.Printf("failed to write response: %v\n", e)
 		}
