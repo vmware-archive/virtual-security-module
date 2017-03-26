@@ -92,3 +92,56 @@ func DataStoreEntryToUserEntry(dataStoreEntry *DataStoreEntry) (*model.UserEntry
 
 	return userEntry, nil
 }
+
+func NamespaceEntryToDataStoreEntry(namespaceEntry *model.NamespaceEntry) (*DataStoreEntry, error) {
+	metaData := &MetaData{
+		OwnerEntryId: namespaceEntry.OwnerEntryId,
+	}
+	metaDataBytes, err := json.Marshal(metaData)
+	if err != nil {
+		return nil, util.ErrInternal
+	}
+
+	data, err := json.Marshal(namespaceEntry.AuthorizationPolicyIds)
+	if err != nil {
+		return nil, util.ErrInternal
+	}
+
+	dataStoreEntry := &DataStoreEntry{
+		Id:       namespaceEntry.Path,
+		Data:     data,
+		MetaData: string(metaDataBytes),
+	}
+
+	return dataStoreEntry, nil
+}
+
+func DataStoreEntryToNamespaceEntry(dataStoreEntry *DataStoreEntry) (*model.NamespaceEntry, error) {
+	var metaData MetaData
+	if err := json.Unmarshal([]byte(dataStoreEntry.MetaData), &metaData); err != nil {
+		return nil, util.ErrInternal
+	}
+
+	var authorizationPolicyIds []string
+	if err := json.Unmarshal(dataStoreEntry.Data, &authorizationPolicyIds); err != nil {
+		return nil, util.ErrInternal
+	}
+
+	namespaceEntry := &model.NamespaceEntry{
+		Path:                   dataStoreEntry.Id,
+		OwnerEntryId:           metaData.OwnerEntryId,
+		AuthorizationPolicyIds: authorizationPolicyIds,
+	}
+
+	return namespaceEntry, nil
+}
+
+func DataStoreEntriesToPaths(dataStoreEntries []*DataStoreEntry) []string {
+	paths := make([]string, 0, len(dataStoreEntries))
+
+	for _, dataStoreEntry := range dataStoreEntries {
+		paths = append(paths, dataStoreEntry.Id)
+	}
+
+	return paths
+}

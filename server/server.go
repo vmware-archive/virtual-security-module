@@ -13,6 +13,7 @@ import (
 	"github.com/vmware/virtual-security-module/authn"
 	"github.com/vmware/virtual-security-module/config"
 	"github.com/vmware/virtual-security-module/model"
+	"github.com/vmware/virtual-security-module/namespace"
 	"github.com/vmware/virtual-security-module/secret"
 	"github.com/vmware/virtual-security-module/util"
 	"github.com/vmware/virtual-security-module/vds"
@@ -43,30 +44,35 @@ type TlsConfig struct {
 }
 
 type Server struct {
-	modules      []Module
-	authnManager *authn.AuthnManager
-	httpPipeline http.Handler
-	httpServer   *http.Server
-	httpsServer  *http.Server
-	useHttp      bool
-	useHttps     bool
-	httpPort     int
-	httpsPort    int
-	tlsConfig    *TlsConfig
-	dataStore    vds.DataStoreAdapter
-	keyStore     vks.KeyStoreAdapter
+	modules          []Module
+	authnManager     *authn.AuthnManager
+	namespaceManager *namespace.NamespaceManager
+	httpPipeline     http.Handler
+	httpServer       *http.Server
+	httpsServer      *http.Server
+	useHttp          bool
+	useHttps         bool
+	httpPort         int
+	httpsPort        int
+	tlsConfig        *TlsConfig
+	dataStore        vds.DataStoreAdapter
+	keyStore         vks.KeyStoreAdapter
 }
 
 func New() *Server {
 	authnManager := authn.New()
+	namespaceManager := namespace.New()
+
 	modules := []Module{
-		secret.New(),
 		authnManager,
+		namespaceManager,
+		secret.New(),
 	}
 
 	return &Server{
-		modules:      modules,
-		authnManager: authnManager,
+		modules:          modules,
+		authnManager:     authnManager,
+		namespaceManager: namespaceManager,
 	}
 }
 
@@ -123,41 +129,13 @@ func (server *Server) initKeyStoreFromConfig(configuration *config.Config) error
 func (server *Server) initSelfFromConfig(configuration *config.Config) error {
 	server.useHttp = false
 	if configuration.HttpConfig.Enabled {
-		server.useHttp = true
-		httpPort := configuration.HttpConfig.Port
-		server.httpPort = DefaultHttpPort
-		if httpPort != 0 {
-			server.httpPort = httpPort
-		}
+		server.initHttp(configuration)
 	}
 
 	server.useHttps = false
 	if configuration.HttpsConfig.Enabled {
-		server.useHttps = true
-		httpsPort := configuration.HttpsConfig.Port
-		server.httpsPort = DefaultHttpsPort
-		if httpsPort != 0 {
-			server.httpsPort = httpsPort
-		}
-
-		if configuration.HttpsConfig.CaCert == "" {
-			return fmt.Errorf("%v cannot be empty", PropertyNameCaCert)
-		}
-		if configuration.HttpsConfig.CaKey == "" {
-			return fmt.Errorf("%v cannot be empty", PropertyNameCaKey)
-		}
-		if configuration.HttpsConfig.ServerCert == "" {
-			return fmt.Errorf("%v cannot be empty", PropertyNameServerCert)
-		}
-		if configuration.HttpsConfig.ServerCert == "" {
-			return fmt.Errorf("%v cannot be empty", PropertyNameServerCert)
-		}
-
-		server.tlsConfig = &TlsConfig{
-			caCertFile:     configuration.HttpsConfig.CaCert,
-			caKeyFile:      configuration.HttpsConfig.CaKey,
-			serverCertFile: configuration.HttpsConfig.ServerCert,
-			serverKeyFile:  configuration.HttpsConfig.ServerKey,
+		if err := server.initHttps(configuration); err != nil {
+			return err
 		}
 	}
 
@@ -165,21 +143,78 @@ func (server *Server) initSelfFromConfig(configuration *config.Config) error {
 		return fmt.Errorf("http and/or https need to be enabled")
 	}
 
-	if _, err := server.authnManager.GetUser("root"); err != nil {
-		rootInitPubKey := configuration.ServerConfig.RootInitPubKey
-		if rootInitPubKey == "" {
-			return fmt.Errorf("%v cannot be empty", PropertyNameRootInitPubKey)
-		}
-
-		if e := server.initRootUser(rootInitPubKey); e != nil {
-			return fmt.Errorf("Failed to initialize root user: %v", e)
+	if server.firstTimeInitRequired() {
+		if err := server.firstTimeInit(configuration); err != nil {
+			return fmt.Errorf("first time initialization failed: %v", err)
 		}
 	}
 
 	return nil
 }
 
-func (server *Server) initRootUser(rootInitPubKey string) error {
+func (server *Server) firstTimeInitRequired() bool {
+	_, err := server.authnManager.GetUser("root")
+	return err != nil
+}
+
+func (server *Server) firstTimeInit(configuration *config.Config) error {
+	if err := server.initRootUser(configuration); err != nil {
+		return fmt.Errorf("Failed to initialize root user: %v", err)
+	}
+
+	if err := server.initRootNamespace(); err != nil {
+		return fmt.Errorf("Failed to initialize root namespace: %v", err)
+	}
+
+	return nil
+}
+
+func (server *Server) initHttp(configuration *config.Config) {
+	server.useHttp = true
+	httpPort := configuration.HttpConfig.Port
+	server.httpPort = DefaultHttpPort
+	if httpPort != 0 {
+		server.httpPort = httpPort
+	}
+}
+
+func (server *Server) initHttps(configuration *config.Config) error {
+	server.useHttps = true
+	httpsPort := configuration.HttpsConfig.Port
+	server.httpsPort = DefaultHttpsPort
+	if httpsPort != 0 {
+		server.httpsPort = httpsPort
+	}
+
+	if configuration.HttpsConfig.CaCert == "" {
+		return fmt.Errorf("%v cannot be empty", PropertyNameCaCert)
+	}
+	if configuration.HttpsConfig.CaKey == "" {
+		return fmt.Errorf("%v cannot be empty", PropertyNameCaKey)
+	}
+	if configuration.HttpsConfig.ServerCert == "" {
+		return fmt.Errorf("%v cannot be empty", PropertyNameServerCert)
+	}
+	if configuration.HttpsConfig.ServerCert == "" {
+		return fmt.Errorf("%v cannot be empty", PropertyNameServerCert)
+	}
+
+	server.tlsConfig = &TlsConfig{
+		caCertFile:     configuration.HttpsConfig.CaCert,
+		caKeyFile:      configuration.HttpsConfig.CaKey,
+		serverCertFile: configuration.HttpsConfig.ServerCert,
+		serverKeyFile:  configuration.HttpsConfig.ServerKey,
+	}
+
+	return nil
+}
+
+func (server *Server) initRootUser(configuration *config.Config) error {
+	rootInitPubKey := configuration.ServerConfig.RootInitPubKey
+	if rootInitPubKey == "" {
+		return fmt.Errorf("%v cannot be empty", PropertyNameRootInitPubKey)
+	}
+
 	rsaPubKey, err := util.ReadRSAPublicKey(rootInitPubKey)
 	if err != nil {
 		return fmt.Errorf("Root initialization failed: %v", err)
@@ -196,6 +231,16 @@ func (server *Server) initRootUser(rootInitPubKey string) error {
 	}
 
 	_, err = server.authnManager.CreateUser(ue)
+
+	return err
+}
+
+func (server *Server) initRootNamespace() error {
+	rootNamespace := &model.NamespaceEntry{
+		Path: "/",
+	}
+
+	_, err := server.namespaceManager.CreateNamespace(rootNamespace)
 
 	return err
 }

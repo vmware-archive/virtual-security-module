@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "description": "User Management and Authentication API",
+    "description": "Secret Lifecycle Management API",
     "title": "Virtual Security Module"
   },
   "basePath": "/",
@@ -28,6 +28,49 @@
             "$ref": "#/responses/LoginResp"
           }
         }
+      }
+    },
+    "/namespaces*": {
+      "get": {
+        "description": "Retrieves a namespace",
+        "tags": [
+          "namespaces"
+        ],
+        "operationId": "GetNamespace",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/NamespaceEntryResponse"
+          }
+        }
+      },
+      "post": {
+        "description": "Creates a new namespace",
+        "tags": [
+          "namespaces"
+        ],
+        "operationId": "CreateNamespace",
+        "parameters": [
+          {
+            "name": "NamespaceEntry",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/NamespaceEntry"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "$ref": "#/responses/NamespaceCreationResponse"
+          }
+        }
+      },
+      "delete": {
+        "description": "Deletes a namespace",
+        "tags": [
+          "namespaces"
+        ],
+        "operationId": "DeleteNamespace",
+        "responses": {}
       }
     },
     "/secrets": {
@@ -146,6 +189,34 @@
       },
       "x-go-package": "github.com/vmware/virtual-security-module/model"
     },
+    "NamespaceEntry": {
+      "type": "object",
+      "properties": {
+        "authorizationPolicyIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "AuthorizationPolicyIds"
+        },
+        "childPaths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "ChildPaths"
+        },
+        "ownerEntryId": {
+          "type": "string",
+          "x-go-name": "OwnerEntryId"
+        },
+        "path": {
+          "type": "string",
+          "x-go-name": "Path"
+        }
+      },
+      "x-go-package": "github.com/vmware/virtual-security-module/model"
+    },
     "SecretEntry": {
       "type": "object",
       "properties": {
@@ -193,13 +264,6 @@
           },
           "x-go-name": "Credentials"
         },
-        "roleEntryIds": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "x-go-name": "RoleEntryIds"
-        },
         "username": {
           "type": "string",
           "x-go-name": "Username"
@@ -212,6 +276,21 @@
     "LoginResp": {
       "schema": {
         "$ref": "#/definitions/LoginResponse"
+      }
+    },
+    "NamespaceCreationResponse": {
+      "schema": {
+        "type": "object",
+        "properties": {
+          "NamespaceId": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "NamespaceEntryResponse": {
+      "schema": {
+        "$ref": "#/definitions/NamespaceEntry"
       }
     },
     "SecretCreationResponse": {
