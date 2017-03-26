@@ -7,15 +7,14 @@ import (
 )
 
 type UserEntry struct {
-	Username     string   `json:"username"`
-	Credentials  []byte   `json:"credentials"`
-	RoleEntryIds []string `json:"roleEntryIds"`
+	Username    string `json:"username"`
+	Credentials []byte `json:"credentials"`
 }
 
 type RoleEntry struct {
-	Id           string   `json:"id"`
-	Label        string   `json:"label"`
-	UserEntryIds []string `json:"userEntryIds"`
+	Scope     string   `json:"scope"`
+	Label     string   `json:"label"`
+	Usernames []string `json:"usernames"`
 }
 
 type SecretEntry struct {
@@ -28,11 +27,10 @@ type SecretEntry struct {
 }
 
 type NamespaceEntry struct {
-	Id                     string   `json:"id"`
-	PathElement            string   `json:"pathElement"`
+	Path                   string   `json:"path"`
 	OwnerEntryId           string   `json:"ownerEntryId"`
-	ParentNamespaceEntryId string   `json:"parentNamespaceId"`
 	AuthorizationPolicyIds []string `json:"authorizationPolicyIds"`
+	ChildPaths             []string `json:"childPaths"`
 }
 
 const (

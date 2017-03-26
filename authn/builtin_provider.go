@@ -176,9 +176,8 @@ func (p *BuiltinProvider) CreateUser(userEntry *model.UserEntry) (string, error)
 	}
 
 	ue := &model.UserEntry{
-		Username:     userEntry.Username,
-		Credentials:  encryptedCredentials,
-		RoleEntryIds: userEntry.RoleEntryIds,
+		Username:    userEntry.Username,
+		Credentials: encryptedCredentials,
 	}
 
 	// create a data store entry and save it
@@ -236,9 +235,8 @@ func (p *BuiltinProvider) GetUser(username string) (*model.UserEntry, error) {
 	}
 
 	ue := &model.UserEntry{
-		Username:     userEntry.Username,
-		Credentials:  credentials,
-		RoleEntryIds: userEntry.RoleEntryIds,
+		Username:    userEntry.Username,
+		Credentials: credentials,
 	}
 
 	return ue, nil

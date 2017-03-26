@@ -5,6 +5,7 @@ package model
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/vmware/virtual-security-module/util"
 )
@@ -52,4 +53,24 @@ func ExtractAndValidateLoginRequest(req *http.Request) (*LoginRequest, error) {
 	}
 
 	return &loginRequest, nil
+}
+
+func ExtractAndValidateNamespaceEntry(req *http.Request) (*NamespaceEntry, error) {
+	decoder := json.NewDecoder(req.Body)
+	var namespaceEntry NamespaceEntry
+	if err := decoder.Decode(&namespaceEntry); err != nil {
+		return nil, util.ErrInputValidation
+	}
+	defer req.Body.Close()
+
+	reqNamespacePath := strings.TrimPrefix(req.URL.Path, "/namespaces")
+	if !strings.HasPrefix(namespaceEntry.Path, reqNamespacePath) {
+		return nil, util.ErrInputValidation
+	}
+
+	if len(namespaceEntry.ChildPaths) != 0 {
+		return nil, util.ErrInputValidation
+	}
+
+	return &namespaceEntry, nil
 }

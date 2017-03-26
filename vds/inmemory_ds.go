@@ -4,6 +4,7 @@ package vds
 
 import (
 	"fmt"
+	"path"
 	"sync"
 
 	"github.com/vmware/virtual-security-module/config"
@@ -94,6 +95,35 @@ func (ds *InMemoryDS) DeleteEntry(entryId string) error {
 	delete(ds.entryMap, entryId)
 
 	return nil
+}
+
+func (ds *InMemoryDS) SearchEntries(entryIdPattern string) ([]*DataStoreEntry, error) {
+	ds.mutex.Lock()
+	defer ds.mutex.Unlock()
+
+	dsEntries := make([]*DataStoreEntry, 0)
+
+	for entryId, entry := range ds.entryMap {
+		matched, err := path.Match(entryIdPattern, entryId)
+		if err != nil {
+			return dsEntries, err
+		}
+
+		if matched {
+			buf := make([]byte, len(entry.Data))
+			copy(buf, entry.Data)
+
+			dsEntry := &DataStoreEntry{
+				Id:       entry.Id,
+				Data:     buf,
+				MetaData: entry.MetaData,
+			}
+
+			dsEntries = append(dsEntries, dsEntry)
+		}
+	}
+
+	return dsEntries, nil
 }
 
 func (ds *InMemoryDS) Type() string {
