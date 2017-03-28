@@ -67,7 +67,7 @@ make test
 ```
 7. To generate RESTful API docs run:
 ```
-make -B doc
+make doc
 ```
 8. To start the server run:
 ```
