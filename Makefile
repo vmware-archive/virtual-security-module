@@ -16,6 +16,7 @@ DOC := $(DOC_DIR)/swagger.json
 GO_ENV := GOPATH=$(GOPATH)
 GO := $(GO_ENV) go
 
+.PHONY: doc
 default: build
 
 install-deps:

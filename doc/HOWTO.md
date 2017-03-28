@@ -77,7 +77,7 @@ If the server, "vsmd", is already built, you can start it
 The server supports a RESTful API, which is documented using
 [Swagger](http://swagger.io/). The server's swagger specification file is
 **"swagger.json"**, which resides in the "doc" dir (if it's not there, you
-need to generate it using "make -B doc"). There are multiple tools for loading
+need to generate it using "make doc"). There are multiple tools for loading
 and browsing a Swagger spec; we've successfully tested the procedure described
 at http://swagger.io/docs/ (look for "Swagger UI Documentation"), as follows:
 
