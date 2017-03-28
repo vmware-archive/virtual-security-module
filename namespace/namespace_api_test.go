@@ -34,7 +34,7 @@ func apiTestCleanup() {
 }
 
 func TestAPICreateAndGetRootNamespace(t *testing.T) {
-	rootNS := "/"
+	rootNS := "/namespace0"
 	id, err := apiCreateNamespace(rootNS)
 	if err != nil {
 		t.Fatalf("Failed to create namespace: %v", err)
@@ -51,9 +51,9 @@ func TestAPICreateAndGetRootNamespace(t *testing.T) {
 }
 
 func TestAPICreateAndGetChildNamespace(t *testing.T) {
-	rootNS := "/"
-	childNS := "/child"
-	grandchildNS := "/child/grandchild"
+	rootNS := "/namespace0"
+	childNS := "/namespace0/child"
+	grandchildNS := "/namespace0/child/grandchild"
 
 	if _, err := apiCreateNamespace(rootNS); err != nil {
 		t.Fatalf("Failed to create namespace: %v", err)
@@ -93,19 +93,19 @@ func TestAPICreateAndGetChildNamespace(t *testing.T) {
 }
 
 func TestAPINamespaceNavigation(t *testing.T) {
-	if _, err := apiCreateNamespace("/"); err != nil {
+	if _, err := apiCreateNamespace("/namespace0"); err != nil {
 		t.Fatalf("Failed to create namespace: %v", err)
 	}
 
 	childCount := 3
 	for i := 0; i < childCount; i++ {
-		path := fmt.Sprintf("/%v", i)
+		path := fmt.Sprintf("/namespace0/%v", i)
 		if _, err := apiCreateNamespace(path); err != nil {
 			t.Fatalf("Failed to create namespace: %v", err)
 		}
 	}
 
-	root2, err := nm.GetNamespace("/")
+	root2, err := nm.GetNamespace("/namespace0")
 	if err != nil {
 		t.Fatalf("Failed to get namespace: %v", err)
 	}
@@ -124,7 +124,7 @@ func TestAPINamespaceNavigation(t *testing.T) {
 		}
 	}
 
-	if err := nm.DeleteNamespace("/"); err != nil {
+	if err := nm.DeleteNamespace("/namespace0"); err != nil {
 		t.Fatalf("Failed to delete namespace: %v", err)
 	}
 }

@@ -162,10 +162,6 @@ func (server *Server) firstTimeInit(configuration *config.Config) error {
 		return fmt.Errorf("Failed to initialize root user: %v", err)
 	}
 
-	if err := server.initRootNamespace(); err != nil {
-		return fmt.Errorf("Failed to initialize root namespace: %v", err)
-	}
-
 	return nil
 }
 
@@ -231,16 +227,6 @@ func (server *Server) initRootUser(configuration *config.Config) error {
 	}
 
 	_, err = server.authnManager.CreateUser(ue)
-
-	return err
-}
-
-func (server *Server) initRootNamespace() error {
-	rootNamespace := &model.NamespaceEntry{
-		Path: "/",
-	}
-
-	_, err := server.namespaceManager.CreateNamespace(rootNamespace)
 
 	return err
 }

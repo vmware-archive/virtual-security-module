@@ -21,7 +21,6 @@ type SecretEntry struct {
 	Id                     string    `json:"id"`
 	SecretData             []byte    `json:"secretData"`
 	OwnerEntryId           string    `json:"ownerEntryId"`
-	NamespaceEntryId       string    `json:"namespaceEntryId"`
 	ExpirationTime         time.Time `json:"expirationTime"`
 	AuthorizationPolicyIds []string  `json:"authorizationPolicyIds"`
 }

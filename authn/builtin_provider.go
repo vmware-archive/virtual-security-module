@@ -105,7 +105,7 @@ func (p *BuiltinProvider) Login(l *model.LoginRequest) (token string, e error) {
 	if l.Challenge == "" {
 		// first phase of login: generate a challenge from the user's public
 		// key and send to client
-		entryId := l.Username
+		entryId := vds.UsernameToPath(l.Username)
 
 		dataStoreEntry, err1 := p.dataStore.ReadEntry(entryId)
 		key, err2 := p.keyStore.Read(entryId)
@@ -155,8 +155,8 @@ func (p *BuiltinProvider) Type() string {
 
 func (p *BuiltinProvider) CreateUser(userEntry *model.UserEntry) (string, error) {
 	// verify user doesn't exist
-	_, err := p.dataStore.ReadEntry(userEntry.Username)
-	if err == nil {
+	userpath := vds.UsernameToPath(userEntry.Username)
+	if _, err := p.dataStore.ReadEntry(userpath); err == nil {
 		return "", util.ErrAlreadyExists
 	}
 
@@ -190,7 +190,7 @@ func (p *BuiltinProvider) CreateUser(userEntry *model.UserEntry) (string, error)
 	}
 
 	// persist key using virtual key store
-	if err := p.keyStore.Write(ue.Username, key); err != nil {
+	if err := p.keyStore.Write(userpath, key); err != nil {
 		return "", err
 	}
 
@@ -198,11 +198,13 @@ func (p *BuiltinProvider) CreateUser(userEntry *model.UserEntry) (string, error)
 }
 
 func (p *BuiltinProvider) DeleteUser(username string) error {
-	if err := p.dataStore.DeleteEntry(username); err != nil {
+	userpath := vds.UsernameToPath(username)
+
+	if err := p.dataStore.DeleteEntry(userpath); err != nil {
 		return err
 	}
 
-	if err := p.keyStore.Delete(username); err != nil {
+	if err := p.keyStore.Delete(userpath); err != nil {
 		return err
 	}
 
@@ -210,12 +212,14 @@ func (p *BuiltinProvider) DeleteUser(username string) error {
 }
 
 func (p *BuiltinProvider) GetUser(username string) (*model.UserEntry, error) {
-	dataStoreEntry, err := p.dataStore.ReadEntry(username)
+	userpath := vds.UsernameToPath(username)
+
+	dataStoreEntry, err := p.dataStore.ReadEntry(userpath)
 	if err != nil {
 		return nil, err
 	}
 
-	key, err := p.keyStore.Read(username)
+	key, err := p.keyStore.Read(userpath)
 	if err != nil {
 		return nil, err
 	}

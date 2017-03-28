@@ -46,7 +46,7 @@ func TestMain(m *testing.M) {
 
 func TestCreateAndGetNamespace(t *testing.T) {
 	ne := &model.NamespaceEntry{
-		Path:                   "/",
+		Path:                   "/namespace0",
 		OwnerEntryId:           "user0",
 		AuthorizationPolicyIds: []string{},
 	}
@@ -76,7 +76,7 @@ func TestCreateAndGetNamespace(t *testing.T) {
 
 func TestCreateAlreadyExists(t *testing.T) {
 	ne := &model.NamespaceEntry{
-		Path:                   "/",
+		Path:                   "/namespace0",
 		OwnerEntryId:           "user0",
 		AuthorizationPolicyIds: []string{},
 	}
@@ -91,7 +91,7 @@ func TestCreateAlreadyExists(t *testing.T) {
 	}
 
 	child := &model.NamespaceEntry{
-		Path:                   "/child",
+		Path:                   "/namespace0/child",
 		OwnerEntryId:           "user0",
 		AuthorizationPolicyIds: []string{},
 	}
@@ -116,7 +116,7 @@ func TestCreateAlreadyExists(t *testing.T) {
 
 func TestCreateParentNotExists(t *testing.T) {
 	ne := &model.NamespaceEntry{
-		Path:                   "/child",
+		Path:                   "/namespace0/child",
 		OwnerEntryId:           "user0",
 		AuthorizationPolicyIds: []string{},
 	}
@@ -134,7 +134,7 @@ func TestGetNotExists(t *testing.T) {
 
 func TestDeleteParentNotEmpty(t *testing.T) {
 	root := &model.NamespaceEntry{
-		Path:                   "/",
+		Path:                   "/namespace0",
 		OwnerEntryId:           "user0",
 		AuthorizationPolicyIds: []string{},
 	}
@@ -145,7 +145,7 @@ func TestDeleteParentNotEmpty(t *testing.T) {
 	}
 
 	child := &model.NamespaceEntry{
-		Path:                   "/child",
+		Path:                   "/namespace0/child",
 		OwnerEntryId:           "user0",
 		AuthorizationPolicyIds: []string{},
 	}
@@ -156,7 +156,7 @@ func TestDeleteParentNotEmpty(t *testing.T) {
 	}
 
 	grandchild := &model.NamespaceEntry{
-		Path:                   "/child/grandchild",
+		Path:                   "/namespace0/child/grandchild",
 		OwnerEntryId:           "user0",
 		AuthorizationPolicyIds: []string{},
 	}
@@ -189,7 +189,7 @@ func TestDeleteParentNotEmpty(t *testing.T) {
 
 func TestNamespaceNavigation(t *testing.T) {
 	root := &model.NamespaceEntry{
-		Path:                   "/",
+		Path:                   "/namespace0",
 		OwnerEntryId:           "user0",
 		AuthorizationPolicyIds: []string{},
 	}
@@ -201,7 +201,7 @@ func TestNamespaceNavigation(t *testing.T) {
 	childCount := 3
 	for i := 0; i < childCount; i++ {
 		child := &model.NamespaceEntry{
-			Path:                   fmt.Sprintf("/%v", i),
+			Path:                   fmt.Sprintf("/namespace0/%v", i),
 			OwnerEntryId:           fmt.Sprintf("user-%v", i),
 			AuthorizationPolicyIds: []string{},
 		}
@@ -211,7 +211,7 @@ func TestNamespaceNavigation(t *testing.T) {
 		}
 	}
 
-	root2, err := nm.GetNamespace("/")
+	root2, err := nm.GetNamespace("/namespace0")
 	if err != nil {
 		t.Fatalf("Failed to get namespace: %v", err)
 	}
@@ -221,7 +221,7 @@ func TestNamespaceNavigation(t *testing.T) {
 	}
 
 	for i := 0; i < childCount; i++ {
-		path := fmt.Sprintf("/%v", i)
+		path := fmt.Sprintf("/namespace0/%v", i)
 		expectedOwnerId := fmt.Sprintf("user-%v", i)
 
 		child, err := nm.GetNamespace(path)
@@ -236,5 +236,9 @@ func TestNamespaceNavigation(t *testing.T) {
 		if err := nm.DeleteNamespace(path); err != nil {
 			t.Fatalf("Failed to delete namespace: %v", err)
 		}
+	}
+
+	if err := nm.DeleteNamespace("/namespace0"); err != nil {
+		t.Fatalf("Failed to delete namespace: %v", err)
 	}
 }

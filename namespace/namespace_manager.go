@@ -30,6 +30,10 @@ func (namespaceManager *NamespaceManager) Init(configuration *config.Config, ds 
 	namespaceManager.dataStore = ds
 	namespaceManager.keyStore = ks
 
+	if err := namespaceManager.initNamespaces(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -44,9 +48,8 @@ func (namespaceManager *NamespaceManager) CreateNamespace(namespaceEntry *model.
 	}
 
 	if namespaceEntry.Path != "/" {
-		_, err = namespaceManager.dataStore.ReadEntry(path.Dir(namespaceEntry.Path))
-		if err != nil {
-			// parent path does not exist
+		// verify parent path exists
+		if _, err := namespaceManager.dataStore.ReadEntry(path.Dir(namespaceEntry.Path)); err != nil {
 			return "", util.ErrInputValidation
 		}
 	}
@@ -95,6 +98,34 @@ func (namespaceManager *NamespaceManager) DeleteNamespace(path string) error {
 	}
 
 	if err := namespaceManager.dataStore.DeleteEntry(path); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (namespaceManager *NamespaceManager) initNamespaces() error {
+	paths := []string{"/", "/users", "/secrets"}
+
+	for _, path := range paths {
+		if err := namespaceManager.createNamespaceIfNotExists(path); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (namespaceManager *NamespaceManager) createNamespaceIfNotExists(path string) error {
+	if _, err := namespaceManager.GetNamespace(path); err == nil {
+		return nil
+	}
+
+	namespaceEntry := &model.NamespaceEntry{
+		Path: path,
+	}
+
+	if _, err := namespaceManager.CreateNamespace(namespaceEntry); err != nil {
 		return err
 	}
 
