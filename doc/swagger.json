@@ -30,19 +30,7 @@
         }
       }
     },
-    "/namespaces*": {
-      "get": {
-        "description": "Retrieves a namespace",
-        "tags": [
-          "namespaces"
-        ],
-        "operationId": "GetNamespace",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/NamespaceEntryResponse"
-          }
-        }
-      },
+    "/namespaces": {
       "post": {
         "description": "Creates a new namespace",
         "tags": [
@@ -61,6 +49,20 @@
         "responses": {
           "201": {
             "$ref": "#/responses/NamespaceCreationResponse"
+          }
+        }
+      }
+    },
+    "/namespaces*": {
+      "get": {
+        "description": "Retrieves a namespace",
+        "tags": [
+          "namespaces"
+        ],
+        "operationId": "GetNamespace",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/NamespaceEntryResponse"
           }
         }
       },
@@ -96,7 +98,7 @@
         }
       }
     },
-    "/secrets/{id}": {
+    "/secrets/{path}": {
       "get": {
         "description": "Retrieves a secret",
         "tags": [
@@ -233,10 +235,6 @@
         "id": {
           "type": "string",
           "x-go-name": "Id"
-        },
-        "namespaceEntryId": {
-          "type": "string",
-          "x-go-name": "NamespaceEntryId"
         },
         "ownerEntryId": {
           "type": "string",

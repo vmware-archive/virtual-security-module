@@ -13,7 +13,7 @@ In this section we're going to provide information about how to accomplish some 
  * [User management](#user-management)
  * [Secret management](#secret-management)
  * placeholder: auto-rotating secrets
- * placeholder: Namespace management
+ * [Namespace management](#namespace-management)
  * placeholder: Authorization policies
  * placeholder: Cluster management
  * placeholder: Internals
@@ -235,7 +235,7 @@ now, so we're actually going to delete the user:
 ./vsm-cli --token $TOKEN users delete test-user
 ```
 
-## Secret Management
+## Secret management
 In this section we're going to create secrets and manage their life-cycle. Finally!
 
 let's start by creating a secret:
@@ -263,3 +263,43 @@ secret by providing its key:
 ```
 ./vsm-cli --token $TOKEN secrets delete coke-secret-formula
 ```
+
+## Namespace management
+VSM is a multi-tenant system. The primary construct that enables multi-tenancy
+is: namespace. The secrets namespace starts at "/secrets" and can be partitioned
+into multiple sub-namespaces, hierarchically. For example, let's create two
+sub-namespaces directly under "/secrets", then, in the first sub-namespace
+we'll create a secret and in the second sub-namespace we'll create a third
+sub-namespace and a secret in it:
+
+```
+./vsm-cli --token $TOKEN namespaces create /secrets/sub1
+./vsm-cli --token $TOKEN namespaces create /secrets/sub2
+./vsm-cli --token $TOKEN namespaces create /secrets/sub2/sub3
+./vsm-cli --token $TOKEN secrets create sub1/first-secret hello-first
+./vsm-cli --token $TOKEN secrets create sub2/sub3/second-secret hello-second
+```
+
+Now try to read the secrets:
+```
+./vsm-cli --token $TOKEN secrets get sub1/first-secret
+./vsm-cli --token $TOKEN secrets get sub2/sub3/second-secret
+```
+
+You should be able to retrieve the secrets.
+
+Of course, just partitioning a namespace is not enough for multi-tenancy - you
+need to be able to segregate each namespace. We'll do that when we learn about
+authorization.
+
+Namespaces in general do not need to live under "/secrets" - they are a more
+fundamental mechanism within VSM, which uses them for its own management; for
+example: users are created under the "/users" namespace. You can check this
+out, for example list all users through the namespaces command:
+
+```
+./vsm-cli --token $TOKEN namespaces get /users
+```
+
+All namespaces live under the root namespace "/", and all secrets live under
+"/secrets".

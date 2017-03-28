@@ -18,7 +18,7 @@ func ExtractAndValidateSecretEntry(req *http.Request) (*SecretEntry, error) {
 	}
 	defer req.Body.Close()
 
-	if len(secretEntry.SecretData) == 0 {
+	if secretEntry.Id == "" || len(secretEntry.SecretData) == 0 {
 		return nil, util.ErrInputValidation
 	}
 

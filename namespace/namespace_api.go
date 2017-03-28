@@ -20,7 +20,7 @@ import (
 )
 
 func (namespaceManager *NamespaceManager) RegisterEndpoints(mux *denco.Mux) []denco.Handler {
-	// swagger:route POST /namespaces* namespaces CreateNamespace
+	// swagger:route POST /namespaces namespaces CreateNamespace
 	//
 	// Creates a new namespace
 	//

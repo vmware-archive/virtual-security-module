@@ -4,10 +4,16 @@ package vds
 
 import (
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/vmware/virtual-security-module/model"
 	"github.com/vmware/virtual-security-module/util"
+)
+
+const (
+	secretsPathPrefix = "/secrets/"
+	usersPathPrefix   = "/users/"
 )
 
 type MetaData struct {
@@ -20,7 +26,6 @@ type MetaData struct {
 func SecretEntryToDataStoreEntry(secretEntry *model.SecretEntry) (*DataStoreEntry, error) {
 	metaData := &MetaData{
 		OwnerEntryId:           secretEntry.OwnerEntryId,
-		NamespaceEntryId:       secretEntry.NamespaceEntryId,
 		ExpirationTime:         secretEntry.ExpirationTime,
 		AuthorizationPolicyIds: secretEntry.AuthorizationPolicyIds,
 	}
@@ -31,7 +36,7 @@ func SecretEntryToDataStoreEntry(secretEntry *model.SecretEntry) (*DataStoreEntr
 	}
 
 	dataStoreEntry := &DataStoreEntry{
-		Id:       secretEntry.Id,
+		Id:       SecretIdToPath(secretEntry.Id),
 		Data:     secretEntry.SecretData,
 		MetaData: string(metaDataBytes),
 	}
@@ -47,10 +52,9 @@ func DataStoreEntryToSecretEntry(dataStoreEntry *DataStoreEntry) (*model.SecretE
 	}
 
 	secretEntry := &model.SecretEntry{
-		Id:                     dataStoreEntry.Id,
+		Id:                     SecretPathToId(dataStoreEntry.Id),
 		SecretData:             dataStoreEntry.Data,
 		OwnerEntryId:           metaData.OwnerEntryId,
-		NamespaceEntryId:       metaData.NamespaceEntryId,
 		ExpirationTime:         metaData.ExpirationTime,
 		AuthorizationPolicyIds: metaData.AuthorizationPolicyIds,
 	}
@@ -59,9 +63,11 @@ func DataStoreEntryToSecretEntry(dataStoreEntry *DataStoreEntry) (*model.SecretE
 }
 
 func UserEntryToDataStoreEntry(userEntry *model.UserEntry) (*DataStoreEntry, error) {
+	userpath := UsernameToPath(userEntry.Username)
+
 	metaData := &MetaData{
 		OwnerEntryId:     userEntry.Username,
-		NamespaceEntryId: "", // TODO: replace with built-in "users" namspace id
+		NamespaceEntryId: userpath,
 	}
 
 	metaDataBytes, err := json.Marshal(metaData)
@@ -70,7 +76,7 @@ func UserEntryToDataStoreEntry(userEntry *model.UserEntry) (*DataStoreEntry, err
 	}
 
 	dataStoreEntry := &DataStoreEntry{
-		Id:       userEntry.Username,
+		Id:       userpath,
 		Data:     []byte(userEntry.Credentials),
 		MetaData: string(metaDataBytes),
 	}
@@ -86,7 +92,7 @@ func DataStoreEntryToUserEntry(dataStoreEntry *DataStoreEntry) (*model.UserEntry
 	}
 
 	userEntry := &model.UserEntry{
-		Username:    dataStoreEntry.Id,
+		Username:    UserpathToName(dataStoreEntry.Id),
 		Credentials: dataStoreEntry.Data,
 	}
 
@@ -144,4 +150,20 @@ func DataStoreEntriesToPaths(dataStoreEntries []*DataStoreEntry) []string {
 	}
 
 	return paths
+}
+
+func SecretIdToPath(secretId string) string {
+	return secretsPathPrefix + secretId
+}
+
+func SecretPathToId(secretPath string) string {
+	return strings.TrimPrefix(secretPath, secretsPathPrefix)
+}
+
+func UsernameToPath(username string) string {
+	return usersPathPrefix + username
+}
+
+func UserpathToName(userpath string) string {
+	return strings.TrimPrefix(userpath, usersPathPrefix)
 }

@@ -3,6 +3,8 @@
 package secret
 
 import (
+	"path"
+
 	"github.com/vmware/virtual-security-module/config"
 	"github.com/vmware/virtual-security-module/crypt"
 	"github.com/vmware/virtual-security-module/model"
@@ -36,11 +38,18 @@ func (secretManager *SecretManager) Close() error {
 }
 
 func (secretManager *SecretManager) CreateSecret(secretEntry *model.SecretEntry) (string, error) {
-	// verify id doesn't exist, in case client has provided an id
-	if secretEntry.Id != "" {
-		_, err := secretManager.dataStore.ReadEntry(secretEntry.Id)
-		if err == nil {
-			return "", util.ErrAlreadyExists
+	secretPath := vds.SecretIdToPath(secretEntry.Id)
+
+	// verify id doesn't exist
+	if _, err := secretManager.dataStore.ReadEntry(secretPath); err == nil {
+		return "", util.ErrAlreadyExists
+	}
+
+	// verify parent path exists
+	parentPath := path.Dir(secretPath)
+	if parentPath != "/secrets" {
+		if _, err := secretManager.dataStore.ReadEntry(parentPath); err != nil {
+			return "", util.ErrInputValidation
 		}
 	}
 
@@ -59,18 +68,10 @@ func (secretManager *SecretManager) CreateSecret(secretEntry *model.SecretEntry)
 		return "", util.ErrInternal
 	}
 
-	id := secretEntry.Id
-
-	// create new entry id unless one has been provided by the client
-	if id == "" {
-		id = util.NewUUID()
-	}
-
 	se := &model.SecretEntry{
-		Id:                     id,
+		Id:                     secretEntry.Id,
 		SecretData:             encryptedSecretData,
 		OwnerEntryId:           secretEntry.OwnerEntryId,
-		NamespaceEntryId:       secretEntry.NamespaceEntryId,
 		ExpirationTime:         secretEntry.ExpirationTime,
 		AuthorizationPolicyIds: secretEntry.AuthorizationPolicyIds,
 	}
@@ -85,22 +86,24 @@ func (secretManager *SecretManager) CreateSecret(secretEntry *model.SecretEntry)
 	}
 
 	// persist key using virtual key store
-	if err := secretManager.keyStore.Write(id, key); err != nil {
+	if err := secretManager.keyStore.Write(secretPath, key); err != nil {
 		return "", err
 	}
 
-	return id, nil
+	return secretEntry.Id, nil
 }
 
 func (secretManager *SecretManager) GetSecret(secretId string) (*model.SecretEntry, error) {
+	secretPath := vds.SecretIdToPath(secretId)
+
 	// fetch data store entry
-	dataStoreEntry, err := secretManager.dataStore.ReadEntry(secretId)
+	dataStoreEntry, err := secretManager.dataStore.ReadEntry(secretPath)
 	if err != nil {
 		return nil, err
 	}
 
 	// fetch encryption key
-	key, err := secretManager.keyStore.Read(secretId)
+	key, err := secretManager.keyStore.Read(secretPath)
 	if err != nil {
 		return nil, err
 	}
@@ -125,11 +128,13 @@ func (secretManager *SecretManager) GetSecret(secretId string) (*model.SecretEnt
 }
 
 func (secretManager *SecretManager) DeleteSecret(secretId string) error {
-	if err := secretManager.dataStore.DeleteEntry(secretId); err != nil {
+	secretPath := vds.SecretIdToPath(secretId)
+
+	if err := secretManager.dataStore.DeleteEntry(secretPath); err != nil {
 		return err
 	}
 
-	if err := secretManager.keyStore.Delete(secretId); err != nil {
+	if err := secretManager.keyStore.Delete(secretPath); err != nil {
 		return err
 	}
 

@@ -35,23 +35,14 @@ func apiTestCleanup() {
 	ts.Close()
 }
 
-func TestAPICreateAndGetSecretProvidedId(t *testing.T) {
-	testAPICreateAndGetSecret(t, "api-id0")
-}
-
 func TestAPICreateAndGetSecret(t *testing.T) {
-	testAPICreateAndGetSecret(t, "")
-}
-
-func testAPICreateAndGetSecret(t *testing.T, id string) {
 	// step 1: create and send secret creation request
 	expirationTime := time.Now().Add(time.Hour)
 
 	se := &model.SecretEntry{
-		Id:                     id,
+		Id:                     "api-id0",
 		SecretData:             []byte("secret0"),
 		OwnerEntryId:           "user0",
-		NamespaceEntryId:       "root",
 		ExpirationTime:         expirationTime,
 		AuthorizationPolicyIds: []string{},
 	}
@@ -98,10 +89,22 @@ func testAPICreateAndGetSecret(t *testing.T, id string) {
 		t.Fatalf("Failed to parse get secret response: %v", err)
 	}
 
-	if id == "" {
-		se.Id = creationResponse.Id
-	}
 	if !reflect.DeepEqual(se, &se2) {
 		t.Fatalf("Created and retrieved secrets are different: %v %v", se, se2)
+	}
+
+	// cleanup: delete secret
+	req, err := http.NewRequest("DELETE", testUrl, nil)
+	if err != nil {
+		t.Fatalf("Failed to dekete secret with id %v: %v", creationResponse.Id, err)
+	}
+	resp3, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("Failed to dekete secret with id %v: %v", creationResponse.Id, err)
+	}
+	defer resp3.Body.Close()
+
+	if resp3.StatusCode != http.StatusNoContent {
+		t.Fatalf("Response status is different than 204 StatusNoContent: %v", resp3.Status)
 	}
 }

@@ -45,19 +45,11 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestCreateAndGetSecretProvidedId(t *testing.T) {
-	testCreateAndGetSecret(t, "id1")
-}
 func TestCreateAndGetSecret(t *testing.T) {
-	testCreateAndGetSecret(t, "")
-}
-
-func testCreateAndGetSecret(t *testing.T, id string) {
 	se := &model.SecretEntry{
-		Id:                     id,
+		Id:                     "id1",
 		SecretData:             []byte("secret0"),
 		OwnerEntryId:           "user0",
-		NamespaceEntryId:       "root",
 		ExpirationTime:         time.Now().Add(time.Hour),
 		AuthorizationPolicyIds: []string{},
 	}
@@ -75,10 +67,11 @@ func testCreateAndGetSecret(t *testing.T, id string) {
 		t.Fatalf("Failed to get secret for id %v: %v", id2, err)
 	}
 
-	if id == "" {
-		se.Id = id2
-	}
 	if !reflect.DeepEqual(se, se2) {
 		t.Fatalf("Created and retrieved secrets are different: %v %v", se, se2)
+	}
+
+	if err := sm.DeleteSecret(id2); err != nil {
+		t.Fatalf("Failed to delet secret for id %v: %v", id2, err)
 	}
 }
