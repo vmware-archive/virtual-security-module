@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"reflect"
 	"testing"
 	"time"
 
@@ -89,8 +88,8 @@ func TestAPICreateAndGetSecret(t *testing.T) {
 		t.Fatalf("Failed to parse get secret response: %v", err)
 	}
 
-	if !reflect.DeepEqual(se, &se2) {
-		t.Fatalf("Created and retrieved secrets are different: %v %v", se, se2)
+	if ok := se.Equal(&se2); !ok {
+		t.Fatalf(err.Error())
 	}
 
 	// cleanup: delete secret
