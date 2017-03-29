@@ -129,7 +129,9 @@ func (server *Server) initKeyStoreFromConfig(configuration *config.Config) error
 func (server *Server) initSelfFromConfig(configuration *config.Config) error {
 	server.useHttp = false
 	if configuration.HttpConfig.Enabled {
-		server.initHttp(configuration)
+		if err := server.initHttp(configuration); err != nil {
+			return err
+		}
 	}
 
 	server.useHttps = false
@@ -165,18 +167,28 @@ func (server *Server) firstTimeInit(configuration *config.Config) error {
 	return nil
 }
 
-func (server *Server) initHttp(configuration *config.Config) {
+func (server *Server) initHttp(configuration *config.Config) error {
 	server.useHttp = true
 	httpPort := configuration.HttpConfig.Port
+	if err := util.CheckPort(httpPort); err != nil {
+		return err
+	}
+
 	server.httpPort = DefaultHttpPort
 	if httpPort != 0 {
 		server.httpPort = httpPort
 	}
+
+	return nil
 }
 
 func (server *Server) initHttps(configuration *config.Config) error {
 	server.useHttps = true
 	httpsPort := configuration.HttpsConfig.Port
+	if err := util.CheckPort(httpsPort); err != nil {
+		return err
+	}
+
 	server.httpsPort = DefaultHttpsPort
 	if httpsPort != 0 {
 		server.httpsPort = httpsPort
