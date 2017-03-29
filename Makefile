@@ -14,9 +14,17 @@ DOC_DIR := $(PROJECT_DIR)/doc
 DOC := $(DOC_DIR)/swagger.json
 
 GO_ENV := GOPATH=$(GOPATH)
+GO_LINT := PATH=${PATH}:$(GOPATH)/bin golint
 GO := $(GO_ENV) go
 
+ifeq ($(CI),1)
+	is_ci = true
+else
+	is_ci = false
+endif
+
 .PHONY: doc
+
 default: build
 
 install-deps:
@@ -25,6 +33,7 @@ install-deps:
 	$(GO) get -u gopkg.in/yaml.v2
 	$(GO) get -u github.com/dgrijalva/jwt-go
 	$(GO) get -u github.com/spf13/cobra/cobra
+	$(GO) get -u github.com/golang/lint/golint
 	
 build: fmt vet
 	$(GO) build ./...
@@ -34,8 +43,21 @@ build: fmt vet
 vet:
 	$(GO) vet ./...
 
+lint:
+	if [ $$($(GO_LINT) ./... | wc -l) != 0 ]; then \
+	        if $(is_ci); then \
+	                echo "FATAL: you should run 'make lint' on your local system"; \
+	                exit 1; \
+	        fi; \
+	fi
+
 fmt:
-	$(GO) fmt ./...
+	if [ $$($(GO) fmt ./... | wc -l) != 0 ]; then \
+		if $(is_ci); then \
+			echo "FATAL: you should run 'make fmt' on your local system"; \
+			exit 1; \
+		fi; \
+	fi
 
 cross: fmt vet
 	for os in $(OS); do \

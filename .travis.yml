@@ -1,0 +1,20 @@
+language: go
+
+go:
+  - 1.7.x
+  - 1.8.x
+
+go_import_path: github.com/vmware/virtual-security-module
+
+install:
+  - make install-deps
+  - go get github.com/mattn/goveralls
+
+script:
+  - make CI=1
+  - make test
+  - goveralls -service=travis-ci
+
+branches:
+  only:
+  - master

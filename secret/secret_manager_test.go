@@ -5,7 +5,6 @@ package secret
 import (
 	"fmt"
 	"os"
-	"reflect"
 	"testing"
 	"time"
 
@@ -67,11 +66,11 @@ func TestCreateAndGetSecret(t *testing.T) {
 		t.Fatalf("Failed to get secret for id %v: %v", id2, err)
 	}
 
-	if !reflect.DeepEqual(se, se2) {
-		t.Fatalf("Created and retrieved secrets are different: %v %v", se, se2)
+	if ok := se.Equal(se2); !ok {
+		t.Fatalf(err.Error())
 	}
 
 	if err := sm.DeleteSecret(id2); err != nil {
-		t.Fatalf("Failed to delet secret for id %v: %v", id2, err)
+		t.Fatalf("Failed to delete secret for id %v: %v", id2, err)
 	}
 }

@@ -4,11 +4,24 @@ package model
 
 import (
 	"encoding/json"
-	"net/http"
-	"strings"
-
 	"github.com/vmware/virtual-security-module/util"
+	"net/http"
+	"reflect"
+	"strings"
 )
+
+func (s *SecretEntry) Equal(t *SecretEntry) bool {
+	if !reflect.DeepEqual(s.AuthorizationPolicyIds, t.AuthorizationPolicyIds) ||
+		!s.ExpirationTime.Equal(t.ExpirationTime) ||
+		!reflect.DeepEqual(s.Id, t.Id) ||
+		!reflect.DeepEqual(s.OwnerEntryId, t.OwnerEntryId) ||
+		!reflect.DeepEqual(s.SecretData, t.SecretData) {
+
+		return false
+	}
+
+	return true
+}
 
 func ExtractAndValidateSecretEntry(req *http.Request) (*SecretEntry, error) {
 	decoder := json.NewDecoder(req.Body)
