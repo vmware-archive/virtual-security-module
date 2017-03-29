@@ -10,10 +10,12 @@ func GenerateTestConfig() *Config {
 				Port:    8090,
 			},
 			HttpsConfig: HttpsConfig{
+				Enabled:    true,
 				CaCert:     "../certs/test-root-cert.pem",
 				CaKey:      "../certs/test-root-key.pem",
 				ServerCert: "../certs/test-server-cert.pem",
 				ServerKey:  "../certs/test-server-key.pem",
+				Port:       8444,
 			},
 			RootInitPubKey:     "../certs/test-root-init-public.pem",
 			RootInitPrivateKey: "../certs/test-root-init-private.pem",
