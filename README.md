@@ -81,6 +81,9 @@ make doc
 ## Documentation
 The [HOWTO](doc/HOWTO.md) describes how to accomplish some common tasks.
 
+## Community
+**Slack:** Join VSM's community here: [VMware {code}](https://code.vmware.com/join/), Channel: #vsm.  
+
 ## Contributing
 
 The virtual-security-module project team welcomes contributions from the community.
