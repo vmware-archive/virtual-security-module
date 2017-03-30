@@ -104,7 +104,7 @@ func GetChildSearchPattern(path string) string {
 }
 
 func CheckPort(port int) error {
-	if (port < 0) || (port > 65535) {
+	if (port <= 0) || (port > 65535) {
 		return fmt.Errorf("Port should between 0 and 65535")
 	}
 
