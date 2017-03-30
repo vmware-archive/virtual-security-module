@@ -22,7 +22,6 @@ import (
 
 const (
 	DefaultHttpPort            = 8080
-	DefaultHttpsPort           = 443
 	PropertyNameCaCert         = "caCert"
 	PropertyNameCaKey          = "caKey"
 	PropertyNameServerCert     = "serverCert"
@@ -169,30 +168,20 @@ func (server *Server) firstTimeInit(configuration *config.Config) error {
 
 func (server *Server) initHttp(configuration *config.Config) error {
 	server.useHttp = true
-	httpPort := configuration.HttpConfig.Port
-	if err := util.CheckPort(httpPort); err != nil {
+	if err := util.CheckPort(configuration.HttpConfig.Port); err != nil {
 		return err
 	}
-
-	server.httpPort = DefaultHttpPort
-	if httpPort != 0 {
-		server.httpPort = httpPort
-	}
+	server.httpPort = configuration.HttpConfig.Port
 
 	return nil
 }
 
 func (server *Server) initHttps(configuration *config.Config) error {
 	server.useHttps = true
-	httpsPort := configuration.HttpsConfig.Port
-	if err := util.CheckPort(httpsPort); err != nil {
+	if err := util.CheckPort(configuration.HttpsConfig.Port); err != nil {
 		return err
 	}
-
-	server.httpsPort = DefaultHttpsPort
-	if httpsPort != 0 {
-		server.httpsPort = httpsPort
-	}
+	server.httpsPort = configuration.HttpsConfig.Port
 
 	if configuration.HttpsConfig.CaCert == "" {
 		return fmt.Errorf("%v cannot be empty", PropertyNameCaCert)
