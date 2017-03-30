@@ -52,7 +52,7 @@ show_cover_report() {
 
 main() {
 	get_opts "${@}"
-	generate_cover_data $(go list ./...)
+	generate_cover_data $(go list ./... | grep -v vendor)
 
 	if "${SHOW_COVER_REPORT}"; then
 		show_cover_report
