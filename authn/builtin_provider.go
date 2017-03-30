@@ -33,7 +33,6 @@ type BuiltinProvider struct {
 	dataStore       vds.DataStoreAdapter
 	keyStore        vks.KeyStoreAdapter
 	tokenSigningKey []byte
-	challenges      map[string]*BuiltinChallenge
 }
 
 func NewBuiltinProvider() *BuiltinProvider {
@@ -49,7 +48,6 @@ func (p *BuiltinProvider) Init(config *config.Config, ds vds.DataStoreAdapter, k
 	p.dataStore = ds
 	p.keyStore = ks
 	p.tokenSigningKey = tokenSigningKey
-	p.challenges = make(map[string]*BuiltinChallenge)
 
 	return nil
 }
@@ -265,7 +263,14 @@ func (p *BuiltinProvider) generateFakeChallenge(username string) (string, error)
 }
 
 func (p *BuiltinProvider) genChallenge(username string, publicKey *rsa.PublicKey, fake bool) (string, error) {
-	challenge, err := NewBuiltinChallenge(username)
+	challenge, err := NewFakeBuiltinChallenge(username)
+	if err != nil {
+		return "", err
+	}
+
+	if !fake {
+		challenge, err = NewBuiltinChallenge(username)
+	}
 	if err != nil {
 		return "", err
 	}
@@ -280,13 +285,6 @@ func (p *BuiltinProvider) genChallenge(username string, publicKey *rsa.PublicKey
 		return "", err
 	}
 
-	if !fake {
-		p.challenges[challenge.Uuid] = challenge
-		time.AfterFunc(challenge.GoodUntil.Sub(time.Now()), func() {
-			delete(p.challenges, challenge.Uuid)
-		})
-	}
-
 	return base64.StdEncoding.EncodeToString(cipherText), nil
 }
 
@@ -299,20 +297,9 @@ func (p *BuiltinProvider) verifyChallengeAndGenerateToken(challengeStr string) (
 		return "", err
 	}
 
-	if challenge.Uuid == "" {
-		return "", fmt.Errorf("challenge id is empty")
+	if !challenge.Valid() {
+		return "", fmt.Errorf("challenge is invalid")
 	}
-
-	originalChallenge, ok := p.challenges[challenge.Uuid]
-	if !ok {
-		return "", fmt.Errorf("challenge id not found")
-	}
-
-	if !originalChallenge.Equal(challenge) || originalChallenge.Expired() {
-		return "", fmt.Errorf("challenge mismatch")
-	}
-
-	delete(p.challenges, challenge.Uuid)
 
 	expirationTime := time.Now().Add(time.Hour)
 	t := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
