@@ -48,8 +48,13 @@ func (namespaceManager *NamespaceManager) CreateNamespace(namespaceEntry *model.
 	}
 
 	if namespaceEntry.Path != "/" {
-		// verify parent path exists
-		if _, err := namespaceManager.dataStore.ReadEntry(path.Dir(namespaceEntry.Path)); err != nil {
+		// verify parent path exists and it's a namespace
+		dsEntry, err := namespaceManager.dataStore.ReadEntry(path.Dir(namespaceEntry.Path))
+		if err != nil {
+			return "", util.ErrInputValidation
+		}
+
+		if !vds.IsNamespaceEntry(dsEntry) {
 			return "", util.ErrInputValidation
 		}
 	}
@@ -87,6 +92,15 @@ func (namespaceManager *NamespaceManager) GetNamespace(path string) (*model.Name
 }
 
 func (namespaceManager *NamespaceManager) DeleteNamespace(path string) error {
+	dsEntry, err := namespaceManager.dataStore.ReadEntry(path)
+	if err != nil {
+		return err
+	}
+
+	if !vds.IsNamespaceEntry(dsEntry) {
+		return util.ErrInputValidation
+	}
+
 	childSearchPattern := util.GetChildSearchPattern(path)
 	childNamespaces, err := namespaceManager.dataStore.SearchEntries(childSearchPattern)
 	if err != nil {

@@ -7,12 +7,12 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"time"
-
-	"github.com/vmware/virtual-security-module/util"
 )
 
+const FIXED = "builtin-challenge"
+
 type BuiltinChallenge struct {
-	Uuid      string
+	Fixed     string
 	Username  string
 	Random    []byte
 	GoodUntil time.Time
@@ -26,10 +26,25 @@ func NewBuiltinChallenge(username string) (*BuiltinChallenge, error) {
 	}
 
 	return &BuiltinChallenge{
-		Uuid:      util.NewUUID(),
+		Fixed:     FIXED,
 		Username:  username,
 		Random:    buf,
 		GoodUntil: time.Now().Add(time.Minute),
+	}, nil
+}
+
+func NewFakeBuiltinChallenge(username string) (*BuiltinChallenge, error) {
+	buf := make([]byte, 32)
+	_, err := rand.Read(buf)
+	if err != nil {
+		return nil, err
+	}
+
+	return &BuiltinChallenge{
+		Fixed:     "INVALID",
+		Username:  username,
+		Random:    buf,
+		GoodUntil: time.Now().Add(-time.Hour),
 	}, nil
 }
 
@@ -47,7 +62,7 @@ func (challenge *BuiltinChallenge) Decode(encodedChallenge []byte) error {
 }
 
 func (challenge *BuiltinChallenge) Equal(challenge2 *BuiltinChallenge) bool {
-	return (challenge.Uuid == challenge2.Uuid) &&
+	return (challenge.Fixed == challenge2.Fixed) &&
 		(challenge.Username == challenge2.Username) &&
 		bytes.Equal(challenge.Random, challenge2.Random) &&
 		challenge.GoodUntil.Equal(challenge2.GoodUntil)
@@ -55,4 +70,8 @@ func (challenge *BuiltinChallenge) Equal(challenge2 *BuiltinChallenge) bool {
 
 func (challenge *BuiltinChallenge) Expired() bool {
 	return challenge.GoodUntil.Before(time.Now())
+}
+
+func (challenge *BuiltinChallenge) Valid() bool {
+	return challenge.Fixed == FIXED && !challenge.Expired()
 }

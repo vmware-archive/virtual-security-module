@@ -3,6 +3,7 @@
 package vds
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/vmware/virtual-security-module/config"
@@ -29,4 +30,31 @@ func GetDataStoreFromConfig(configuration *config.Config) (DataStoreAdapter, err
 	}
 
 	return dsAdapter, nil
+}
+
+func IsSecretEntry(dsEntry *DataStoreEntry) bool {
+	var metaData MetaData
+	if err := json.Unmarshal([]byte(dsEntry.MetaData), &metaData); err != nil {
+		return false
+	}
+
+	return metaData.Type == secretEntryType
+}
+
+func IsUserEntry(dsEntry *DataStoreEntry) bool {
+	var metaData MetaData
+	if err := json.Unmarshal([]byte(dsEntry.MetaData), &metaData); err != nil {
+		return false
+	}
+
+	return metaData.Type == userEntryType
+}
+
+func IsNamespaceEntry(dsEntry *DataStoreEntry) bool {
+	var metaData MetaData
+	if err := json.Unmarshal([]byte(dsEntry.MetaData), &metaData); err != nil {
+		return false
+	}
+
+	return metaData.Type == namespaceEntryType
 }

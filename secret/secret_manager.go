@@ -45,10 +45,15 @@ func (secretManager *SecretManager) CreateSecret(secretEntry *model.SecretEntry)
 		return "", util.ErrAlreadyExists
 	}
 
-	// verify parent path exists
+	// verify parent path exists and it's a namespace
 	parentPath := path.Dir(secretPath)
 	if parentPath != "/secrets" {
-		if _, err := secretManager.dataStore.ReadEntry(parentPath); err != nil {
+		dsEntry, err := secretManager.dataStore.ReadEntry(parentPath)
+		if err != nil {
+			return "", util.ErrInputValidation
+		}
+
+		if !vds.IsNamespaceEntry(dsEntry) {
 			return "", util.ErrInputValidation
 		}
 	}
@@ -129,6 +134,15 @@ func (secretManager *SecretManager) GetSecret(secretId string) (*model.SecretEnt
 
 func (secretManager *SecretManager) DeleteSecret(secretId string) error {
 	secretPath := vds.SecretIdToPath(secretId)
+
+	dsEntry, err := secretManager.dataStore.ReadEntry(secretPath)
+	if err != nil {
+		return err
+	}
+
+	if !vds.IsSecretEntry(dsEntry) {
+		return util.ErrInputValidation
+	}
 
 	if err := secretManager.dataStore.DeleteEntry(secretPath); err != nil {
 		return err
