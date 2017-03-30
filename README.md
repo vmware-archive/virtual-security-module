@@ -33,15 +33,12 @@ Following is a list of high-level capabilities:
  * **Command-line client tool** - for easy interaction with the server
 
 ## Getting Started
-
 ### Prerequisites
-
 * To run: none
 * To build: Golang 1.7+ (https://golang.org/doc/install)
 * To generate RESTful API docs: go-swagger (https://github.com/go-swagger/go-swagger)
 
 ### Clone Repo
-
 Under your Go workspace (**$GOPATH**) create a **src/github.com/vmware** directory:
 Then cd into **src/github.com/vmware** and clone your forked repo.\:
 ```
@@ -49,27 +46,23 @@ git clone https://github.com/$yourusername/virtual-security-module
 ```
 
 ### First Build
-
-cd into **virtual-security-module**
+cd into **virtual-security-module**.
 Before your first build fetch dependencies by running:
 ```
 make install-deps
 ```
 
 ### Build
-
-To build run:
 ```
 make
 ```
 
 ### Test
-To execute tests run:
 ```
 make test
 ```
 
-If tests pass you're ready to go - just follow the [HOWTO](doc/HOWTO.md).
+From here, just follow the [HOWTO](doc/HOWTO.md).
 
 ## Documentation
 The [HOWTO](doc/HOWTO.md) describes how to accomplish some common tasks.
@@ -78,7 +71,6 @@ The [HOWTO](doc/HOWTO.md) describes how to accomplish some common tasks.
 **Slack:** Join VSM's community here: [VMware {code}](https://code.vmware.com/join/), Channel: #vsm.  
 
 ## Contributing
-
 The virtual-security-module project team welcomes contributions from the community.
 Before you start working with virtual-security-module, please read our
 [Developer Certificate of Origin](https://cla.vmware.com/dco). All contributions to

@@ -40,25 +40,26 @@ Now let's go over some of the main configuration properties (open "config.yaml")
   **port**.
 * **Certificates** - when **https** is enabled, a number of certificates are
   expected:
-  ** **caCert** - points to the file containing the root CA certificate. By
+  
+    **caCert** - points to the file containing the root CA certificate. By
     default, this would be **"certs/test-root-cert.pem"**, which is a self-signed
     certificate bundled with the system. In production replace this with your
     own root CA certificate.
-  ** **caKey** - points to the file containing the root CA private key.
-  ** **serverCert** - points to the file containing the server certificate, i.e.
+    **caKey** - points to the file containing the root CA private key.  
+    **serverCert** - points to the file containing the server certificate, i.e.
     the certificate that is being used by the server in https connections. This
     certificate must be signed by the root CA, and indeed, the default server
     certificate (**"certs/test-server-cert.pem"**) is signed by the default
     root CA.
-  ** **serverKey** - points to the file containing the private key corresponding
+    **serverKey** - points to the file containing the private key corresponding
     to the server certificate. By default it is **"certs/test-server-key.pem"**
-  ** **rootInitPubKey** - points to the file containing the public key of the
-    server's root user, which is created once during initialization of a new
-    server. By default it is **"certs/test-root-init-public.pem"**; however in
-    production you'd want to replace that with your own public key **before
-    starting the server** so that you're the only one who has the corresponding
-    root user private key (as opposed to **"certs/test-root-init-private.pem"**,
-    which is available to everyone).
+* **rootInitPubKey** - points to the file containing the public key of the
+  server's root user, which is created once during initialization of a new
+  server. By default it is **"certs/test-root-init-public.pem"**; however in
+  production you'd want to replace that with your own public key **before
+  starting the server** so that you're the only one who has the corresponding
+  root user private key (as opposed to **"certs/test-root-init-private.pem"**,
+  which is available to everyone).
 * **dataStore** - controls the type and location of the server's data store,
     where (encrypted) data is persisted. By default we use an in-memory data
     store, which is convenient for testing and experimentation.
