@@ -13,7 +13,8 @@ install:
 script:
   - make CI=1
   - make test
-  - goveralls -service=travis-ci
+  - ./ci/coverage.sh
+  - goveralls -coverprofile=profile.cov -service=travis-ci
 
 branches:
   only:
