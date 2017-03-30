@@ -119,7 +119,7 @@ options.
 Here are a few important top-level options:
 * -t, --token: you must provide a valid JWT token for interaction with the server.
   You receive a JWT token after successfully logging into the server.
-* -u, --url: you can provide the server's URL (both http and https is are
+* -u, --url: you can provide the server's URL (both http and https are
   supported). The default is "http://localhost:8080", which works in the default
   test configuration. You can also use "https://localhost:8443" with the default
   test configuration.
