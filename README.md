@@ -32,7 +32,7 @@ Following is a list of high-level capabilities:
    with Swagger.
  * **Command-line client tool** - for easy interaction with the server
 
-## Try it out
+## Getting Started
 
 ### Prerequisites
 
@@ -40,44 +40,36 @@ Following is a list of high-level capabilities:
 * To build: Golang 1.7+ (https://golang.org/doc/install)
 * To generate RESTful API docs: go-swagger (https://github.com/go-swagger/go-swagger)
 
-### Build, Test & Run
+### Clone Repo
 
-1. Under your Go workspace create a **src/github.com/vmware** directory.
-```
-mkdir -p src/github.com/vmware
-```
-2. cd into **src/github.com/vmware** and clone your forked repo.
+Under your Go workspace (**$GOPATH**) create a **src/github.com/vmware** directory:
+Then cd into **src/github.com/vmware** and clone your forked repo.\:
 ```
 git clone https://github.com/$yourusername/virtual-security-module
 ```
-3. cd into **virtual-security-module**
-```
-cd virtual-security-module
-```
-4. Before your first build fetch dependencies by running:
+
+### First Build
+
+cd into **virtual-security-module**
+Before your first build fetch dependencies by running:
 ```
 make install-deps
 ```
-5. To build run:
+
+### Build
+
+To build run:
 ```
 make
 ```
-6. To test run:
+
+### Test
+To execute tests run:
 ```
 make test
 ```
-7. To generate RESTful API docs run:
-```
-make doc
-```
-8. To start the server run:
-```
-./dist/vsmd
-```
-9. To start the cli tool run:
-```
-./dist/vsm-cli
-```
+
+If tests pass you're ready to go - just follow the [HOWTO](doc/HOWTO.md).
 
 ## Documentation
 The [HOWTO](doc/HOWTO.md) describes how to accomplish some common tasks.

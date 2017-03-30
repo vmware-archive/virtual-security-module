@@ -12,19 +12,23 @@ import (
 )
 
 const (
-	secretsPathPrefix = "/secrets/"
-	usersPathPrefix   = "/users/"
+	secretsPathPrefix  = "/secrets/"
+	usersPathPrefix    = "/users/"
+	secretEntryType    = "secret"
+	userEntryType      = "user"
+	namespaceEntryType = "namespace"
 )
 
 type MetaData struct {
+	Type                   string
 	OwnerEntryId           string
-	NamespaceEntryId       string
 	ExpirationTime         time.Time
 	AuthorizationPolicyIds []string
 }
 
 func SecretEntryToDataStoreEntry(secretEntry *model.SecretEntry) (*DataStoreEntry, error) {
 	metaData := &MetaData{
+		Type:                   secretEntryType,
 		OwnerEntryId:           secretEntry.OwnerEntryId,
 		ExpirationTime:         secretEntry.ExpirationTime,
 		AuthorizationPolicyIds: secretEntry.AuthorizationPolicyIds,
@@ -51,6 +55,10 @@ func DataStoreEntryToSecretEntry(dataStoreEntry *DataStoreEntry) (*model.SecretE
 		return nil, util.ErrInternal
 	}
 
+	if metaData.Type != secretEntryType {
+		return nil, util.ErrInternal
+	}
+
 	secretEntry := &model.SecretEntry{
 		Id:                     SecretPathToId(dataStoreEntry.Id),
 		SecretData:             dataStoreEntry.Data,
@@ -66,8 +74,8 @@ func UserEntryToDataStoreEntry(userEntry *model.UserEntry) (*DataStoreEntry, err
 	userpath := UsernameToPath(userEntry.Username)
 
 	metaData := &MetaData{
-		OwnerEntryId:     userEntry.Username,
-		NamespaceEntryId: userpath,
+		Type:         userEntryType,
+		OwnerEntryId: userEntry.Username,
 	}
 
 	metaDataBytes, err := json.Marshal(metaData)
@@ -91,6 +99,10 @@ func DataStoreEntryToUserEntry(dataStoreEntry *DataStoreEntry) (*model.UserEntry
 		return nil, util.ErrInternal
 	}
 
+	if metaData.Type != userEntryType {
+		return nil, util.ErrInternal
+	}
+
 	userEntry := &model.UserEntry{
 		Username:    UserpathToName(dataStoreEntry.Id),
 		Credentials: dataStoreEntry.Data,
@@ -101,6 +113,7 @@ func DataStoreEntryToUserEntry(dataStoreEntry *DataStoreEntry) (*model.UserEntry
 
 func NamespaceEntryToDataStoreEntry(namespaceEntry *model.NamespaceEntry) (*DataStoreEntry, error) {
 	metaData := &MetaData{
+		Type:         namespaceEntryType,
 		OwnerEntryId: namespaceEntry.OwnerEntryId,
 	}
 	metaDataBytes, err := json.Marshal(metaData)
@@ -125,6 +138,10 @@ func NamespaceEntryToDataStoreEntry(namespaceEntry *model.NamespaceEntry) (*Data
 func DataStoreEntryToNamespaceEntry(dataStoreEntry *DataStoreEntry) (*model.NamespaceEntry, error) {
 	var metaData MetaData
 	if err := json.Unmarshal([]byte(dataStoreEntry.MetaData), &metaData); err != nil {
+		return nil, util.ErrInternal
+	}
+
+	if metaData.Type != namespaceEntryType {
 		return nil, util.ErrInternal
 	}
 
