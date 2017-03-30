@@ -3,34 +3,64 @@
 # Copyright © 2017 VMware, Inc. All Rights Reserved.
 # SPDX-License-Identifier: BSD-2-Clause
 
-echo "mode: set" > profile.cov
+PROFILE="profile.cov"
+IS_COVERALLS="false"
+SHOW_COVER_REPORT="false"
+MODE="count"
+echo "mode: ${MODE}" > "${PROFILE}"
 
-DEPS=""
-
-list_deps(){
-	local pkg="${1?}"
-	DEPS="${pkg}"
-	ds="$(echo $(go list -f '{{.Imports}}' "${pkg}") | sed 's/[][]//g')"
-	for d in ${ds}; do
-		if echo "${d}" | grep -q "github.com/vmware/virtual-security-module"; then
-			DEPS+=",${d}"
-		fi
+get_opts() {
+	while [[ -n "${1}" ]]; do
+		opt="${1}"
+		val="${opt#*=}"
+		shift
+		case "${opt}" in
+			--coveralls)
+				IS_COVERALLS="true"
+				;;
+			--show-cover-report)
+				SHOW_COVER_REPORT="true"
+				;;
+			--help|-h)
+				usage
+				exit 0
+				;;
+		esac
 	done
 }
 
-build_cover_profile() {
-	local packages=$(go list ./...)
-	for p in ${packages}; do
-		list_deps "${p}"
-		go test -cover -coverprofile=cover.out -coverpkg "${DEPS}" "${p}"
-		if [[ -f cover.out ]]; then
-			tail -n+2 cover.out >> profile.cov
-			rm -f cover.out
-		fi
+
+
+generate_cover_data() {
+	for pkg in "${@}"; do
+                f="$(echo "${pkg}" | tr / -).cover"
+                go test -covermode="${MODE}" -coverprofile="${f}" "${pkg}"
 	done
+
+	grep -h -v "^mode:" *.cover >> "${PROFILE}"
+	rm -f *.cover
 }
+
+push_to_coveralls() {
+	echo "Pushing coverage statistics to coveralls.io"
+	goveralls -coverprofile="${PROFILE}" -service=travis-ci
+}
+
+show_cover_report() {
+	go tool cover -func="${PROFILE}"
+}
+
 main() {
-	build_cover_profile
+	get_opts "${@}"
+	generate_cover_data $(go list ./...)
+
+	if "${SHOW_COVER_REPORT}"; then
+		show_cover_report
+	fi
+
+	if "${IS_COVERALLS}"; then
+		push_to_coveralls
+	fi
 }
 
-main
+main "${@}"
