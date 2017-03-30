@@ -3,3 +3,4 @@ pkg/
 dist/
 bin/
 .project
+profile.cov
