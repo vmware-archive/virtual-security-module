@@ -53,6 +53,7 @@ Now let's go over some of the main configuration properties (open "config.yaml")
     root CA.
     **serverKey** - points to the file containing the private key corresponding
     to the server certificate. By default it is **"certs/test-server-key.pem"**
+    
 * **rootInitPubKey** - points to the file containing the public key of the
   server's root user, which is created once during initialization of a new
   server. By default it is **"certs/test-root-init-public.pem"**; however in
