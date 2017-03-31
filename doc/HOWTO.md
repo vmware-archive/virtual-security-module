@@ -44,13 +44,13 @@ Now let's go over some of the main configuration properties (open "config.yaml")
     **caCert** - points to the file containing the root CA certificate. By
     default, this would be **"certs/test-root-cert.pem"**, which is a self-signed
     certificate bundled with the system. In production replace this with your
-    own root CA certificate.
+    own root CA certificate.  
     **caKey** - points to the file containing the root CA private key.  
     **serverCert** - points to the file containing the server certificate, i.e.
     the certificate that is being used by the server in https connections. This
     certificate must be signed by the root CA, and indeed, the default server
     certificate (**"certs/test-server-cert.pem"**) is signed by the default
-    root CA.
+    root CA.  
     **serverKey** - points to the file containing the private key corresponding
     to the server certificate. By default it is **"certs/test-server-key.pem"**
     
