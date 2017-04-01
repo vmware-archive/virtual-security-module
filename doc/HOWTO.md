@@ -19,13 +19,13 @@ In this section we're going to provide information about how to accomplish some 
  * placeholder: Internals
 
 ## Configuring the server
-Before you start the server, you might want to take a look at its configuration
-file. It is not mandatory to look at it when you're just starting to experiment
-with the system, but it's a good idea to understand some of the configuration
-options. Before going over the options though, let's understand where the server
-expects to find its configuration file.
+Before you start the server, you might want to take a look at its configuration.
+It is not mandatory to look at it when you're just starting to experiment with
+the system, but it's a good idea to understand some of the configuration
+properties. Before going over the properties though, let's understand where the
+server expects to find its configuration file.
 
-The server expects to a filed called "config.yaml" in its current directory
+The server expects a file called "config.yaml" in its current directory
 (the directory from which you're starting the server). This is why, in the VSM
 root dir, you start the server with "./dist/vsmd". In the future we will add
 a command-line switch to control where the server configuration should be loaded
@@ -96,14 +96,14 @@ swagger serve --no-open /.../swagger.json
 ```
 
 In our example the port number is 33998.
-Now open a web browser and open <swagger-ui-root>/dist/index.html.
+Now launch a web browser and open <swagger-ui-root>/dist/index.html.
 Replace the address at the top according to your port number:
 
 ```
 http://localhost:33998/swagger.json
 ```
 
-You should see and browse the API documentation.
+You should be able to browse the API documentation.
 
 
 ## Using the cli tool
@@ -126,8 +126,8 @@ Here are a few important top-level options:
   test configuration.
 * -c, --cert: points to the filename containing the root CA public key. This
   is not needed with the default test config, because the client will use
-  "certs/test-root-cert.pem", the test root CA public key, if the option is
-  omitted, however you will need it in case the server has a non-default root CA
+  "certs/test-root-cert.pem" - the test root CA public key - if the option is
+  omitted; however you will need it in case the server has a non-default root CA
   certificate.
 
 Let's give it a try - make sure the server is started and then run:
@@ -136,12 +136,12 @@ Let's give it a try - make sure the server is started and then run:
 ```
 This should fail with an error message like: "authn token is empty". You need to
 provide an auth token. But to get a token you need to log-in, which we haven't
-cover yet. In the next section we'll show you how to log-in, grab the generated
+covered yet. In the next section we'll show you how to log-in, grab the generated
 token and use it in your further interactions with the server.
 
 ## Logging in
 To log-in you need to have an existing user. If you haven't created a user yet,
-that's fine (in fact, you have be logged-in to create a user, so this is kind of
+that's fine (in fact, you have to be logged-in to create a user, so this is kind of
 a recursive problem) - the server has already initialized itself with a root user.
 The name of the root user is "root" and its credentials is a public key, taken
 from the file pointed by the "rootInitPubKey" configuration property
@@ -154,9 +154,9 @@ cryptography. A user is created with a username and a public key, and during
 authentication the user needs to provide her username and private key.
 
 The root user has a fixed user name, "root", but other than that authentication
-for root is similar to authenticating other users - you need to provide root's
+for root is similar to the authentication of other users - you need to provide the
 private key. The default root private key (which corresponds to the default root
-public key is in "../certs/test-root-init-private.pem" so try this:
+public key) is in "../certs/test-root-init-private.pem" so try this:
 ```
 ./vsm-cli login root ../certs/test-root-init-private.pem
 ```
@@ -173,7 +173,7 @@ Through the rest of the document, we will assume $TOKEN holds your authenticatio
 Please note that the token will expire in one hour - you will need to log-in again
 to get a new token to continue interacting with the server.
 
-You will use the token in your further authentication with the server. Try:
+You will use the token in your further interaction with the server. Try:
 ```
 ./vsm-cli --token $TOKEN users get root
 ```
@@ -181,20 +181,19 @@ You will use the token in your further authentication with the server. Try:
 You should see the returned root user info.
 
 ## User management
-Loggin in as root is fine, but it's dangerous - as root you can perform any action on
+Logging-in as root is fine, but it's dangerous - as root you can perform any action on
 any object. So typically root will create additional users and delegate them certain
 permissions. User management allows you to:
 * Create a user
 * Get a user's info
 * Delete a user
 
-In the future we're going to add support for listing existing users.
+Note: you can also list existing users through [namespaces](#namespace-management).
 
 Let's start by creating a user. To create a user you need to specify a username
-(the username has to be globally unique in the system, so it's convenient to use
-an email address) and credentials (a public key in the case of the built-in
-authn provider). So let's generate a RSA key-pair first. We'll use
-[openssl](https://www.openssl.org/) for that:
+and credentials - a public key in the case of the built-in authn provider. So
+let's generate a RSA key-pair first. We'll use [openssl](https://www.openssl.org/)
+for that:
 
 ```
 openssl genrsa -out test-user-private.pem 2048
@@ -224,9 +223,9 @@ Let's verify the existence of the user:
 
 You should see some details about the user.
 
-Now, just to illustrate the point of all this, let's login as test-user:
+Now, just to illustrate the point of all this, let's log-in as test-user:
 ```
-./vsm-cli login test-user ~/tmp/test-user-private.pem
+./vsm-cli login test-user test-user-private.pem
 ```
 
 You should get a new token - one that represents the test-user's 'session'. You can use
