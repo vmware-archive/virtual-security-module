@@ -6,22 +6,8 @@ import (
 	"encoding/json"
 	"github.com/vmware/virtual-security-module/util"
 	"net/http"
-	"reflect"
 	"strings"
 )
-
-func (s *SecretEntry) Equal(t *SecretEntry) bool {
-	if !reflect.DeepEqual(s.AuthorizationPolicyIds, t.AuthorizationPolicyIds) ||
-		!s.ExpirationTime.Equal(t.ExpirationTime) ||
-		!reflect.DeepEqual(s.Id, t.Id) ||
-		!reflect.DeepEqual(s.OwnerEntryId, t.OwnerEntryId) ||
-		!reflect.DeepEqual(s.SecretData, t.SecretData) {
-
-		return false
-	}
-
-	return true
-}
 
 func ExtractAndValidateSecretEntry(req *http.Request) (*SecretEntry, error) {
 	decoder := json.NewDecoder(req.Body)
@@ -86,4 +72,30 @@ func ExtractAndValidateNamespaceEntry(req *http.Request) (*NamespaceEntry, error
 	}
 
 	return &namespaceEntry, nil
+}
+
+func ExtractAndValidateAuthorizationPolicyEntry(req *http.Request) (*AuthorizationPolicyEntry, error) {
+	decoder := json.NewDecoder(req.Body)
+	var authzPolicyEntry AuthorizationPolicyEntry
+	if err := decoder.Decode(&authzPolicyEntry); err != nil {
+		return nil, util.ErrInputValidation
+	}
+	defer req.Body.Close()
+
+	if authzPolicyEntry.Id == "" {
+		return nil, util.ErrInputValidation
+	}
+
+	return &authzPolicyEntry, nil
+}
+
+func IsValidOpLabel(label string) bool {
+	return label == OpCreate ||
+		label == OpRead ||
+		label == OpUpdate ||
+		label == OpDelete
+}
+
+func ValidOpLabels() []string {
+	return []string{OpCreate, OpRead, OpUpdate, OpDelete}
 }

@@ -7,34 +7,33 @@ import (
 )
 
 type UserEntry struct {
-	Username    string `json:"username"`
-	Credentials []byte `json:"credentials"`
+	Username    string      `json:"username"`
+	Credentials []byte      `json:"credentials"`
+	Roles       []RoleEntry `json:"roles"`
 }
 
 type RoleEntry struct {
-	Scope     string   `json:"scope"`
-	Label     string   `json:"label"`
-	Usernames []string `json:"usernames"`
+	Scope string `json:"scope"`
+	Label string `json:"label"`
 }
 
 type SecretEntry struct {
-	Id                     string    `json:"id"`
-	SecretData             []byte    `json:"secretData"`
-	OwnerEntryId           string    `json:"ownerEntryId"`
-	ExpirationTime         time.Time `json:"expirationTime"`
-	AuthorizationPolicyIds []string  `json:"authorizationPolicyIds"`
+	Id             string    `json:"id"`
+	SecretData     []byte    `json:"secretData"`
+	Owner          string    `json:"owner"`
+	ExpirationTime time.Time `json:"expirationTime"`
 }
 
 type NamespaceEntry struct {
-	Path                   string   `json:"path"`
-	OwnerEntryId           string   `json:"ownerEntryId"`
-	AuthorizationPolicyIds []string `json:"authorizationPolicyIds"`
-	ChildPaths             []string `json:"childPaths"`
+	Path       string   `json:"path"`
+	Owner      string   `json:"owner"`
+	RoleLabels []string `json:"roleLabels"`
+	ChildPaths []string `json:"childPaths"`
 }
 
 const (
 	OpCreate = "C"
-	OpWrite  = "W"
+	OpRead   = "R"
 	OpUpdate = "U"
 	OpDelete = "D"
 )
@@ -45,8 +44,7 @@ type Operation struct {
 
 type AuthorizationPolicyEntry struct {
 	Id                string      `json:"id"`
-	Name              string      `json:"name"`
-	RoleEntryIds      []string    `json:"roleEntryIds"`
+	RoleLabels        []string    `json:"roleLabels"`
 	AllowedOperations []Operation `json:"allowedOperations"`
-	OwnerEntryId      string      `json:"ownerEntryId"`
+	Owner             string      `json:"owner"`
 }

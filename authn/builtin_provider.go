@@ -158,6 +158,23 @@ func (p *BuiltinProvider) CreateUser(userEntry *model.UserEntry) (string, error)
 		return "", util.ErrAlreadyExists
 	}
 
+	// verify roles' scopes exist
+	for _, role := range userEntry.Roles {
+		namespacePath := role.Scope
+		if !strings.HasPrefix(namespacePath, "/") {
+			return "", util.ErrInputValidation
+		}
+
+		dsEntry, err := p.dataStore.ReadEntry(namespacePath)
+		if err != nil {
+			return "", util.ErrInputValidation
+		}
+
+		if !vds.IsNamespaceEntry(dsEntry) {
+			return "", util.ErrInputValidation
+		}
+	}
+
 	// generate encryption key for user entry
 	key, err := crypt.GenerateKey()
 	if err != nil {
@@ -173,10 +190,8 @@ func (p *BuiltinProvider) CreateUser(userEntry *model.UserEntry) (string, error)
 		return "", util.ErrInternal
 	}
 
-	ue := &model.UserEntry{
-		Username:    userEntry.Username,
-		Credentials: encryptedCredentials,
-	}
+	ue := model.NewUserEntry(userEntry)
+	ue.Credentials = encryptedCredentials
 
 	// create a data store entry and save it
 	dataStoreEntry, err := vds.UserEntryToDataStoreEntry(ue)
@@ -236,10 +251,8 @@ func (p *BuiltinProvider) GetUser(username string) (*model.UserEntry, error) {
 		return nil, util.ErrInternal
 	}
 
-	ue := &model.UserEntry{
-		Username:    userEntry.Username,
-		Credentials: credentials,
-	}
+	ue := model.NewUserEntry(userEntry)
+	ue.Credentials = credentials
 
 	return ue, nil
 }

@@ -58,3 +58,12 @@ func IsNamespaceEntry(dsEntry *DataStoreEntry) bool {
 
 	return metaData.Type == namespaceEntryType
 }
+
+func IsAuthorizationPolicyEntry(dsEntry *DataStoreEntry) bool {
+	var metaData MetaData
+	if err := json.Unmarshal([]byte(dsEntry.MetaData), &metaData); err != nil {
+		return false
+	}
+
+	return metaData.Type == authorizationPolicyEntryType
+}

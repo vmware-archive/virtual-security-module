@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/vmware/virtual-security-module/config"
+	"github.com/vmware/virtual-security-module/context"
 	"github.com/vmware/virtual-security-module/model"
 	"github.com/vmware/virtual-security-module/vds"
 	"github.com/vmware/virtual-security-module/vks"
@@ -36,7 +37,7 @@ func TestMain(m *testing.M) {
 	}
 
 	am = New()
-	if err := am.Init(nil, ds, ks); err != nil {
+	if err := am.Init(context.NewModuleInitContext(cfg, ds, ks)); err != nil {
 		fmt.Printf("Failed to initialize authn manager: %v\n", err)
 		os.Exit(1)
 	}

@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/vmware/virtual-security-module/model"
@@ -15,9 +16,9 @@ import (
 
 const (
 	namespacesCmdUsage      = "namespaces [sub-command]"
-	createNamespaceCmdUsage = "create [namespace-path]"
-	deleteNamespaceCmdUsage = "delete [namespace-path]"
-	getNamespaceCmdUsage    = "get [namespace-path]"
+	createNamespaceCmdUsage = "create namespace-path [owner] [role-labels]"
+	deleteNamespaceCmdUsage = "delete namespace-path"
+	getNamespaceCmdUsage    = "get namespace-path"
 )
 
 func init() {
@@ -56,13 +57,13 @@ var getNamespaceCmd = &cobra.Command{
 }
 
 func createNamespace(cmd *cobra.Command, args []string) {
-	namespacePath, err := createNamespaceCheckUsage(args)
+	namespacePath, owner, roleLabels, err := createNamespaceCheckUsage(args)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
 
-	_, err = apiCreateNamespace(namespacePath)
+	_, err = apiCreateNamespace(namespacePath, owner, roleLabels)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
@@ -109,14 +110,24 @@ func getNamespace(cmd *cobra.Command, args []string) {
 	fmt.Println(s)
 }
 
-func createNamespaceCheckUsage(args []string) (string, error) {
-	if len(args) != 1 {
-		return "", fmt.Errorf("Usage: %v", createNamespaceCmdUsage)
+func createNamespaceCheckUsage(args []string) (string, string, []string, error) {
+	if len(args) < 1 || len(args) > 3 {
+		return "", "", []string{}, fmt.Errorf("Usage: %v", createNamespaceCmdUsage)
 	}
 
 	namespacePath := args[0]
 
-	return namespacePath, nil
+	owner := ""
+	if len(args) > 1 {
+		owner = args[1]
+	}
+
+	roleLabels := []string{}
+	if len(args) > 2 {
+		roleLabels = strings.Split(args[2], ",")
+	}
+
+	return namespacePath, owner, roleLabels, nil
 }
 
 func deleteNamespaceCheckUsage(args []string) (string, error) {
@@ -139,13 +150,15 @@ func getNamespaceCheckUsage(args []string) (string, error) {
 	return namespacePath, nil
 }
 
-func apiCreateNamespace(path string) (string, error) {
+func apiCreateNamespace(path, owner string, roleLabels []string) (string, error) {
 	if Token == "" {
 		return "", fmt.Errorf("authn token is empty")
 	}
 
 	ne := &model.NamespaceEntry{
-		Path: path,
+		Path:       path,
+		Owner:      owner,
+		RoleLabels: roleLabels,
 	}
 
 	body := new(bytes.Buffer)

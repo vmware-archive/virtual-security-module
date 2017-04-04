@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/vmware/virtual-security-module/config"
+	"github.com/vmware/virtual-security-module/context"
 	"github.com/vmware/virtual-security-module/model"
 	"github.com/vmware/virtual-security-module/vds"
 	"github.com/vmware/virtual-security-module/vks"
@@ -32,7 +33,7 @@ func TestMain(m *testing.M) {
 	}
 
 	sm = New()
-	if err := sm.Init(cfg, ds, ks); err != nil {
+	if err := sm.Init(context.NewModuleInitContext(cfg, ds, ks)); err != nil {
 		fmt.Printf("Failed to initialize secret manager: %v\n", err)
 		os.Exit(1)
 	}
@@ -46,11 +47,10 @@ func TestMain(m *testing.M) {
 
 func TestCreateAndGetSecret(t *testing.T) {
 	se := &model.SecretEntry{
-		Id:                     "id1",
-		SecretData:             []byte("secret0"),
-		OwnerEntryId:           "user0",
-		ExpirationTime:         time.Now().Add(time.Hour),
-		AuthorizationPolicyIds: []string{},
+		Id:             "id1",
+		SecretData:     []byte("secret0"),
+		Owner:          "user0",
+		ExpirationTime: time.Now().Add(time.Hour),
 	}
 
 	id2, err := sm.CreateSecret(se)
@@ -66,8 +66,8 @@ func TestCreateAndGetSecret(t *testing.T) {
 		t.Fatalf("Failed to get secret for id %v: %v", id2, err)
 	}
 
-	if ok := se.Equal(se2); !ok {
-		t.Fatalf(err.Error())
+	if ok := model.SecretsEqual(se, se2); !ok {
+		t.Fatalf("Created and retrieved secrets do not match: %v %v", se, se2)
 	}
 
 	if err := sm.DeleteSecret(id2); err != nil {

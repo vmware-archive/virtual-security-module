@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"path"
 
-	"github.com/vmware/virtual-security-module/config"
+	"github.com/vmware/virtual-security-module/context"
 	"github.com/vmware/virtual-security-module/model"
 	"github.com/vmware/virtual-security-module/util"
 	"github.com/vmware/virtual-security-module/vds"
@@ -26,9 +26,9 @@ func (namespaceManager *NamespaceManager) Type() string {
 	return "NamespaceManager"
 }
 
-func (namespaceManager *NamespaceManager) Init(configuration *config.Config, ds vds.DataStoreAdapter, ks vks.KeyStoreAdapter) error {
-	namespaceManager.dataStore = ds
-	namespaceManager.keyStore = ks
+func (namespaceManager *NamespaceManager) Init(moduleInitContext *context.ModuleInitContext) error {
+	namespaceManager.dataStore = moduleInitContext.DataStore
+	namespaceManager.keyStore = moduleInitContext.KeyStore
 
 	if err := namespaceManager.initNamespaces(); err != nil {
 		return err

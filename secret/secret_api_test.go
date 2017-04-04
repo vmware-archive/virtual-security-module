@@ -39,11 +39,10 @@ func TestAPICreateAndGetSecret(t *testing.T) {
 	expirationTime := time.Now().Add(time.Hour)
 
 	se := &model.SecretEntry{
-		Id:                     "api-id0",
-		SecretData:             []byte("secret0"),
-		OwnerEntryId:           "user0",
-		ExpirationTime:         expirationTime,
-		AuthorizationPolicyIds: []string{},
+		Id:             "api-id0",
+		SecretData:     []byte("secret0"),
+		Owner:          "user0",
+		ExpirationTime: expirationTime,
 	}
 	body := new(bytes.Buffer)
 	err := json.NewEncoder(body).Encode(se)
@@ -88,7 +87,7 @@ func TestAPICreateAndGetSecret(t *testing.T) {
 		t.Fatalf("Failed to parse get secret response: %v", err)
 	}
 
-	if ok := se.Equal(&se2); !ok {
+	if ok := model.SecretsEqual(se, &se2); !ok {
 		t.Fatalf(err.Error())
 	}
 

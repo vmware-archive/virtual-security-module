@@ -1,11 +1,56 @@
 {
   "swagger": "2.0",
   "info": {
-    "description": "Namespace API",
+    "description": "Secret Lifecycle Management API",
     "title": "Virtual Security Module"
   },
   "basePath": "/",
   "paths": {
+    "/authz/policies": {
+      "post": {
+        "description": "Creates a new authz policy",
+        "tags": [
+          "authz-policies"
+        ],
+        "operationId": "CreateAuthzPolicy",
+        "parameters": [
+          {
+            "name": "AuthzPolicyEntry",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/AuthorizationPolicyEntry"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "$ref": "#/responses/AuthzPolicyCreationResponse"
+          }
+        }
+      }
+    },
+    "/authz/policies/{path}": {
+      "get": {
+        "description": "Returns an authz policy's info",
+        "tags": [
+          "authz-policies"
+        ],
+        "operationId": "GetAuthzPolicy",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/AuthzPolicyEntryResponse"
+          }
+        }
+      },
+      "delete": {
+        "description": "Deletes an authz policy",
+        "tags": [
+          "authz-policies"
+        ],
+        "operationId": "DeleteAuthzPolicy",
+        "responses": {}
+      }
+    },
     "/login": {
       "post": {
         "description": "First phase: client provides the username and gets back a challenge,\ndecrypted by the user's public key\nSecond phase: client decrypts the challenge with the user's private\nkey and provides it with the request; and gets a token",
@@ -167,6 +212,34 @@
     }
   },
   "definitions": {
+    "AuthorizationPolicyEntry": {
+      "type": "object",
+      "properties": {
+        "allowedOperations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Operation"
+          },
+          "x-go-name": "AllowedOperations"
+        },
+        "id": {
+          "type": "string",
+          "x-go-name": "Id"
+        },
+        "owner": {
+          "type": "string",
+          "x-go-name": "Owner"
+        },
+        "roleLabels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "RoleLabels"
+        }
+      },
+      "x-go-package": "github.com/vmware/virtual-security-module/model"
+    },
     "LoginRequest": {
       "type": "object",
       "properties": {
@@ -194,13 +267,6 @@
     "NamespaceEntry": {
       "type": "object",
       "properties": {
-        "authorizationPolicyIds": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "x-go-name": "AuthorizationPolicyIds"
-        },
         "childPaths": {
           "type": "array",
           "items": {
@@ -208,13 +274,44 @@
           },
           "x-go-name": "ChildPaths"
         },
-        "ownerEntryId": {
+        "owner": {
           "type": "string",
-          "x-go-name": "OwnerEntryId"
+          "x-go-name": "Owner"
         },
         "path": {
           "type": "string",
           "x-go-name": "Path"
+        },
+        "roleLabels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "RoleLabels"
+        }
+      },
+      "x-go-package": "github.com/vmware/virtual-security-module/model"
+    },
+    "Operation": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string",
+          "x-go-name": "Label"
+        }
+      },
+      "x-go-package": "github.com/vmware/virtual-security-module/model"
+    },
+    "RoleEntry": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string",
+          "x-go-name": "Label"
+        },
+        "scope": {
+          "type": "string",
+          "x-go-name": "Scope"
         }
       },
       "x-go-package": "github.com/vmware/virtual-security-module/model"
@@ -222,13 +319,6 @@
     "SecretEntry": {
       "type": "object",
       "properties": {
-        "authorizationPolicyIds": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "x-go-name": "AuthorizationPolicyIds"
-        },
         "expirationTime": {
           "x-go-name": "ExpirationTime"
         },
@@ -236,9 +326,9 @@
           "type": "string",
           "x-go-name": "Id"
         },
-        "ownerEntryId": {
+        "owner": {
           "type": "string",
-          "x-go-name": "OwnerEntryId"
+          "x-go-name": "Owner"
         },
         "secretData": {
           "type": "array",
@@ -262,6 +352,13 @@
           },
           "x-go-name": "Credentials"
         },
+        "roles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RoleEntry"
+          },
+          "x-go-name": "Roles"
+        },
         "username": {
           "type": "string",
           "x-go-name": "Username"
@@ -271,6 +368,21 @@
     }
   },
   "responses": {
+    "AuthzPolicyCreationResponse": {
+      "schema": {
+        "type": "object",
+        "properties": {
+          "AuthzPolicyId": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "AuthzPolicyEntryResponse": {
+      "schema": {
+        "$ref": "#/definitions/AuthorizationPolicyEntry"
+      }
+    },
     "LoginResp": {
       "schema": {
         "$ref": "#/definitions/LoginResponse"
