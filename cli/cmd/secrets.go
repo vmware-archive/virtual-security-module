@@ -15,9 +15,9 @@ import (
 
 const (
 	secretsCmdUsage      = "secrets [sub-command]"
-	createSecretCmdUsage = "create [secret-id] [secret-data]"
-	deleteSecretCmdUsage = "delete [secret-id]"
-	getSecretCmdUsage    = "get [secret-id]"
+	createSecretCmdUsage = "create secret-id secret-data"
+	deleteSecretCmdUsage = "delete secret-id"
+	getSecretCmdUsage    = "get secret-id"
 )
 
 func init() {

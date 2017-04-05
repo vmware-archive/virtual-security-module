@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/vmware/virtual-security-module/model"
@@ -16,9 +17,9 @@ import (
 
 const (
 	usersCmdUsage      = "users [sub-command]"
-	createUserCmdUsage = "create [username] [public-key-filename]"
-	deleteUserCmdUsage = "delete [username]"
-	getUserCmdUsage    = "get [username]"
+	createUserCmdUsage = "create username public-key-filename [roles]"
+	deleteUserCmdUsage = "delete username"
+	getUserCmdUsage    = "get username"
 )
 
 func init() {
@@ -57,13 +58,13 @@ var getUserCmd = &cobra.Command{
 }
 
 func createUser(cmd *cobra.Command, args []string) {
-	username, pubKey, err := createUserCheckUsage(args)
+	username, pubKey, roles, err := createUserCheckUsage(args)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
 
-	id, err := apiCreateUser(username, pubKey)
+	id, err := apiCreateUser(username, pubKey, roles)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
@@ -111,9 +112,9 @@ func getUser(cmd *cobra.Command, args []string) {
 	fmt.Println(s)
 }
 
-func createUserCheckUsage(args []string) (string, *rsa.PublicKey, error) {
-	if len(args) != 2 {
-		return "", nil, fmt.Errorf("Usage: %v", createUserCmdUsage)
+func createUserCheckUsage(args []string) (string, *rsa.PublicKey, []model.RoleEntry, error) {
+	if len(args) < 2 || len(args) > 3 {
+		return "", nil, []model.RoleEntry{}, fmt.Errorf("Usage: %v", createUserCmdUsage)
 	}
 
 	username := args[0]
@@ -121,10 +122,33 @@ func createUserCheckUsage(args []string) (string, *rsa.PublicKey, error) {
 
 	rsaPubKey, err := util.ReadRSAPublicKey(pubKeyFilename)
 	if err != nil {
-		return "", nil, fmt.Errorf("failed to read public key: %v", err)
+		return "", nil, []model.RoleEntry{}, fmt.Errorf("failed to read public key: %v", err)
 	}
 
-	return username, rsaPubKey, nil
+	roles := make([]model.RoleEntry, 0)
+	if len(args) == 3 {
+		roleStrs := strings.Split(args[2], ",")
+		for _, roleStr := range roleStrs {
+			scopeLabelPair := strings.Split(roleStr, ":")
+			if len(scopeLabelPair) != 2 {
+				return "", nil, []model.RoleEntry{},
+					fmt.Errorf("failed to parse roles \"%v\". Expected format is scope1:label1 [,scope2:label2] ...", args[2])
+			}
+
+			if !strings.HasPrefix(scopeLabelPair[0], "/") {
+				return "", nil, []model.RoleEntry{},
+					fmt.Errorf("failed to parse scope \"%v\". Scope is a namespace path and must begin with a \"/\"", scopeLabelPair[0])
+			}
+
+			roleEntry := model.RoleEntry{
+				Scope: scopeLabelPair[0],
+				Label: scopeLabelPair[1],
+			}
+			roles = append(roles, roleEntry)
+		}
+	}
+
+	return username, rsaPubKey, roles, nil
 }
 
 func deleteUserCheckUsage(args []string) (string, error) {
@@ -147,7 +171,7 @@ func getUserCheckUsage(args []string) (string, error) {
 	return username, nil
 }
 
-func apiCreateUser(username string, pubKey *rsa.PublicKey) (string, error) {
+func apiCreateUser(username string, pubKey *rsa.PublicKey, roles []model.RoleEntry) (string, error) {
 	if Token == "" {
 		return "", fmt.Errorf("authn token is empty")
 	}
@@ -160,6 +184,7 @@ func apiCreateUser(username string, pubKey *rsa.PublicKey) (string, error) {
 	ue := &model.UserEntry{
 		Username:    username,
 		Credentials: creds,
+		Roles:       roles,
 	}
 
 	body := new(bytes.Buffer)

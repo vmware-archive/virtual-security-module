@@ -5,7 +5,7 @@ package secret
 import (
 	"path"
 
-	"github.com/vmware/virtual-security-module/config"
+	"github.com/vmware/virtual-security-module/context"
 	"github.com/vmware/virtual-security-module/crypt"
 	"github.com/vmware/virtual-security-module/model"
 	"github.com/vmware/virtual-security-module/util"
@@ -26,9 +26,9 @@ func (secretManager *SecretManager) Type() string {
 	return "SecretManager"
 }
 
-func (secretManager *SecretManager) Init(configuration *config.Config, ds vds.DataStoreAdapter, ks vks.KeyStoreAdapter) error {
-	secretManager.dataStore = ds
-	secretManager.keyStore = ks
+func (secretManager *SecretManager) Init(moduleInitContext *context.ModuleInitContext) error {
+	secretManager.dataStore = moduleInitContext.DataStore
+	secretManager.keyStore = moduleInitContext.KeyStore
 
 	return nil
 }
@@ -73,13 +73,8 @@ func (secretManager *SecretManager) CreateSecret(secretEntry *model.SecretEntry)
 		return "", util.ErrInternal
 	}
 
-	se := &model.SecretEntry{
-		Id:                     secretEntry.Id,
-		SecretData:             encryptedSecretData,
-		OwnerEntryId:           secretEntry.OwnerEntryId,
-		ExpirationTime:         secretEntry.ExpirationTime,
-		AuthorizationPolicyIds: secretEntry.AuthorizationPolicyIds,
-	}
+	se := model.NewSecretEntry(secretEntry)
+	se.SecretData = encryptedSecretData
 
 	// create a data store entry and save it
 	dataStoreEntry, err := vds.SecretEntryToDataStoreEntry(se)

@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/vmware/virtual-security-module/config"
+	"github.com/vmware/virtual-security-module/context"
 	"github.com/vmware/virtual-security-module/model"
 	"github.com/vmware/virtual-security-module/util"
 	"github.com/vmware/virtual-security-module/vds"
@@ -42,9 +43,9 @@ func (authnManager *AuthnManager) Type() string {
 	return "AuthnManager"
 }
 
-func (authnManager *AuthnManager) Init(config *config.Config, ds vds.DataStoreAdapter, ks vks.KeyStoreAdapter) error {
+func (authnManager *AuthnManager) Init(moduleInitContext *context.ModuleInitContext) error {
 	authnProvider := NewBuiltinProvider()
-	if err := authnProvider.Init(nil, ds, ks); err != nil {
+	if err := authnProvider.Init(nil, moduleInitContext.DataStore, moduleInitContext.KeyStore); err != nil {
 		return err
 	}
 

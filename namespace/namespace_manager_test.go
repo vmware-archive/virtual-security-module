@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/vmware/virtual-security-module/config"
+	"github.com/vmware/virtual-security-module/context"
 	"github.com/vmware/virtual-security-module/model"
 	"github.com/vmware/virtual-security-module/vds"
 	"github.com/vmware/virtual-security-module/vks"
@@ -32,7 +33,7 @@ func TestMain(m *testing.M) {
 	}
 
 	nm = New()
-	if err := nm.Init(cfg, ds, ks); err != nil {
+	if err := nm.Init(context.NewModuleInitContext(cfg, ds, ks)); err != nil {
 		fmt.Printf("Failed to initialize namespace manager: %v\n", err)
 		os.Exit(1)
 	}
@@ -46,9 +47,9 @@ func TestMain(m *testing.M) {
 
 func TestCreateAndGetNamespace(t *testing.T) {
 	ne := &model.NamespaceEntry{
-		Path:                   "/namespace0",
-		OwnerEntryId:           "user0",
-		AuthorizationPolicyIds: []string{},
+		Path:       "/namespace0",
+		Owner:      "user0",
+		RoleLabels: []string{},
 	}
 
 	id, err := nm.CreateNamespace(ne)
@@ -76,9 +77,9 @@ func TestCreateAndGetNamespace(t *testing.T) {
 
 func TestCreateAlreadyExists(t *testing.T) {
 	ne := &model.NamespaceEntry{
-		Path:                   "/namespace0",
-		OwnerEntryId:           "user0",
-		AuthorizationPolicyIds: []string{},
+		Path:       "/namespace0",
+		Owner:      "user0",
+		RoleLabels: []string{},
 	}
 
 	id, err := nm.CreateNamespace(ne)
@@ -91,9 +92,9 @@ func TestCreateAlreadyExists(t *testing.T) {
 	}
 
 	child := &model.NamespaceEntry{
-		Path:                   "/namespace0/child",
-		OwnerEntryId:           "user0",
-		AuthorizationPolicyIds: []string{},
+		Path:       "/namespace0/child",
+		Owner:      "user0",
+		RoleLabels: []string{},
 	}
 
 	childId, err := nm.CreateNamespace(child)
@@ -116,9 +117,9 @@ func TestCreateAlreadyExists(t *testing.T) {
 
 func TestCreateParentNotExists(t *testing.T) {
 	ne := &model.NamespaceEntry{
-		Path:                   "/namespace0/child",
-		OwnerEntryId:           "user0",
-		AuthorizationPolicyIds: []string{},
+		Path:       "/namespace0/child",
+		Owner:      "user0",
+		RoleLabels: []string{},
 	}
 
 	if _, err := nm.CreateNamespace(ne); err == nil {
@@ -134,9 +135,9 @@ func TestGetNotExists(t *testing.T) {
 
 func TestDeleteParentNotEmpty(t *testing.T) {
 	root := &model.NamespaceEntry{
-		Path:                   "/namespace0",
-		OwnerEntryId:           "user0",
-		AuthorizationPolicyIds: []string{},
+		Path:       "/namespace0",
+		Owner:      "user0",
+		RoleLabels: []string{},
 	}
 
 	rootId, err := nm.CreateNamespace(root)
@@ -145,9 +146,9 @@ func TestDeleteParentNotEmpty(t *testing.T) {
 	}
 
 	child := &model.NamespaceEntry{
-		Path:                   "/namespace0/child",
-		OwnerEntryId:           "user0",
-		AuthorizationPolicyIds: []string{},
+		Path:       "/namespace0/child",
+		Owner:      "user0",
+		RoleLabels: []string{},
 	}
 
 	childId, err := nm.CreateNamespace(child)
@@ -156,9 +157,9 @@ func TestDeleteParentNotEmpty(t *testing.T) {
 	}
 
 	grandchild := &model.NamespaceEntry{
-		Path:                   "/namespace0/child/grandchild",
-		OwnerEntryId:           "user0",
-		AuthorizationPolicyIds: []string{},
+		Path:       "/namespace0/child/grandchild",
+		Owner:      "user0",
+		RoleLabels: []string{},
 	}
 
 	grandchildId, err := nm.CreateNamespace(grandchild)
@@ -189,9 +190,9 @@ func TestDeleteParentNotEmpty(t *testing.T) {
 
 func TestNamespaceNavigation(t *testing.T) {
 	root := &model.NamespaceEntry{
-		Path:                   "/namespace0",
-		OwnerEntryId:           "user0",
-		AuthorizationPolicyIds: []string{},
+		Path:       "/namespace0",
+		Owner:      "user0",
+		RoleLabels: []string{},
 	}
 
 	if _, err := nm.CreateNamespace(root); err != nil {
@@ -201,9 +202,9 @@ func TestNamespaceNavigation(t *testing.T) {
 	childCount := 3
 	for i := 0; i < childCount; i++ {
 		child := &model.NamespaceEntry{
-			Path:                   fmt.Sprintf("/namespace0/%v", i),
-			OwnerEntryId:           fmt.Sprintf("user-%v", i),
-			AuthorizationPolicyIds: []string{},
+			Path:       fmt.Sprintf("/namespace0/%v", i),
+			Owner:      fmt.Sprintf("user-%v", i),
+			RoleLabels: []string{},
 		}
 
 		if _, err := nm.CreateNamespace(child); err != nil {
@@ -229,8 +230,8 @@ func TestNamespaceNavigation(t *testing.T) {
 			t.Fatalf("Failed to get namespace: %v", err)
 		}
 
-		if expectedOwnerId != child.OwnerEntryId {
-			t.Fatalf("Created and retrieved owner ids are different: %v, %v", expectedOwnerId, child.OwnerEntryId)
+		if expectedOwnerId != child.Owner {
+			t.Fatalf("Created and retrieved owner ids are different: %v, %v", expectedOwnerId, child.Owner)
 		}
 
 		if err := nm.DeleteNamespace(path); err != nil {

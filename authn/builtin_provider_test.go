@@ -164,6 +164,7 @@ func createUser(username string) (*model.UserEntry, *rsa.PrivateKey, error) {
 	ue := &model.UserEntry{
 		Username:    username,
 		Credentials: creds,
+		Roles:       []model.RoleEntry{},
 	}
 
 	id, err := p.CreateUser(ue)

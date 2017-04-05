@@ -4,6 +4,7 @@ package vds
 
 import (
 	"encoding/json"
+	"path"
 	"strings"
 	"time"
 
@@ -12,26 +13,39 @@ import (
 )
 
 const (
-	secretsPathPrefix  = "/secrets/"
-	usersPathPrefix    = "/users/"
-	secretEntryType    = "secret"
-	userEntryType      = "user"
-	namespaceEntryType = "namespace"
+	PoliciesDirname = "policies"
+
+	secretsPathPrefix = "/secrets/"
+	usersPathPrefix   = "/users/"
+
+	secretEntryType              = "secret"
+	userEntryType                = "user"
+	namespaceEntryType           = "namespace"
+	authorizationPolicyEntryType = "authzPolicy"
 )
 
+type RoleMetaData struct {
+	Scope string
+	Label string
+}
+
+type OperationMetaData struct {
+	Label string
+}
+
 type MetaData struct {
-	Type                   string
-	OwnerEntryId           string
-	ExpirationTime         time.Time
-	AuthorizationPolicyIds []string
+	Type              string
+	Owner             string
+	ExpirationTime    time.Time
+	Roles             []RoleMetaData
+	AllowedOperations []OperationMetaData
 }
 
 func SecretEntryToDataStoreEntry(secretEntry *model.SecretEntry) (*DataStoreEntry, error) {
 	metaData := &MetaData{
-		Type:                   secretEntryType,
-		OwnerEntryId:           secretEntry.OwnerEntryId,
-		ExpirationTime:         secretEntry.ExpirationTime,
-		AuthorizationPolicyIds: secretEntry.AuthorizationPolicyIds,
+		Type:           secretEntryType,
+		Owner:          secretEntry.Owner,
+		ExpirationTime: secretEntry.ExpirationTime,
 	}
 
 	metaDataBytes, err := json.Marshal(metaData)
@@ -60,22 +74,20 @@ func DataStoreEntryToSecretEntry(dataStoreEntry *DataStoreEntry) (*model.SecretE
 	}
 
 	secretEntry := &model.SecretEntry{
-		Id:                     SecretPathToId(dataStoreEntry.Id),
-		SecretData:             dataStoreEntry.Data,
-		OwnerEntryId:           metaData.OwnerEntryId,
-		ExpirationTime:         metaData.ExpirationTime,
-		AuthorizationPolicyIds: metaData.AuthorizationPolicyIds,
+		Id:             SecretPathToId(dataStoreEntry.Id),
+		SecretData:     dataStoreEntry.Data,
+		Owner:          metaData.Owner,
+		ExpirationTime: metaData.ExpirationTime,
 	}
 
 	return secretEntry, nil
 }
 
 func UserEntryToDataStoreEntry(userEntry *model.UserEntry) (*DataStoreEntry, error) {
-	userpath := UsernameToPath(userEntry.Username)
-
 	metaData := &MetaData{
-		Type:         userEntryType,
-		OwnerEntryId: userEntry.Username,
+		Type:  userEntryType,
+		Owner: userEntry.Username,
+		Roles: rolesToMetaData(userEntry.Roles),
 	}
 
 	metaDataBytes, err := json.Marshal(metaData)
@@ -84,7 +96,7 @@ func UserEntryToDataStoreEntry(userEntry *model.UserEntry) (*DataStoreEntry, err
 	}
 
 	dataStoreEntry := &DataStoreEntry{
-		Id:       userpath,
+		Id:       UsernameToPath(userEntry.Username),
 		Data:     []byte(userEntry.Credentials),
 		MetaData: string(metaDataBytes),
 	}
@@ -106,6 +118,7 @@ func DataStoreEntryToUserEntry(dataStoreEntry *DataStoreEntry) (*model.UserEntry
 	userEntry := &model.UserEntry{
 		Username:    UserpathToName(dataStoreEntry.Id),
 		Credentials: dataStoreEntry.Data,
+		Roles:       rolesFromMetaData(metaData.Roles),
 	}
 
 	return userEntry, nil
@@ -113,22 +126,18 @@ func DataStoreEntryToUserEntry(dataStoreEntry *DataStoreEntry) (*model.UserEntry
 
 func NamespaceEntryToDataStoreEntry(namespaceEntry *model.NamespaceEntry) (*DataStoreEntry, error) {
 	metaData := &MetaData{
-		Type:         namespaceEntryType,
-		OwnerEntryId: namespaceEntry.OwnerEntryId,
+		Type:  namespaceEntryType,
+		Owner: namespaceEntry.Owner,
+		Roles: roleLabelsToMetaData(namespaceEntry.RoleLabels),
 	}
 	metaDataBytes, err := json.Marshal(metaData)
 	if err != nil {
 		return nil, util.ErrInternal
 	}
 
-	data, err := json.Marshal(namespaceEntry.AuthorizationPolicyIds)
-	if err != nil {
-		return nil, util.ErrInternal
-	}
-
 	dataStoreEntry := &DataStoreEntry{
 		Id:       namespaceEntry.Path,
-		Data:     data,
+		Data:     []byte{},
 		MetaData: string(metaDataBytes),
 	}
 
@@ -145,18 +154,54 @@ func DataStoreEntryToNamespaceEntry(dataStoreEntry *DataStoreEntry) (*model.Name
 		return nil, util.ErrInternal
 	}
 
-	var authorizationPolicyIds []string
-	if err := json.Unmarshal(dataStoreEntry.Data, &authorizationPolicyIds); err != nil {
-		return nil, util.ErrInternal
-	}
-
 	namespaceEntry := &model.NamespaceEntry{
-		Path:                   dataStoreEntry.Id,
-		OwnerEntryId:           metaData.OwnerEntryId,
-		AuthorizationPolicyIds: authorizationPolicyIds,
+		Path:       dataStoreEntry.Id,
+		Owner:      metaData.Owner,
+		RoleLabels: roleLabelsFromMetaData(metaData.Roles),
 	}
 
 	return namespaceEntry, nil
+}
+
+func AuthorizationPolicyEntryToDataStoreEntry(policyEntry *model.AuthorizationPolicyEntry) (*DataStoreEntry, error) {
+	metaData := &MetaData{
+		Type:              authorizationPolicyEntryType,
+		Owner:             policyEntry.Owner,
+		Roles:             roleLabelsToMetaData(policyEntry.RoleLabels),
+		AllowedOperations: operationsToMetaData(policyEntry.AllowedOperations),
+	}
+	metaDataBytes, err := json.Marshal(metaData)
+	if err != nil {
+		return nil, util.ErrInternal
+	}
+
+	dataStoreEntry := &DataStoreEntry{
+		Id:       AuthorizationPolicyIdToPath(policyEntry.Id),
+		Data:     []byte{},
+		MetaData: string(metaDataBytes),
+	}
+
+	return dataStoreEntry, nil
+}
+
+func DataStoreEntryToAuthorizationPolicyEntry(dataStoreEntry *DataStoreEntry) (*model.AuthorizationPolicyEntry, error) {
+	var metaData MetaData
+	if err := json.Unmarshal([]byte(dataStoreEntry.MetaData), &metaData); err != nil {
+		return nil, util.ErrInternal
+	}
+
+	if metaData.Type != authorizationPolicyEntryType {
+		return nil, util.ErrInternal
+	}
+
+	policyEntry := &model.AuthorizationPolicyEntry{
+		Id:                AuthorizationPolicyPathToId(dataStoreEntry.Id),
+		Owner:             metaData.Owner,
+		RoleLabels:        roleLabelsFromMetaData(metaData.Roles),
+		AllowedOperations: operationsFromMetaData(metaData.AllowedOperations),
+	}
+
+	return policyEntry, nil
 }
 
 func DataStoreEntriesToPaths(dataStoreEntries []*DataStoreEntry) []string {
@@ -183,4 +228,112 @@ func UsernameToPath(username string) string {
 
 func UserpathToName(userpath string) string {
 	return strings.TrimPrefix(userpath, usersPathPrefix)
+}
+
+func AuthorizationPolicyIdToPath(policyId string) string {
+	dir, file := path.Split(policyId)
+	return path.Join("/", dir, PoliciesDirname, file)
+}
+
+func AuthorizationPolicyPathToId(policyPath string) string {
+	policiesDir, file := path.Split(policyPath)
+	dir := path.Dir(strings.TrimSuffix(policiesDir, "/"))
+	return strings.TrimPrefix(path.Join(dir, file), "/")
+}
+
+func rolesToMetaData(roles []model.RoleEntry) []RoleMetaData {
+	rolesMetaData := make([]RoleMetaData, 0, len(roles))
+
+	for _, role := range roles {
+		rolesMetaData = append(rolesMetaData, roleToMetaData(role))
+	}
+
+	return rolesMetaData
+}
+
+func rolesFromMetaData(rolesMetaData []RoleMetaData) []model.RoleEntry {
+	roles := make([]model.RoleEntry, 0, len(rolesMetaData))
+
+	for _, roleMetaData := range rolesMetaData {
+		roles = append(roles, roleFromMetaData(roleMetaData))
+	}
+
+	return roles
+}
+
+func operationsToMetaData(operations []model.Operation) []OperationMetaData {
+	operationsMetaData := make([]OperationMetaData, 0, len(operations))
+
+	for _, op := range operations {
+		operationsMetaData = append(operationsMetaData, operationToMetaData(op))
+	}
+
+	return operationsMetaData
+}
+
+func operationsFromMetaData(operationsMetaData []OperationMetaData) []model.Operation {
+	operations := make([]model.Operation, 0, len(operationsMetaData))
+
+	for _, operationMetaData := range operationsMetaData {
+		operations = append(operations, operationFromMetaData(operationMetaData))
+	}
+
+	return operations
+}
+
+func roleLabelsToMetaData(roleLabels []string) []RoleMetaData {
+	rolesMetaData := make([]RoleMetaData, 0, len(roleLabels))
+
+	for _, roleLabel := range roleLabels {
+		rolesMetaData = append(rolesMetaData, roleLabelToMetaData(roleLabel))
+	}
+
+	return rolesMetaData
+}
+
+func roleLabelsFromMetaData(rolesMetaData []RoleMetaData) []string {
+	roleLabels := make([]string, 0, len(rolesMetaData))
+
+	for _, roleMetaData := range rolesMetaData {
+		roleLabels = append(roleLabels, roleLabelFromMetaData(roleMetaData))
+	}
+
+	return roleLabels
+}
+
+func roleToMetaData(role model.RoleEntry) RoleMetaData {
+	return RoleMetaData{
+		Scope: role.Scope,
+		Label: role.Label,
+	}
+}
+
+func roleFromMetaData(roleMetaData RoleMetaData) model.RoleEntry {
+	return model.RoleEntry{
+		Scope: roleMetaData.Scope,
+		Label: roleMetaData.Label,
+	}
+}
+
+func operationToMetaData(operation model.Operation) OperationMetaData {
+	return OperationMetaData{
+		Label: operation.Label,
+	}
+}
+
+func operationFromMetaData(operationMetaData OperationMetaData) model.Operation {
+	return model.Operation{
+		Label: operationMetaData.Label,
+	}
+}
+
+func roleLabelToMetaData(roleLabel string) RoleMetaData {
+	return RoleMetaData{
+		Scope: "",
+		Label: roleLabel,
+	}
+}
+
+func roleLabelFromMetaData(roleMetaData RoleMetaData) string {
+	return roleMetaData.Label
 }

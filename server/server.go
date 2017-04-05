@@ -11,7 +11,9 @@ import (
 
 	"github.com/naoina/denco"
 	"github.com/vmware/virtual-security-module/authn"
+	"github.com/vmware/virtual-security-module/authz"
 	"github.com/vmware/virtual-security-module/config"
+	"github.com/vmware/virtual-security-module/context"
 	"github.com/vmware/virtual-security-module/model"
 	"github.com/vmware/virtual-security-module/namespace"
 	"github.com/vmware/virtual-security-module/secret"
@@ -30,7 +32,7 @@ const (
 
 type Module interface {
 	Type() string
-	Init(*config.Config, vds.DataStoreAdapter, vks.KeyStoreAdapter) error
+	Init(*context.ModuleInitContext) error
 	RegisterEndpoints(mux *denco.Mux) []denco.Handler
 	Close() error
 }
@@ -43,35 +45,33 @@ type TlsConfig struct {
 }
 
 type Server struct {
-	modules          []Module
-	authnManager     *authn.AuthnManager
-	namespaceManager *namespace.NamespaceManager
-	httpPipeline     http.Handler
-	httpServer       *http.Server
-	httpsServer      *http.Server
-	useHttp          bool
-	useHttps         bool
-	httpPort         int
-	httpsPort        int
-	tlsConfig        *TlsConfig
-	dataStore        vds.DataStoreAdapter
-	keyStore         vks.KeyStoreAdapter
+	modules      []Module
+	authnManager *authn.AuthnManager
+	httpPipeline http.Handler
+	httpServer   *http.Server
+	httpsServer  *http.Server
+	useHttp      bool
+	useHttps     bool
+	httpPort     int
+	httpsPort    int
+	tlsConfig    *TlsConfig
+	dataStore    vds.DataStoreAdapter
+	keyStore     vks.KeyStoreAdapter
 }
 
 func New() *Server {
 	authnManager := authn.New()
-	namespaceManager := namespace.New()
 
 	modules := []Module{
 		authnManager,
-		namespaceManager,
+		authz.New(),
+		namespace.New(),
 		secret.New(),
 	}
 
 	return &Server{
-		modules:          modules,
-		authnManager:     authnManager,
-		namespaceManager: namespaceManager,
+		modules:      modules,
+		authnManager: authnManager,
 	}
 }
 
@@ -87,7 +87,8 @@ func (server *Server) Init(configuration *config.Config) error {
 
 	// initialize modules
 	for _, module := range server.modules {
-		err := module.Init(configuration, server.dataStore, server.keyStore)
+		moduleInitContext := context.NewModuleInitContext(configuration, server.dataStore, server.keyStore)
+		err := module.Init(moduleInitContext)
 		if err != nil {
 			return err
 		}
