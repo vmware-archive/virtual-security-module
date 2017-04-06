@@ -3,6 +3,7 @@
 package secret
 
 import (
+	gocontext "context"
 	"path"
 
 	"github.com/vmware/virtual-security-module/context"
@@ -14,8 +15,9 @@ import (
 )
 
 type SecretManager struct {
-	dataStore vds.DataStoreAdapter
-	keyStore  vks.KeyStoreAdapter
+	dataStore    vds.DataStoreAdapter
+	keyStore     vks.KeyStoreAdapter
+	authzManager context.AuthorizationManager
 }
 
 func New() *SecretManager {
@@ -29,6 +31,7 @@ func (secretManager *SecretManager) Type() string {
 func (secretManager *SecretManager) Init(moduleInitContext *context.ModuleInitContext) error {
 	secretManager.dataStore = moduleInitContext.DataStore
 	secretManager.keyStore = moduleInitContext.KeyStore
+	secretManager.authzManager = moduleInitContext.AuthzManager
 
 	return nil
 }
@@ -37,25 +40,17 @@ func (secretManager *SecretManager) Close() error {
 	return nil
 }
 
-func (secretManager *SecretManager) CreateSecret(secretEntry *model.SecretEntry) (string, error) {
+func (secretManager *SecretManager) CreateSecret(ctx gocontext.Context, secretEntry *model.SecretEntry) (string, error) {
 	secretPath := vds.SecretIdToPath(secretEntry.Id)
+
+	// check if operation is allowed
+	if err := secretManager.authzManager.Allowed(ctx, model.Operation{Label: model.OpCreate}, path.Dir(secretPath)); err != nil {
+		return "", err
+	}
 
 	// verify id doesn't exist
 	if _, err := secretManager.dataStore.ReadEntry(secretPath); err == nil {
 		return "", util.ErrAlreadyExists
-	}
-
-	// verify parent path exists and it's a namespace
-	parentPath := path.Dir(secretPath)
-	if parentPath != "/secrets" {
-		dsEntry, err := secretManager.dataStore.ReadEntry(parentPath)
-		if err != nil {
-			return "", util.ErrInputValidation
-		}
-
-		if !vds.IsNamespaceEntry(dsEntry) {
-			return "", util.ErrInputValidation
-		}
 	}
 
 	// generate encryption key for secret
@@ -93,8 +88,13 @@ func (secretManager *SecretManager) CreateSecret(secretEntry *model.SecretEntry)
 	return secretEntry.Id, nil
 }
 
-func (secretManager *SecretManager) GetSecret(secretId string) (*model.SecretEntry, error) {
+func (secretManager *SecretManager) GetSecret(ctx gocontext.Context, secretId string) (*model.SecretEntry, error) {
 	secretPath := vds.SecretIdToPath(secretId)
+
+	// check if operation is allowed
+	if err := secretManager.authzManager.Allowed(ctx, model.Operation{Label: model.OpRead}, path.Dir(secretPath)); err != nil {
+		return nil, err
+	}
 
 	// fetch data store entry
 	dataStoreEntry, err := secretManager.dataStore.ReadEntry(secretPath)
@@ -127,8 +127,13 @@ func (secretManager *SecretManager) GetSecret(secretId string) (*model.SecretEnt
 	return secretEntry, nil
 }
 
-func (secretManager *SecretManager) DeleteSecret(secretId string) error {
+func (secretManager *SecretManager) DeleteSecret(ctx gocontext.Context, secretId string) error {
 	secretPath := vds.SecretIdToPath(secretId)
+
+	// check if operation is allowed
+	if err := secretManager.authzManager.Allowed(ctx, model.Operation{Label: model.OpDelete}, path.Dir(secretPath)); err != nil {
+		return err
+	}
 
 	dsEntry, err := secretManager.dataStore.ReadEntry(secretPath)
 	if err != nil {

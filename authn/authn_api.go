@@ -34,7 +34,7 @@ func (authnManager *AuthnManager) RegisterEndpoints(mux *denco.Mux) []denco.Hand
 			return
 		}
 
-		id, err := authnManager.CreateUser(userEntry)
+		id, err := authnManager.CreateUser(r.Context(), userEntry)
 		if err != nil {
 			if e := util.WriteErrorResponse(w, err); e != nil {
 				log.Printf("failed to write error response: %v\n", e)
@@ -62,7 +62,7 @@ func (authnManager *AuthnManager) RegisterEndpoints(mux *denco.Mux) []denco.Hand
 			return
 		}
 
-		ue, err := authnManager.GetUser(username)
+		ue, err := authnManager.GetUser(r.Context(), username)
 		if err != nil {
 			if e := util.WriteErrorResponse(w, err); e != nil {
 				log.Printf("failed to write error response: %v\n", e)
@@ -90,7 +90,7 @@ func (authnManager *AuthnManager) RegisterEndpoints(mux *denco.Mux) []denco.Hand
 			return
 		}
 
-		err := authnManager.DeleteUser(username)
+		err := authnManager.DeleteUser(r.Context(), username)
 		if err != nil {
 			util.WriteErrorStatus(w, err)
 			return

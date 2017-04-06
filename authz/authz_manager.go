@@ -3,6 +3,7 @@
 package authz
 
 import (
+	gocontext "context"
 	"path"
 	"strings"
 
@@ -13,13 +14,10 @@ import (
 	"github.com/vmware/virtual-security-module/vks"
 )
 
-type AuthorizationManager interface {
-	Allowed(username string, op model.Operation, namespacePath string) error
-}
-
 type AuthzManager struct {
-	dataStore vds.DataStoreAdapter
-	keyStore  vks.KeyStoreAdapter
+	dataStore       vds.DataStoreAdapter
+	keyStore        vks.KeyStoreAdapter
+	ctxAuthzManager context.AuthorizationManager
 }
 
 func New() *AuthzManager {
@@ -33,6 +31,7 @@ func (authzManager *AuthzManager) Type() string {
 func (authzManager *AuthzManager) Init(moduleInitContext *context.ModuleInitContext) error {
 	authzManager.dataStore = moduleInitContext.DataStore
 	authzManager.keyStore = moduleInitContext.KeyStore
+	authzManager.ctxAuthzManager = moduleInitContext.AuthzManager
 
 	return nil
 }
@@ -41,7 +40,11 @@ func (authzManager *AuthzManager) Close() error {
 	return nil
 }
 
-func (authzManager *AuthzManager) CreatePolicy(policyEntry *model.AuthorizationPolicyEntry) (string, error) {
+func (authzManager *AuthzManager) CreatePolicy(ctx gocontext.Context, policyEntry *model.AuthorizationPolicyEntry) (string, error) {
+	if err := authzManager.ctxAuthzManager.Allowed(ctx, model.Operation{Label: model.OpCreate}, getContainingNamespace(policyEntry.Id)); err != nil {
+		return "", err
+	}
+
 	policyPath := vds.AuthorizationPolicyIdToPath(policyEntry.Id)
 
 	if _, err := authzManager.dataStore.ReadEntry(policyPath); err == nil {
@@ -84,7 +87,11 @@ func (authzManager *AuthzManager) CreatePolicy(policyEntry *model.AuthorizationP
 	return policyEntry.Id, nil
 }
 
-func (authzManager *AuthzManager) GetPolicy(policyId string) (*model.AuthorizationPolicyEntry, error) {
+func (authzManager *AuthzManager) GetPolicy(ctx gocontext.Context, policyId string) (*model.AuthorizationPolicyEntry, error) {
+	if err := authzManager.ctxAuthzManager.Allowed(ctx, model.Operation{Label: model.OpRead}, getContainingNamespace(policyId)); err != nil {
+		return nil, err
+	}
+
 	policyPath := vds.AuthorizationPolicyIdToPath(policyId)
 
 	dataStoreEntry, err := authzManager.dataStore.ReadEntry(policyPath)
@@ -100,7 +107,11 @@ func (authzManager *AuthzManager) GetPolicy(policyId string) (*model.Authorizati
 	return policyEntry, nil
 }
 
-func (authzManager *AuthzManager) DeletePolicy(policyId string) error {
+func (authzManager *AuthzManager) DeletePolicy(ctx gocontext.Context, policyId string) error {
+	if err := authzManager.ctxAuthzManager.Allowed(ctx, model.Operation{Label: model.OpDelete}, getContainingNamespace(policyId)); err != nil {
+		return err
+	}
+
 	policyPath := vds.AuthorizationPolicyIdToPath(policyId)
 
 	dsEntry, err := authzManager.dataStore.ReadEntry(policyPath)
@@ -119,7 +130,13 @@ func (authzManager *AuthzManager) DeletePolicy(policyId string) error {
 	return nil
 }
 
-func (authzManager *AuthzManager) Allowed(username string, op model.Operation, namespacePath string) error {
+func (authzManager *AuthzManager) Allowed(ctx gocontext.Context, op model.Operation, namespacePath string) error {
+	usernameVal := ctx.Value(context.RequestContextKeyUsername)
+	username, ok := usernameVal.(string)
+	if !ok {
+		return util.ErrUnauthorized
+	}
+
 	if username == "root" {
 		dsEntry, err := authzManager.dataStore.ReadEntry(namespacePath)
 		if err != nil {
@@ -159,19 +176,15 @@ func (authzManager *AuthzManager) allowed(ue *model.UserEntry, op model.Operatio
 
 	// find closest policy/policies on path from namespace to root
 	policiesPath := path.Join(nsEntry.Path, vds.PoliciesDirname)
-	policiesDsEntry, err := authzManager.dataStore.ReadEntry(policiesPath)
+	policiesSearchPattern := util.GetChildSearchPattern(policiesPath)
+	policyDsEntries, err := authzManager.dataStore.SearchEntries(policiesSearchPattern)
 	if err != nil {
 		return err
 	}
 
-	policiesNsEntry, err := vds.DataStoreEntryToNamespaceEntry(policiesDsEntry)
-	if err != nil {
-		return err
-	}
-
-	if len(policiesNsEntry.ChildPaths) == 0 {
+	if len(policyDsEntries) == 0 {
 		if namespacePath == "/" {
-			return util.ErrNotFound
+			return util.ErrUnauthorized
 		} else {
 			// search in parent path, recursively
 			parentPath := path.Dir(nsEntry.Path)
@@ -179,13 +192,8 @@ func (authzManager *AuthzManager) allowed(ue *model.UserEntry, op model.Operatio
 		}
 	}
 
-	policies := make([]*model.AuthorizationPolicyEntry, len(policiesNsEntry.ChildPaths))
-	for _, policyPath := range policiesNsEntry.ChildPaths {
-		policyDsEntry, err := authzManager.dataStore.ReadEntry(policyPath)
-		if err != nil {
-			return err
-		}
-
+	policies := make([]*model.AuthorizationPolicyEntry, 0, len(policyDsEntries))
+	for _, policyDsEntry := range policyDsEntries {
 		policy, err := vds.DataStoreEntryToAuthorizationPolicyEntry(policyDsEntry)
 		if err != nil {
 			return err
@@ -230,4 +238,13 @@ func policyPermitsRoleLabelAndOp(policy *model.AuthorizationPolicyEntry, roleLab
 	}
 
 	return false
+}
+
+func getContainingNamespace(policyId string) string {
+	id := policyId
+	if !strings.HasPrefix(id, "/") {
+		id = "/" + policyId
+	}
+
+	return path.Dir(id)
 }

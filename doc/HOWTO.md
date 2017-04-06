@@ -14,7 +14,7 @@ In this section we're going to provide information about how to accomplish some 
  * [Secret management](#secret-management)
  * placeholder: auto-rotating secrets
  * [Namespace management](#namespace-management)
- * placeholder: Authorization policies
+ * [Authorization policies](#authorization-policies)
  * placeholder: Cluster management
  * placeholder: Internals
 
@@ -304,3 +304,123 @@ out, for example list all users through the namespaces command:
 
 All namespaces live under the root namespace "/", and all secrets live under
 "/secrets".
+
+## Authorization policies
+VSM supports a rich RBAC model. Here's an overview:
+
+* A **role** is a **role label* associated with a **role scope**, where a role
+  label is a string (e.g." administrator") and a role scope is a namespace path
+  (e.g. "/secrets/coke")
+* A **namespace** can declare multiple *role label*s. For example, the namespace
+  "/secrets/coke" can declare the role labels "administrator" and "visitor".
+* A **user** can be assigned multiple **role**s, i.e. pairs of **role label**
+  and **role scope".
+* Finally, an **Authorization Policy** is contained within a **namespace**
+  and specifies thet certain *role*s are allowed certain **operation**s (an
+  operation is one of "C" (**C**reate), "R" (**R**ead), "U" (**U**pdate) or
+  "D" (**D**elete)
+  
+When an operation *op* is attempted at resource *res* which requires authorization,
+the following check kicks-in:
+
+1. The identity of the user who's attempting *op* is determined (authentication).
+2. If the user is *root*, access is granted
+3. The namespace which contains *res* is determined
+4. If the namespace contains an authorization policy, access will be determined
+   based on the policy(ies) in that namespace. Otherwise, the namespace parent
+   is searched for authorization policies, recursively up to the root namespace
+   ("/"). If no namespace contains an authorization policy, access is denied.
+   To be clear: If a namespace containing an authorization policy is found, the
+   search up the namespace path is stopped.
+5. Each policy in the namespace is evaluated against *op* and *res*. If at least
+   one policy grants access, then access is granted. A policy grants access if
+   and only if the following 2 conditions are **both** met: the user has a role
+   that is visible in the namespace (i.e. a a role whose scope is the namespace
+   or an ancestor namespace) **and** the operation **op** is included in the
+   set of operations allowed by the policy.
+   
+Let's practice that using an example. We will create:
+
+* 2 namespaces: "/secrets/namespace1" and "/secrets/namespace2".
+* In the first namespace, we will create 2 roles, "admin" and "user"; and 2
+  policies: an "admin-is-king" policy which allows "admin" to perfrom any
+  operation and a "user-can-read" policy which allows "user" to read.
+* In the second namespace, we will create 1 role, "admin" and an "admin-is-king"
+  policy which allows that role to perform any operation.
+* 2 users: "user1" and "user2". We will assign user1 the role "admin" in the
+  first namespace. We will assign user2 the role "user" in the first namespace
+  and the role "admin" in the second namespace.
+* We will then show that:
+
+     * user1 can create and read a secret in "/secrets/namespace1".
+     * user2 can create and read a secret in "/secrets/namespace2".
+     * user2 can read an existing secret in "/secrets/namespace1" but
+       not delete it not create a new secret in that namespace.
+     * user1 cannot perform any operation in "/secrets/namespace2".
+     
+Ready? here we go:
+
+Let's create the namespaces with their role labels (you need to be logged in as
+root):
+```
+./vsm-cli --token $TOKEN namespaces create /secrets/namespace1 user1 "admin,user"
+./vsm-cli --token $TOKEN namespaces create /secrets/namespace2 user2 "admin"
+```
+
+Now let's create the policies:
+```
+./vsm-cli --token $TOKEN authz create /secrets/namespace1/admin-is-king admin "C,R,U,D"
+./vsm-cli --token $TOKEN authz create /secrets/namespace1/user-can-read user "R"
+./vsm-cli --token $TOKEN authz create /secrets/namespace2/admin-is-king admin "C,R,U,D"
+```
+
+Let's create the users with their roles:
+```
+openssl genrsa -out user1-private.pem 2048
+openssl rsa -in user1-private.pem -outform PEM -pubout -out user1-public.pem
+./vsm-cli --token $TOKEN users create user1 user1-public.pem "/secrets/namespace1:admin"
+
+openssl genrsa -out user2-private.pem 2048
+openssl rsa -in user2-private.pem -outform PEM -pubout -out user2-public.pem
+./vsm-cli --token $TOKEN users create user2 user2-public.pem "/secrets/namespace1:user,/secrets/namespace2:admin"
+```
+
+Now let's try some operations as user1. Open a new window and log-in as user1:
+```
+./vsm-cli login user1 user1-private.pem
+...
+TOKEN="..."
+./vsm-cli --token $TOKEN secrets create namespace1/user1-secret user1-data
+./vsm-cli --token $TOKEN secrets get namespace1/user1-secret
+```
+
+Now let's try some operations as user1. Open a new window and log-in as user2:
+```
+./vsm-cli login user2 user2-private.pem
+TOKEN="..."
+./vsm-cli --token $TOKEN secrets create namespace2/user2-secret user2-data
+./vsm-cli --token $TOKEN secrets get namespace2/user2-secret
+./vsm-cli --token $TOKEN secrets get namespace1/user1-secret
+```
+
+Note that the last command succeeded because the "user-can-read" policy in
+"/secrets/namespace1" allowed it!
+
+Now let's try some commands that **should fail**:
+user1 should not be able to perform an operation in namespace2:
+```
+./vsm-cli --token $TOKEN secrets get namespace2/user2-secret
+...
+Response status is different than 200 StatusOK: 403 Forbidden
+``` 
+
+user2 should not be able to delete or create in namespace1:
+```
+./vsm-cli --token $TOKEN secrets delete namespace1/user1-secret
+...
+Response status is different than 201 StatusCreated: 403 Forbidden
+...
+./vsm-cli --token $TOKEN secrets create namespace1/user2-secret user2-data
+...
+Response status is different than 201 StatusCreated: 403 Forbidden
+```

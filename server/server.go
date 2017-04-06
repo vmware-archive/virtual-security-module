@@ -47,6 +47,7 @@ type TlsConfig struct {
 type Server struct {
 	modules      []Module
 	authnManager *authn.AuthnManager
+	authzManager *authz.AuthzManager
 	httpPipeline http.Handler
 	httpServer   *http.Server
 	httpsServer  *http.Server
@@ -61,10 +62,11 @@ type Server struct {
 
 func New() *Server {
 	authnManager := authn.New()
+	authzManager := authz.New()
 
 	modules := []Module{
 		authnManager,
-		authz.New(),
+		authzManager,
 		namespace.New(),
 		secret.New(),
 	}
@@ -72,6 +74,7 @@ func New() *Server {
 	return &Server{
 		modules:      modules,
 		authnManager: authnManager,
+		authzManager: authzManager,
 	}
 }
 
@@ -87,7 +90,7 @@ func (server *Server) Init(configuration *config.Config) error {
 
 	// initialize modules
 	for _, module := range server.modules {
-		moduleInitContext := context.NewModuleInitContext(configuration, server.dataStore, server.keyStore)
+		moduleInitContext := context.NewModuleInitContext(configuration, server.dataStore, server.keyStore, server.authzManager)
 		err := module.Init(moduleInitContext)
 		if err != nil {
 			return err
@@ -155,7 +158,7 @@ func (server *Server) initSelfFromConfig(configuration *config.Config) error {
 }
 
 func (server *Server) firstTimeInitRequired() bool {
-	_, err := server.authnManager.GetUser("root")
+	_, err := server.authnManager.GetUser(context.GetSystemRequestContext(), "root")
 	return err != nil
 }
 
@@ -228,7 +231,7 @@ func (server *Server) initRootUser(configuration *config.Config) error {
 		Credentials: creds,
 	}
 
-	_, err = server.authnManager.CreateUser(ue)
+	_, err = server.authnManager.CreateUser(context.GetSystemRequestContext(), ue)
 
 	return err
 }

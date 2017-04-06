@@ -7,10 +7,10 @@ import (
 )
 
 // PreHttpHandler processses a request before it gets handed of to the main
-// request router and returns true if the next filter in the chain should be
-// invoked.
+// request router and returns the original request or a modified request if
+// the next filter in the chain should be invoked; nil otherwise
 type PreHttpFilter interface {
-	HandlePre(w http.ResponseWriter, r *http.Request) bool
+	HandlePre(w http.ResponseWriter, r *http.Request) *http.Request
 }
 
 // PostHttpFilter processes a response after its request has been processed by
@@ -40,13 +40,15 @@ func NewHttpFilterManager() *HttpFilterManager {
 // chain of post-handlers in reverse order.
 func (fm *HttpFilterManager) BuildPipeline(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		nextRequest := r
 		for _, f := range fm.preFilters {
-			if !f.HandlePre(w, r) {
+			nextRequest = f.HandlePre(w, r)
+			if nextRequest == nil {
 				return
 			}
 		}
 
-		handler.ServeHTTP(w, r)
+		handler.ServeHTTP(w, nextRequest)
 
 		for i := len(fm.postFilters) - 1; i >= 0; i-- {
 			f := fm.postFilters[i]

@@ -35,7 +35,7 @@ func (authzManager *AuthzManager) RegisterEndpoints(mux *denco.Mux) []denco.Hand
 			return
 		}
 
-		id, err := authzManager.CreatePolicy(authzPolicyEntry)
+		id, err := authzManager.CreatePolicy(r.Context(), authzPolicyEntry)
 		if err != nil {
 			if e := util.WriteErrorResponse(w, err); e != nil {
 				log.Printf("failed to write error response: %v\n", e)
@@ -63,7 +63,7 @@ func (authzManager *AuthzManager) RegisterEndpoints(mux *denco.Mux) []denco.Hand
 			return
 		}
 
-		pe, err := authzManager.GetPolicy(policyId)
+		pe, err := authzManager.GetPolicy(r.Context(), policyId)
 		if err != nil {
 			if e := util.WriteErrorResponse(w, err); e != nil {
 				log.Printf("failed to write error response: %v\n", e)
@@ -91,7 +91,7 @@ func (authzManager *AuthzManager) RegisterEndpoints(mux *denco.Mux) []denco.Hand
 			return
 		}
 
-		err := authzManager.DeletePolicy(policyId)
+		err := authzManager.DeletePolicy(r.Context(), policyId)
 		if err != nil {
 			util.WriteErrorStatus(w, err)
 			return
