@@ -33,7 +33,8 @@ func TestMain(m *testing.M) {
 	}
 
 	nm = New()
-	if err := nm.Init(context.NewModuleInitContext(cfg, ds, ks)); err != nil {
+	az := context.GetTestAuthzManager()
+	if err := nm.Init(context.NewModuleInitContext(cfg, ds, ks, az)); err != nil {
 		fmt.Printf("Failed to initialize namespace manager: %v\n", err)
 		os.Exit(1)
 	}
@@ -52,7 +53,7 @@ func TestCreateAndGetNamespace(t *testing.T) {
 		RoleLabels: []string{},
 	}
 
-	id, err := nm.CreateNamespace(ne)
+	id, err := nm.CreateNamespace(context.GetTestRequestContext(), ne)
 	if err != nil {
 		t.Fatalf("Failed to create namespace: %v", err)
 	}
@@ -60,7 +61,7 @@ func TestCreateAndGetNamespace(t *testing.T) {
 		t.Fatalf("Failed to create namespace: returned id is empty")
 	}
 
-	ne2, err := nm.GetNamespace(id)
+	ne2, err := nm.GetNamespace(context.GetTestRequestContext(), id)
 	if err != nil {
 		t.Fatalf("Failed to get namespace for id %v: %v", id, err)
 	}
@@ -70,7 +71,7 @@ func TestCreateAndGetNamespace(t *testing.T) {
 		t.Fatalf("Created and retrieved namespaces are different: %v %v", ne, ne2)
 	}
 
-	if err := nm.DeleteNamespace(id); err != nil {
+	if err := nm.DeleteNamespace(context.GetTestRequestContext(), id); err != nil {
 		t.Fatalf("Faied to delete namespace:%v", err)
 	}
 }
@@ -82,12 +83,12 @@ func TestCreateAlreadyExists(t *testing.T) {
 		RoleLabels: []string{},
 	}
 
-	id, err := nm.CreateNamespace(ne)
+	id, err := nm.CreateNamespace(context.GetTestRequestContext(), ne)
 	if err != nil {
 		t.Fatalf("Failed to create namespace: %v", err)
 	}
 
-	if _, err := nm.CreateNamespace(ne); err == nil {
+	if _, err := nm.CreateNamespace(context.GetTestRequestContext(), ne); err == nil {
 		t.Fatal("Succeeded to create the same namespace twice")
 	}
 
@@ -97,38 +98,26 @@ func TestCreateAlreadyExists(t *testing.T) {
 		RoleLabels: []string{},
 	}
 
-	childId, err := nm.CreateNamespace(child)
+	childId, err := nm.CreateNamespace(context.GetTestRequestContext(), child)
 	if err != nil {
 		t.Fatalf("Failed to create namespace: %v", err)
 	}
 
-	if _, err := nm.CreateNamespace(child); err == nil {
+	if _, err := nm.CreateNamespace(context.GetTestRequestContext(), child); err == nil {
 		t.Fatal("Succeeded to create the same namespace twice")
 	}
 
-	if err := nm.DeleteNamespace(childId); err != nil {
+	if err := nm.DeleteNamespace(context.GetTestRequestContext(), childId); err != nil {
 		t.Fatalf("Faied to delete namespace:%v", err)
 	}
 
-	if err := nm.DeleteNamespace(id); err != nil {
+	if err := nm.DeleteNamespace(context.GetTestRequestContext(), id); err != nil {
 		t.Fatalf("Faied to delete namespace:%v", err)
-	}
-}
-
-func TestCreateParentNotExists(t *testing.T) {
-	ne := &model.NamespaceEntry{
-		Path:       "/namespace0/child",
-		Owner:      "user0",
-		RoleLabels: []string{},
-	}
-
-	if _, err := nm.CreateNamespace(ne); err == nil {
-		t.Fatal("Succeeded to create a child namespace of a non-existent parent")
 	}
 }
 
 func TestGetNotExists(t *testing.T) {
-	if _, err := nm.GetNamespace("/not/exists"); err == nil {
+	if _, err := nm.GetNamespace(context.GetTestRequestContext(), "/not/exists"); err == nil {
 		t.Fatal("Succeeded to get a non-existent namespace")
 	}
 }
@@ -140,7 +129,7 @@ func TestDeleteParentNotEmpty(t *testing.T) {
 		RoleLabels: []string{},
 	}
 
-	rootId, err := nm.CreateNamespace(root)
+	rootId, err := nm.CreateNamespace(context.GetTestRequestContext(), root)
 	if err != nil {
 		t.Fatalf("Failed to create namespace: %v", err)
 	}
@@ -151,7 +140,7 @@ func TestDeleteParentNotEmpty(t *testing.T) {
 		RoleLabels: []string{},
 	}
 
-	childId, err := nm.CreateNamespace(child)
+	childId, err := nm.CreateNamespace(context.GetTestRequestContext(), child)
 	if err != nil {
 		t.Fatalf("Failed to create namespace: %v", err)
 	}
@@ -162,28 +151,28 @@ func TestDeleteParentNotEmpty(t *testing.T) {
 		RoleLabels: []string{},
 	}
 
-	grandchildId, err := nm.CreateNamespace(grandchild)
+	grandchildId, err := nm.CreateNamespace(context.GetTestRequestContext(), grandchild)
 	if err != nil {
 		t.Fatalf("Failed to create namespace: %v", err)
 	}
 
-	if err := nm.DeleteNamespace(rootId); err == nil {
+	if err := nm.DeleteNamespace(context.GetTestRequestContext(), rootId); err == nil {
 		t.Fatal("Succeeded delete namespace that has children")
 	}
 
-	if err := nm.DeleteNamespace(childId); err == nil {
+	if err := nm.DeleteNamespace(context.GetTestRequestContext(), childId); err == nil {
 		t.Fatal("Succeeded delete namespace that has children")
 	}
 
-	if err := nm.DeleteNamespace(grandchildId); err != nil {
+	if err := nm.DeleteNamespace(context.GetTestRequestContext(), grandchildId); err != nil {
 		t.Fatalf("Faied to delete namespace:%v", err)
 	}
 
-	if err := nm.DeleteNamespace(childId); err != nil {
+	if err := nm.DeleteNamespace(context.GetTestRequestContext(), childId); err != nil {
 		t.Fatalf("Faied to delete namespace:%v", err)
 	}
 
-	if err := nm.DeleteNamespace(rootId); err != nil {
+	if err := nm.DeleteNamespace(context.GetTestRequestContext(), rootId); err != nil {
 		t.Fatalf("Faied to delete namespace:%v", err)
 	}
 }
@@ -195,7 +184,7 @@ func TestNamespaceNavigation(t *testing.T) {
 		RoleLabels: []string{},
 	}
 
-	if _, err := nm.CreateNamespace(root); err != nil {
+	if _, err := nm.CreateNamespace(context.GetTestRequestContext(), root); err != nil {
 		t.Fatalf("Failed to create namespace: %v", err)
 	}
 
@@ -207,12 +196,12 @@ func TestNamespaceNavigation(t *testing.T) {
 			RoleLabels: []string{},
 		}
 
-		if _, err := nm.CreateNamespace(child); err != nil {
+		if _, err := nm.CreateNamespace(context.GetTestRequestContext(), child); err != nil {
 			t.Fatalf("Failed to create namespace: %v", err)
 		}
 	}
 
-	root2, err := nm.GetNamespace("/namespace0")
+	root2, err := nm.GetNamespace(context.GetTestRequestContext(), "/namespace0")
 	if err != nil {
 		t.Fatalf("Failed to get namespace: %v", err)
 	}
@@ -225,7 +214,7 @@ func TestNamespaceNavigation(t *testing.T) {
 		path := fmt.Sprintf("/namespace0/%v", i)
 		expectedOwnerId := fmt.Sprintf("user-%v", i)
 
-		child, err := nm.GetNamespace(path)
+		child, err := nm.GetNamespace(context.GetTestRequestContext(), path)
 		if err != nil {
 			t.Fatalf("Failed to get namespace: %v", err)
 		}
@@ -234,12 +223,12 @@ func TestNamespaceNavigation(t *testing.T) {
 			t.Fatalf("Created and retrieved owner ids are different: %v, %v", expectedOwnerId, child.Owner)
 		}
 
-		if err := nm.DeleteNamespace(path); err != nil {
+		if err := nm.DeleteNamespace(context.GetTestRequestContext(), path); err != nil {
 			t.Fatalf("Failed to delete namespace: %v", err)
 		}
 	}
 
-	if err := nm.DeleteNamespace("/namespace0"); err != nil {
+	if err := nm.DeleteNamespace(context.GetTestRequestContext(), "/namespace0"); err != nil {
 		t.Fatalf("Failed to delete namespace: %v", err)
 	}
 }

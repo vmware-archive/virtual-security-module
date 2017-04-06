@@ -35,7 +35,7 @@ func (namespaceManager *NamespaceManager) RegisterEndpoints(mux *denco.Mux) []de
 			return
 		}
 
-		id, err := namespaceManager.CreateNamespace(namespaceEntry)
+		id, err := namespaceManager.CreateNamespace(r.Context(), namespaceEntry)
 		if err != nil {
 			if e := util.WriteErrorResponse(w, err); e != nil {
 				log.Printf("failed to write error response: %v\n", e)
@@ -60,7 +60,7 @@ func (namespaceManager *NamespaceManager) RegisterEndpoints(mux *denco.Mux) []de
 			namespacePath = "/" + namespacePath
 		}
 
-		namespaceEntry, err := namespaceManager.GetNamespace(namespacePath)
+		namespaceEntry, err := namespaceManager.GetNamespace(r.Context(), namespacePath)
 		if err != nil {
 			if e := util.WriteErrorResponse(w, err); e != nil {
 				log.Printf("failed to write error response: %v\n", e)
@@ -85,7 +85,7 @@ func (namespaceManager *NamespaceManager) RegisterEndpoints(mux *denco.Mux) []de
 			namespacePath = "/" + namespacePath
 		}
 
-		err := namespaceManager.DeleteNamespace(namespacePath)
+		err := namespaceManager.DeleteNamespace(r.Context(), namespacePath)
 		if err != nil {
 			util.WriteErrorStatus(w, err)
 			return

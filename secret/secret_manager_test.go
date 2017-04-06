@@ -33,7 +33,8 @@ func TestMain(m *testing.M) {
 	}
 
 	sm = New()
-	if err := sm.Init(context.NewModuleInitContext(cfg, ds, ks)); err != nil {
+	az := context.GetTestAuthzManager()
+	if err := sm.Init(context.NewModuleInitContext(cfg, ds, ks, az)); err != nil {
 		fmt.Printf("Failed to initialize secret manager: %v\n", err)
 		os.Exit(1)
 	}
@@ -53,7 +54,7 @@ func TestCreateAndGetSecret(t *testing.T) {
 		ExpirationTime: time.Now().Add(time.Hour),
 	}
 
-	id2, err := sm.CreateSecret(se)
+	id2, err := sm.CreateSecret(context.GetTestRequestContext(), se)
 	if err != nil {
 		t.Fatalf("Failed to create secret: %v", err)
 	}
@@ -61,7 +62,7 @@ func TestCreateAndGetSecret(t *testing.T) {
 		t.Fatalf("Failed to create secret: returned id is empty")
 	}
 
-	se2, err := sm.GetSecret(id2)
+	se2, err := sm.GetSecret(context.GetTestRequestContext(), id2)
 	if err != nil {
 		t.Fatalf("Failed to get secret for id %v: %v", id2, err)
 	}
@@ -70,7 +71,7 @@ func TestCreateAndGetSecret(t *testing.T) {
 		t.Fatalf("Created and retrieved secrets do not match: %v %v", se, se2)
 	}
 
-	if err := sm.DeleteSecret(id2); err != nil {
+	if err := sm.DeleteSecret(context.GetTestRequestContext(), id2); err != nil {
 		t.Fatalf("Failed to delete secret for id %v: %v", id2, err)
 	}
 }

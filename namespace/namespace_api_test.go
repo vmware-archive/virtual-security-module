@@ -105,7 +105,7 @@ func TestAPINamespaceNavigation(t *testing.T) {
 		}
 	}
 
-	root2, err := nm.GetNamespace("/namespace0")
+	root2, err := apiGetNamespace("/namespace0")
 	if err != nil {
 		t.Fatalf("Failed to get namespace: %v", err)
 	}
@@ -115,16 +115,16 @@ func TestAPINamespaceNavigation(t *testing.T) {
 	}
 
 	for _, path := range root2.ChildPaths {
-		if _, err := nm.GetNamespace(path); err != nil {
+		if _, err := apiGetNamespace(path); err != nil {
 			t.Fatalf("Failed to get namespace: %v", err)
 		}
 
-		if err := nm.DeleteNamespace(path); err != nil {
+		if err := apiDeleteNamespace(path); err != nil {
 			t.Fatalf("Failed to delete namespace: %v", err)
 		}
 	}
 
-	if err := nm.DeleteNamespace("/namespace0"); err != nil {
+	if err := apiDeleteNamespace("/namespace0"); err != nil {
 		t.Fatalf("Failed to delete namespace: %v", err)
 	}
 }

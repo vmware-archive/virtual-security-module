@@ -9,15 +9,17 @@ import (
 )
 
 type ModuleInitContext struct {
-	Config    *config.Config
-	DataStore vds.DataStoreAdapter
-	KeyStore  vks.KeyStoreAdapter
+	Config       *config.Config
+	DataStore    vds.DataStoreAdapter
+	KeyStore     vks.KeyStoreAdapter
+	AuthzManager AuthorizationManager
 }
 
-func NewModuleInitContext(config *config.Config, dsAdapter vds.DataStoreAdapter, ksAdapter vks.KeyStoreAdapter) *ModuleInitContext {
+func NewModuleInitContext(config *config.Config, dsAdapter vds.DataStoreAdapter, ksAdapter vks.KeyStoreAdapter, authzManager AuthorizationManager) *ModuleInitContext {
 	return &ModuleInitContext{
-		Config:    config,
-		DataStore: dsAdapter,
-		KeyStore:  ksAdapter,
+		Config:       config,
+		DataStore:    dsAdapter,
+		KeyStore:     ksAdapter,
+		AuthzManager: authzManager,
 	}
 }

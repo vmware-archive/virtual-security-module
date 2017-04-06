@@ -47,27 +47,27 @@ func TestRootLoginCreateUserAndLogin(t *testing.T) {
 		t.Fatalf("Root login failed: %v", err)
 	}
 
-	token, err := apiLogin("root", rootPrivKey)
+	rootToken, err := apiLogin("root", rootPrivKey)
 	if err != nil {
 		t.Fatalf("Root login failed: %v", err)
 	}
 
 	username := "testuser-0"
-	_, privateKey, err := apiCreateUser(username, token)
+	_, userPriveKey, err := apiCreateUser(username, rootToken)
 	if err != nil {
 		t.Fatalf("Failed to create user: %v", err)
 	}
 
-	token2, err := apiLogin(username, privateKey)
+	userToken, err := apiLogin(username, userPriveKey)
 	if err != nil {
 		t.Fatalf("Failed to login: %v", err)
 	}
 
-	if token == token2 {
+	if rootToken == userToken {
 		t.Fatal("returned user token is the same as root token")
 	}
 
-	if err := apiDeleteUser(username, token2); err != nil {
+	if err := apiDeleteUser(username, rootToken); err != nil {
 		t.Fatalf("Failed to delete user: %v", err)
 	}
 }

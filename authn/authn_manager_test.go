@@ -37,7 +37,8 @@ func TestMain(m *testing.M) {
 	}
 
 	am = New()
-	if err := am.Init(context.NewModuleInitContext(cfg, ds, ks)); err != nil {
+	az := context.GetTestAuthzManager()
+	if err := am.Init(context.NewModuleInitContext(cfg, ds, ks, az)); err != nil {
 		fmt.Printf("Failed to initialize authn manager: %v\n", err)
 		os.Exit(1)
 	}
@@ -54,14 +55,14 @@ func TestMain(m *testing.M) {
 func TestWhitelist(t *testing.T) {
 	r := httptest.NewRequest("GET", "/login", nil)
 	w := httptest.NewRecorder()
-	admitted := am.HandlePre(w, r)
+	admitted := am.HandlePre(w, r) != nil
 	if !admitted {
 		t.Fatalf("not admitted to /login, which is in whitelist")
 	}
 
 	r = httptest.NewRequest("POST", "/users", nil)
 	w = httptest.NewRecorder()
-	admitted = am.HandlePre(w, r)
+	admitted = am.HandlePre(w, r) != nil
 	if admitted {
 		t.Fatalf("admitted to /users without a token")
 	}
@@ -80,7 +81,7 @@ func TestWhitelist(t *testing.T) {
 	r = httptest.NewRequest("POST", "/users", nil)
 	r.Header.Add(HeaderNameAuth, fmt.Sprintf("Bearer: %v", token))
 	w = httptest.NewRecorder()
-	admitted = am.HandlePre(w, r)
+	admitted = am.HandlePre(w, r) != nil
 	if !admitted {
 		t.Fatalf("not admitted to /users with a valid token")
 	}
@@ -106,7 +107,7 @@ func amCreateUser(username string) (*model.UserEntry, *rsa.PrivateKey, error) {
 		Credentials: creds,
 	}
 
-	id, err := am.CreateUser(ue)
+	id, err := am.CreateUser(context.GetTestRequestContext(), ue)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -118,7 +119,7 @@ func amCreateUser(username string) (*model.UserEntry, *rsa.PrivateKey, error) {
 }
 
 func amDeleteUser(username string) error {
-	return am.DeleteUser(username)
+	return am.DeleteUser(context.GetTestRequestContext(), username)
 }
 
 func amLogin(username string, privateKey *rsa.PrivateKey) (string, error) {

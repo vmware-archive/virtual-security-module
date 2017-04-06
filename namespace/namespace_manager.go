@@ -3,6 +3,7 @@
 package namespace
 
 import (
+	gocontext "context"
 	"fmt"
 	"path"
 
@@ -14,8 +15,9 @@ import (
 )
 
 type NamespaceManager struct {
-	dataStore vds.DataStoreAdapter
-	keyStore  vks.KeyStoreAdapter
+	dataStore    vds.DataStoreAdapter
+	keyStore     vks.KeyStoreAdapter
+	authzManager context.AuthorizationManager
 }
 
 func New() *NamespaceManager {
@@ -29,6 +31,7 @@ func (namespaceManager *NamespaceManager) Type() string {
 func (namespaceManager *NamespaceManager) Init(moduleInitContext *context.ModuleInitContext) error {
 	namespaceManager.dataStore = moduleInitContext.DataStore
 	namespaceManager.keyStore = moduleInitContext.KeyStore
+	namespaceManager.authzManager = moduleInitContext.AuthzManager
 
 	if err := namespaceManager.initNamespaces(); err != nil {
 		return err
@@ -41,22 +44,16 @@ func (namespaceManager *NamespaceManager) Close() error {
 	return nil
 }
 
-func (namespaceManager *NamespaceManager) CreateNamespace(namespaceEntry *model.NamespaceEntry) (string, error) {
+func (namespaceManager *NamespaceManager) CreateNamespace(ctx gocontext.Context, namespaceEntry *model.NamespaceEntry) (string, error) {
+	if namespaceEntry.Path != "/" {
+		if err := namespaceManager.authzManager.Allowed(ctx, model.Operation{Label: model.OpCreate}, path.Dir(namespaceEntry.Path)); err != nil {
+			return "", err
+		}
+	}
+
 	_, err := namespaceManager.dataStore.ReadEntry(namespaceEntry.Path)
 	if err == nil {
 		return "", util.ErrAlreadyExists
-	}
-
-	if namespaceEntry.Path != "/" {
-		// verify parent path exists and it's a namespace
-		dsEntry, err := namespaceManager.dataStore.ReadEntry(path.Dir(namespaceEntry.Path))
-		if err != nil {
-			return "", util.ErrInputValidation
-		}
-
-		if !vds.IsNamespaceEntry(dsEntry) {
-			return "", util.ErrInputValidation
-		}
 	}
 
 	dataStoreEntry, err := vds.NamespaceEntryToDataStoreEntry(namespaceEntry)
@@ -70,7 +67,11 @@ func (namespaceManager *NamespaceManager) CreateNamespace(namespaceEntry *model.
 	return namespaceEntry.Path, nil
 }
 
-func (namespaceManager *NamespaceManager) GetNamespace(path string) (*model.NamespaceEntry, error) {
+func (namespaceManager *NamespaceManager) GetNamespace(ctx gocontext.Context, path string) (*model.NamespaceEntry, error) {
+	if err := namespaceManager.authzManager.Allowed(ctx, model.Operation{Label: model.OpRead}, path); err != nil {
+		return nil, err
+	}
+
 	dataStoreEntry, err := namespaceManager.dataStore.ReadEntry(path)
 	if err != nil {
 		return nil, err
@@ -91,7 +92,11 @@ func (namespaceManager *NamespaceManager) GetNamespace(path string) (*model.Name
 	return namespaceEntry, nil
 }
 
-func (namespaceManager *NamespaceManager) DeleteNamespace(path string) error {
+func (namespaceManager *NamespaceManager) DeleteNamespace(ctx gocontext.Context, path string) error {
+	if err := namespaceManager.authzManager.Allowed(ctx, model.Operation{Label: model.OpDelete}, path); err != nil {
+		return err
+	}
+
 	dsEntry, err := namespaceManager.dataStore.ReadEntry(path)
 	if err != nil {
 		return err
@@ -131,15 +136,17 @@ func (namespaceManager *NamespaceManager) initNamespaces() error {
 }
 
 func (namespaceManager *NamespaceManager) createNamespaceIfNotExists(path string) error {
-	if _, err := namespaceManager.GetNamespace(path); err == nil {
+	systemContext := context.GetSystemRequestContext()
+	if _, err := namespaceManager.GetNamespace(systemContext, path); err == nil {
 		return nil
 	}
 
 	namespaceEntry := &model.NamespaceEntry{
-		Path: path,
+		Path:  path,
+		Owner: "root",
 	}
 
-	if _, err := namespaceManager.CreateNamespace(namespaceEntry); err != nil {
+	if _, err := namespaceManager.CreateNamespace(systemContext, namespaceEntry); err != nil {
 		return err
 	}
 

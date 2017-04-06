@@ -69,11 +69,11 @@ func getMainHandler() http.Handler {
 }
 
 type httpFilterHelper struct {
-	preFunc  func(w http.ResponseWriter, r *http.Request) bool
+	preFunc  func(w http.ResponseWriter, r *http.Request) *http.Request
 	postFunc func(w http.ResponseWriter, r *http.Request) bool
 }
 
-func (fh *httpFilterHelper) HandlePre(w http.ResponseWriter, r *http.Request) bool {
+func (fh *httpFilterHelper) HandlePre(w http.ResponseWriter, r *http.Request) *http.Request {
 	return fh.preFunc(w, r)
 }
 
@@ -83,8 +83,8 @@ func (fh *httpFilterHelper) HandlePost(w http.ResponseWriter, r *http.Request) b
 
 func getPreDropper() PreHttpFilter {
 	return &httpFilterHelper{
-		preFunc: func(w http.ResponseWriter, r *http.Request) bool {
-			return false
+		preFunc: func(w http.ResponseWriter, r *http.Request) *http.Request {
+			return nil
 		},
 		postFunc: nil,
 	}
@@ -101,9 +101,9 @@ func getPostDropper() PostHttpFilter {
 
 func getOppositePrePost(amount int) *httpFilterHelper {
 	return &httpFilterHelper{
-		preFunc: func(w http.ResponseWriter, r *http.Request) bool {
+		preFunc: func(w http.ResponseWriter, r *http.Request) *http.Request {
 			counter += amount
-			return true
+			return r
 		},
 		postFunc: func(w http.ResponseWriter, r *http.Request) bool {
 			counter -= amount
