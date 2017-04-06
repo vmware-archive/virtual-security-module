@@ -308,31 +308,31 @@ All namespaces live under the root namespace "/", and all secrets live under
 ## Authorization policies
 VSM supports a rich RBAC model. Here's an overview:
 
-* A **role** is a **role label* associated with a **role scope**, where a role
+* A **role** is a **role label** associated with a **role scope**, where a role
   label is a string (e.g." administrator") and a role scope is a namespace path
   (e.g. "/secrets/coke")
 * A **namespace** can declare multiple *role label*s. For example, the namespace
   "/secrets/coke" can declare the role labels "administrator" and "visitor".
 * A **user** can be assigned multiple **role**s, i.e. pairs of **role label**
-  and **role scope".
+  and **role scope**.
 * Finally, an **Authorization Policy** is contained within a **namespace**
   and specifies thet certain *role*s are allowed certain **operation**s (an
   operation is one of "C" (**C**reate), "R" (**R**ead), "U" (**U**pdate) or
-  "D" (**D**elete)
+  "D" (**D**elete))
   
-When an operation *op* is attempted at resource *res* which requires authorization,
+When an operation **op** is attempted at resource **res** which requires authorization,
 the following check kicks-in:
 
-1. The identity of the user who's attempting *op* is determined (authentication).
-2. If the user is *root*, access is granted
-3. The namespace which contains *res* is determined
+1. The identity of the user who's attempting **op** is determined (authentication).
+2. If the user is **root**, access is granted
+3. The namespace which contains **res** is determined
 4. If the namespace contains an authorization policy, access will be determined
    based on the policy(ies) in that namespace. Otherwise, the namespace parent
    is searched for authorization policies, recursively up to the root namespace
    ("/"). If no namespace contains an authorization policy, access is denied.
    To be clear: If a namespace containing an authorization policy is found, the
    search up the namespace path is stopped.
-5. Each policy in the namespace is evaluated against *op* and *res*. If at least
+5. Each policy in the namespace is evaluated against **op** and **res**. If at least
    one policy grants access, then access is granted. A policy grants access if
    and only if the following 2 conditions are **both** met: the user has a role
    that is visible in the namespace (i.e. a a role whose scope is the namespace
@@ -355,13 +355,13 @@ Let's practice that using an example. We will create:
      * user1 can create and read a secret in "/secrets/namespace1".
      * user2 can create and read a secret in "/secrets/namespace2".
      * user2 can read an existing secret in "/secrets/namespace1" but
-       not delete it not create a new secret in that namespace.
+       not delete it nor create a new secret in that namespace.
      * user1 cannot perform any operation in "/secrets/namespace2".
      
 Ready? here we go:
 
-Let's create the namespaces with their role labels (you need to be logged in as
-root):
+Let's create the namespaces with their role labels (**you need to be logged in as
+root**):
 ```
 ./vsm-cli --token $TOKEN namespaces create /secrets/namespace1 user1 "admin,user"
 ./vsm-cli --token $TOKEN namespaces create /secrets/namespace2 user2 "admin"
@@ -385,7 +385,7 @@ openssl rsa -in user2-private.pem -outform PEM -pubout -out user2-public.pem
 ./vsm-cli --token $TOKEN users create user2 user2-public.pem "/secrets/namespace1:user,/secrets/namespace2:admin"
 ```
 
-Now let's try some operations as user1. Open a new window and log-in as user1:
+Now let's try some operations as user1. **Open a new window and log-in as user1**:
 ```
 ./vsm-cli login user1 user1-private.pem
 ...
@@ -394,7 +394,7 @@ TOKEN="..."
 ./vsm-cli --token $TOKEN secrets get namespace1/user1-secret
 ```
 
-Now let's try some operations as user1. Open a new window and log-in as user2:
+Now let's try some operations as user2. **Open a new window and log-in as user2**:
 ```
 ./vsm-cli login user2 user2-private.pem
 TOKEN="..."
@@ -406,15 +406,16 @@ TOKEN="..."
 Note that the last command succeeded because the "user-can-read" policy in
 "/secrets/namespace1" allowed it!
 
-Now let's try some commands that **should fail**:
-user1 should not be able to perform an operation in namespace2:
+Now let's try some commands that **should fail**:  
+
+user1 should not be able to perform any operation in namespace2:
 ```
 ./vsm-cli --token $TOKEN secrets get namespace2/user2-secret
 ...
 Response status is different than 200 StatusOK: 403 Forbidden
 ``` 
 
-user2 should not be able to delete or create in namespace1:
+user2 should not be able to delete or create a secret in namespace1:
 ```
 ./vsm-cli --token $TOKEN secrets delete namespace1/user1-secret
 ...
