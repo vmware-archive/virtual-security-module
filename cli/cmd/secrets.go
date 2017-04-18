@@ -10,6 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/vmware/virtual-security-module/model"
+	"github.com/vmware/virtual-security-module/secret"
 	"github.com/vmware/virtual-security-module/util"
 )
 
@@ -149,6 +150,7 @@ func apiCreateSecret(secretId, secretData string) (string, error) {
 
 	se := &model.SecretEntry{
 		Id:         secretId,
+		Type:       secret.DataSecretTypeName,
 		SecretData: []byte(secretData),
 	}
 

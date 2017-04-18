@@ -34,12 +34,13 @@ func apiTestCleanup() {
 	ts.Close()
 }
 
-func TestAPICreateAndGetSecret(t *testing.T) {
+func TestAPICreateAndGetDataSecret(t *testing.T) {
 	// step 1: create and send secret creation request
 	expirationTime := time.Now().Add(time.Hour)
 
 	se := &model.SecretEntry{
 		Id:             "api-id0",
+		Type:           DataSecretTypeName,
 		SecretData:     []byte("secret0"),
 		Owner:          "user0",
 		ExpirationTime: expirationTime,
