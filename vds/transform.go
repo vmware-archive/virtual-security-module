@@ -34,7 +34,8 @@ type OperationMetaData struct {
 }
 
 type MetaData struct {
-	Type              string
+	EntryType         string
+	SecretType        string
 	Owner             string
 	ExpirationTime    time.Time
 	Roles             []RoleMetaData
@@ -43,7 +44,8 @@ type MetaData struct {
 
 func SecretEntryToDataStoreEntry(secretEntry *model.SecretEntry) (*DataStoreEntry, error) {
 	metaData := &MetaData{
-		Type:           secretEntryType,
+		EntryType:      secretEntryType,
+		SecretType:     secretEntry.Type,
 		Owner:          secretEntry.Owner,
 		ExpirationTime: secretEntry.ExpirationTime,
 	}
@@ -69,12 +71,13 @@ func DataStoreEntryToSecretEntry(dataStoreEntry *DataStoreEntry) (*model.SecretE
 		return nil, util.ErrInternal
 	}
 
-	if metaData.Type != secretEntryType {
+	if metaData.EntryType != secretEntryType {
 		return nil, util.ErrInternal
 	}
 
 	secretEntry := &model.SecretEntry{
 		Id:             SecretPathToId(dataStoreEntry.Id),
+		Type:           metaData.SecretType,
 		SecretData:     dataStoreEntry.Data,
 		Owner:          metaData.Owner,
 		ExpirationTime: metaData.ExpirationTime,
@@ -85,9 +88,9 @@ func DataStoreEntryToSecretEntry(dataStoreEntry *DataStoreEntry) (*model.SecretE
 
 func UserEntryToDataStoreEntry(userEntry *model.UserEntry) (*DataStoreEntry, error) {
 	metaData := &MetaData{
-		Type:  userEntryType,
-		Owner: userEntry.Username,
-		Roles: rolesToMetaData(userEntry.Roles),
+		EntryType: userEntryType,
+		Owner:     userEntry.Username,
+		Roles:     rolesToMetaData(userEntry.Roles),
 	}
 
 	metaDataBytes, err := json.Marshal(metaData)
@@ -111,7 +114,7 @@ func DataStoreEntryToUserEntry(dataStoreEntry *DataStoreEntry) (*model.UserEntry
 		return nil, util.ErrInternal
 	}
 
-	if metaData.Type != userEntryType {
+	if metaData.EntryType != userEntryType {
 		return nil, util.ErrInternal
 	}
 
@@ -126,9 +129,9 @@ func DataStoreEntryToUserEntry(dataStoreEntry *DataStoreEntry) (*model.UserEntry
 
 func NamespaceEntryToDataStoreEntry(namespaceEntry *model.NamespaceEntry) (*DataStoreEntry, error) {
 	metaData := &MetaData{
-		Type:  namespaceEntryType,
-		Owner: namespaceEntry.Owner,
-		Roles: roleLabelsToMetaData(namespaceEntry.RoleLabels),
+		EntryType: namespaceEntryType,
+		Owner:     namespaceEntry.Owner,
+		Roles:     roleLabelsToMetaData(namespaceEntry.RoleLabels),
 	}
 	metaDataBytes, err := json.Marshal(metaData)
 	if err != nil {
@@ -150,7 +153,7 @@ func DataStoreEntryToNamespaceEntry(dataStoreEntry *DataStoreEntry) (*model.Name
 		return nil, util.ErrInternal
 	}
 
-	if metaData.Type != namespaceEntryType {
+	if metaData.EntryType != namespaceEntryType {
 		return nil, util.ErrInternal
 	}
 
@@ -165,7 +168,7 @@ func DataStoreEntryToNamespaceEntry(dataStoreEntry *DataStoreEntry) (*model.Name
 
 func AuthorizationPolicyEntryToDataStoreEntry(policyEntry *model.AuthorizationPolicyEntry) (*DataStoreEntry, error) {
 	metaData := &MetaData{
-		Type:              authorizationPolicyEntryType,
+		EntryType:         authorizationPolicyEntryType,
 		Owner:             policyEntry.Owner,
 		Roles:             roleLabelsToMetaData(policyEntry.RoleLabels),
 		AllowedOperations: operationsToMetaData(policyEntry.AllowedOperations),
@@ -190,7 +193,7 @@ func DataStoreEntryToAuthorizationPolicyEntry(dataStoreEntry *DataStoreEntry) (*
 		return nil, util.ErrInternal
 	}
 
-	if metaData.Type != authorizationPolicyEntryType {
+	if metaData.EntryType != authorizationPolicyEntryType {
 		return nil, util.ErrInternal
 	}
 

@@ -38,7 +38,7 @@ func IsSecretEntry(dsEntry *DataStoreEntry) bool {
 		return false
 	}
 
-	return metaData.Type == secretEntryType
+	return metaData.EntryType == secretEntryType
 }
 
 func IsUserEntry(dsEntry *DataStoreEntry) bool {
@@ -47,7 +47,7 @@ func IsUserEntry(dsEntry *DataStoreEntry) bool {
 		return false
 	}
 
-	return metaData.Type == userEntryType
+	return metaData.EntryType == userEntryType
 }
 
 func IsNamespaceEntry(dsEntry *DataStoreEntry) bool {
@@ -56,7 +56,7 @@ func IsNamespaceEntry(dsEntry *DataStoreEntry) bool {
 		return false
 	}
 
-	return metaData.Type == namespaceEntryType
+	return metaData.EntryType == namespaceEntryType
 }
 
 func IsAuthorizationPolicyEntry(dsEntry *DataStoreEntry) bool {
@@ -65,5 +65,5 @@ func IsAuthorizationPolicyEntry(dsEntry *DataStoreEntry) bool {
 		return false
 	}
 
-	return metaData.Type == authorizationPolicyEntryType
+	return metaData.EntryType == authorizationPolicyEntryType
 }
