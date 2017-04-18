@@ -19,6 +19,7 @@ type RoleEntry struct {
 
 type SecretEntry struct {
 	Id             string    `json:"id"`
+	Type           string    `json:"type"`
 	SecretData     []byte    `json:"secretData"`
 	Owner          string    `json:"owner"`
 	ExpirationTime time.Time `json:"expirationTime"`

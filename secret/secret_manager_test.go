@@ -46,9 +46,10 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestCreateAndGetSecret(t *testing.T) {
+func TestCreateAndGetDataSecret(t *testing.T) {
 	se := &model.SecretEntry{
 		Id:             "id1",
+		Type:           DataSecretTypeName,
 		SecretData:     []byte("secret0"),
 		Owner:          "user0",
 		ExpirationTime: time.Now().Add(time.Hour),
