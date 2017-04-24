@@ -112,7 +112,7 @@ func apiLogin(username string, privateKey *rsa.PrivateKey) (string, error) {
 	}
 
 	// decrypt challenge using private key
-	challenge, err := rsa.DecryptPKCS1v15(nil, privateKey, []byte(encryptedChallenge))
+	challenge, err := rsa.DecryptPKCS1v15(nil, privateKey, encryptedChallenge)
 	if err != nil {
 		return "", err
 	}

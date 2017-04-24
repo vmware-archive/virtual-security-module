@@ -36,6 +36,7 @@ type OperationMetaData struct {
 type MetaData struct {
 	EntryType         string
 	SecretType        string
+	SecretMetaData    string
 	Owner             string
 	ExpirationTime    time.Time
 	Roles             []RoleMetaData
@@ -46,6 +47,7 @@ func SecretEntryToDataStoreEntry(secretEntry *model.SecretEntry) (*DataStoreEntr
 	metaData := &MetaData{
 		EntryType:      secretEntryType,
 		SecretType:     secretEntry.Type,
+		SecretMetaData: secretEntry.MetaData,
 		Owner:          secretEntry.Owner,
 		ExpirationTime: secretEntry.ExpirationTime,
 	}
@@ -78,6 +80,7 @@ func DataStoreEntryToSecretEntry(dataStoreEntry *DataStoreEntry) (*model.SecretE
 	secretEntry := &model.SecretEntry{
 		Id:             SecretPathToId(dataStoreEntry.Id),
 		Type:           metaData.SecretType,
+		MetaData:       metaData.SecretMetaData,
 		SecretData:     dataStoreEntry.Data,
 		Owner:          metaData.Owner,
 		ExpirationTime: metaData.ExpirationTime,

@@ -15,6 +15,7 @@ In this section we're going to provide information about how to accomplish some 
  * placeholder: auto-rotating secrets
  * [Namespace management](#namespace-management)
  * [Authorization policies](#authorization-policies)
+ * [Secret types](#secret-types)
  * placeholder: Cluster management
  * placeholder: Internals
 
@@ -241,11 +242,14 @@ In this section we're going to create secrets and manage their life-cycle. Final
 
 let's start by creating a secret:
 ```
-./vsm-cli --token $TOKEN secrets create coke-secret-formula "7X"
+./vsm-cli --token $TOKEN secrets create data coke-secret-formula "7X"
 ```
 
-We have created a secret entry whose key is "core-secret-formula" and its value
-is "7X". Let's verify that we can reconstruct the secret:
+We have created a data secret entry whose key is "core-secret-formula" and its value
+is "7X". A data secret is a secret of type "Data", which is the simplest secret type -
+it's not interpreted by the system. We will learn about additional secret types later.
+
+Let's verify that we can reconstruct the secret:
 
 ```
 ./vsm-cli --token $TOKEN secrets get coke-secret-formula
@@ -425,3 +429,43 @@ Response status is different than 201 StatusCreated: 403 Forbidden
 ...
 Response status is different than 201 StatusCreated: 403 Forbidden
 ```
+
+## Secret types
+So far we've dealt with one type of secret: a data secret. With a data
+secret the client provides the secret data and can retrieve it; the server
+does not understand the nature of the data.
+
+Sometimes it's beneficial to create typed secrets, that the server understands.
+Two such secret types are **RSA Private Key** and **X509 Certificate**. We're
+going to demonstrate the value of those through an example:
+
+Let's generate a RSA private key (note that we're providing the key length):
+```
+./vsm-cli --token $TOKEN secrets create rsa-private-key my-priv-key 2048
+```
+
+Unlike using client-side tools like openssl, when you're using VSM to create
+a private key, the private key stays in VSM. Of course, you're allowed to retrieve
+your own private key, so let's do that:
+```
+./vsm-cli --token $TOKEN secrets get my-priv-key
+```
+
+You should see the PEM-encoding of the private key you've created.
+
+Now let's create a certificate that corresponds to the private key you've created
+(note that you need to provide, in addition to the certificate id, the id of the
+private key and additional parameters like common name, organization and country):
+```
+./vsm-cli --token $TOKEN secrets create x509-certificate my-cert my-priv-key my.example.com MyOrg IL
+``` 
+
+The certificate you've created lives in the server as well, and it wraps the public key that
+corresponds to the private key you've created.
+
+At this point the certificate is 'self-signed' by the private key. This is going to change soon -
+it's going to be signed by the server acting as a Certificate Authority. Then if you configure clients
+to trust certificates signed by the VSM server, VSM acts as a CA in your environment.
+
+Also, shortly you're going to have to have access to the private key in order to retrieve a certificate
+signed by the server.
