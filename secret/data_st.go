@@ -3,6 +3,7 @@
 package secret
 
 import (
+	gocontext "context"
 	"fmt"
 
 	"github.com/vmware/virtual-security-module/context"
@@ -43,7 +44,7 @@ func (dataST *DataSecretType) Init(moduleInitContext *context.ModuleInitContext)
 	return nil
 }
 
-func (dataST *DataSecretType) CreateSecret(secretEntry *model.SecretEntry) (string, error) {
+func (dataST *DataSecretType) CreateSecret(ctx gocontext.Context, secretEntry *model.SecretEntry) (string, error) {
 	if len(secretEntry.SecretData) == 0 {
 		return "", util.ErrInputValidation
 	}
@@ -90,7 +91,7 @@ func (dataST *DataSecretType) CreateSecret(secretEntry *model.SecretEntry) (stri
 	return secretEntry.Id, nil
 }
 
-func (dataST *DataSecretType) GetSecret(secretEntry *model.SecretEntry) (*model.SecretEntry, error) {
+func (dataST *DataSecretType) GetSecret(ctx gocontext.Context, secretEntry *model.SecretEntry) (*model.SecretEntry, error) {
 	secretPath := vds.SecretIdToPath(secretEntry.Id)
 
 	// fetch encryption key
@@ -114,7 +115,7 @@ func (dataST *DataSecretType) GetSecret(secretEntry *model.SecretEntry) (*model.
 	return secretEntry, nil
 }
 
-func (dataST *DataSecretType) DeleteSecret(secretEntry *model.SecretEntry) error {
+func (dataST *DataSecretType) DeleteSecret(ctx gocontext.Context, secretEntry *model.SecretEntry) error {
 	secretPath := vds.SecretIdToPath(secretEntry.Id)
 
 	if err := dataST.dataStore.DeleteEntry(secretPath); err != nil {

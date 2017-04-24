@@ -3,6 +3,7 @@
 package secret
 
 import (
+	gocontext "context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -50,7 +51,7 @@ func (rsaPrivKeyST *RSAPrivateKeySecretType) Init(moduleInitContext *context.Mod
 	return nil
 }
 
-func (rsaPrivKeyST *RSAPrivateKeySecretType) CreateSecret(secretEntry *model.SecretEntry) (string, error) {
+func (rsaPrivKeyST *RSAPrivateKeySecretType) CreateSecret(ctx gocontext.Context, secretEntry *model.SecretEntry) (string, error) {
 	// get desired key length
 	var rsaPrivKeySTMetaData RSAPrivateKeySecretMetaData
 	if err := json.Unmarshal([]byte(secretEntry.MetaData), &rsaPrivKeySTMetaData); err != nil {
@@ -121,7 +122,7 @@ func (rsaPrivKeyST *RSAPrivateKeySecretType) CreateSecret(secretEntry *model.Sec
 	return secretEntry.Id, nil
 }
 
-func (rsaPrivKeyST *RSAPrivateKeySecretType) GetSecret(secretEntry *model.SecretEntry) (*model.SecretEntry, error) {
+func (rsaPrivKeyST *RSAPrivateKeySecretType) GetSecret(ctx gocontext.Context, secretEntry *model.SecretEntry) (*model.SecretEntry, error) {
 	secretPath := vds.SecretIdToPath(secretEntry.Id)
 
 	// fetch encryption key
@@ -145,7 +146,7 @@ func (rsaPrivKeyST *RSAPrivateKeySecretType) GetSecret(secretEntry *model.Secret
 	return secretEntry, nil
 }
 
-func (rsaPrivKeyST *RSAPrivateKeySecretType) DeleteSecret(secretEntry *model.SecretEntry) error {
+func (rsaPrivKeyST *RSAPrivateKeySecretType) DeleteSecret(ctx gocontext.Context, secretEntry *model.SecretEntry) error {
 	secretPath := vds.SecretIdToPath(secretEntry.Id)
 
 	if err := rsaPrivKeyST.dataStore.DeleteEntry(secretPath); err != nil {

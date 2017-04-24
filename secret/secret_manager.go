@@ -55,7 +55,7 @@ func (secretManager *SecretManager) CreateSecret(ctx gocontext.Context, secretEn
 		return "", util.ErrInputValidation
 	}
 
-	return secretType.CreateSecret(secretEntry)
+	return secretType.CreateSecret(ctx, secretEntry)
 }
 
 func (secretManager *SecretManager) GetSecret(ctx gocontext.Context, secretId string) (*model.SecretEntry, error) {
@@ -75,7 +75,7 @@ func (secretManager *SecretManager) GetSecret(ctx gocontext.Context, secretId st
 		return nil, util.ErrInternal
 	}
 
-	return secretType.GetSecret(secretEntry)
+	return secretType.GetSecret(ctx, secretEntry)
 }
 
 func (secretManager *SecretManager) DeleteSecret(ctx gocontext.Context, secretId string) error {
@@ -95,7 +95,7 @@ func (secretManager *SecretManager) DeleteSecret(ctx gocontext.Context, secretId
 		return util.ErrInternal
 	}
 
-	return secretType.DeleteSecret(secretEntry)
+	return secretType.DeleteSecret(ctx, secretEntry)
 }
 
 func (secretManager *SecretManager) getSecretEntry(secretPath string) (*model.SecretEntry, error) {
