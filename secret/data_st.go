@@ -44,6 +44,10 @@ func (dataST *DataSecretType) Init(moduleInitContext *context.ModuleInitContext)
 }
 
 func (dataST *DataSecretType) CreateSecret(secretEntry *model.SecretEntry) (string, error) {
+	if len(secretEntry.SecretData) == 0 {
+		return "", util.ErrInputValidation
+	}
+
 	secretPath := vds.SecretIdToPath(secretEntry.Id)
 
 	// verify id doesn't exist

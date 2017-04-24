@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "description": "Namespace API",
+    "description": "Authorization API",
     "title": "Virtual Security Module"
   },
   "basePath": "/",
@@ -326,6 +326,10 @@
           "type": "string",
           "x-go-name": "Id"
         },
+        "metaData": {
+          "type": "string",
+          "x-go-name": "MetaData"
+        },
         "owner": {
           "type": "string",
           "x-go-name": "Owner"
@@ -337,6 +341,10 @@
             "format": "uint8"
           },
           "x-go-name": "SecretData"
+        },
+        "type": {
+          "type": "string",
+          "x-go-name": "Type"
         }
       },
       "x-go-package": "github.com/vmware/virtual-security-module/model"

@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/spf13/cobra"
 	"github.com/vmware/virtual-security-module/model"
@@ -16,12 +17,20 @@ import (
 
 const (
 	secretsCmdUsage      = "secrets [sub-command]"
-	createSecretCmdUsage = "create secret-id secret-data"
+	createSecretCmdUsage = "create secret"
 	deleteSecretCmdUsage = "delete secret-id"
 	getSecretCmdUsage    = "get secret-id"
+
+	createDataSecretCmdUsage            = "data secret-id secret-data"
+	createRSAPrivateKeySecretCmdUsage   = "rsa-private-key secret-id key-length"
+	createX509CertificateSecretCmdUsage = "x509-certificate secret-id private-key-id common-name organization country"
 )
 
 func init() {
+	createSecretCmd.AddCommand(createDataSecretCmd)
+	createSecretCmd.AddCommand(createRSAPrivateKeySecretCmd)
+	createSecretCmd.AddCommand(createX509CertificateSecretCmd)
+
 	secretsCmd.AddCommand(createSecretCmd)
 	secretsCmd.AddCommand(deleteSecretCmd)
 	secretsCmd.AddCommand(getSecretCmd)
@@ -39,7 +48,6 @@ var createSecretCmd = &cobra.Command{
 	Use:   createSecretCmdUsage,
 	Short: "Create a secret",
 	Long:  "Create a secret",
-	Run:   createSecret,
 }
 
 var deleteSecretCmd = &cobra.Command{
@@ -56,14 +64,69 @@ var getSecretCmd = &cobra.Command{
 	Run:   getSecret,
 }
 
-func createSecret(cmd *cobra.Command, args []string) {
-	secretId, secretData, err := createSecretCheckUsage(args)
+var createDataSecretCmd = &cobra.Command{
+	Use:   createDataSecretCmdUsage,
+	Short: "Create a data secret",
+	Long:  "Create a data secret",
+	Run:   createDataSecret,
+}
+
+var createRSAPrivateKeySecretCmd = &cobra.Command{
+	Use:   createRSAPrivateKeySecretCmdUsage,
+	Short: "Create a rsa-private-key secret",
+	Long:  "Create a rsa-private-key secret",
+	Run:   createRSAPrivateKeySecret,
+}
+
+var createX509CertificateSecretCmd = &cobra.Command{
+	Use:   createX509CertificateSecretCmdUsage,
+	Short: "Create a x509-certificate secret",
+	Long:  "Create a x509-certificate secret",
+	Run:   createX509CertificateSecret,
+}
+
+func createDataSecret(cmd *cobra.Command, args []string) {
+	secretId, secretData, err := createDataSecretCheckUsage(args)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
 
-	id, err := apiCreateSecret(secretId, secretData)
+	id, err := apiCreateDataSecret(secretId, secretData)
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+
+	fmt.Println("Secret created successfully")
+	fmt.Printf("Id: %v\n", id)
+}
+
+func createRSAPrivateKeySecret(cmd *cobra.Command, args []string) {
+	secretId, keyLength, err := createRSAPrivateKeySecretCheckUsage(args)
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+
+	id, err := apiCreateRSAPrivateKeySecret(secretId, keyLength)
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+
+	fmt.Println("Secret created successfully")
+	fmt.Printf("Id: %v\n", id)
+}
+
+func createX509CertificateSecret(cmd *cobra.Command, args []string) {
+	secretId, privateKeyId, commonName, organization, country, err := createX509CertificateSecretCheckUsage(args)
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+
+	id, err := apiCreateX509CertificateSecret(secretId, privateKeyId, commonName, organization, country)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
@@ -107,20 +170,51 @@ func getSecret(cmd *cobra.Command, args []string) {
 		fmt.Println(err.Error())
 		return
 	}
-
 	fmt.Println(s)
-	fmt.Printf("Secret data: %v\n", string(se.SecretData))
+
+	fmt.Printf("\nDecoded Secret data:\n")
+	fmt.Printf("%s\n", se.SecretData)
 }
 
-func createSecretCheckUsage(args []string) (string, string, error) {
+func createDataSecretCheckUsage(args []string) (string, string, error) {
 	if len(args) != 2 {
-		return "", "", fmt.Errorf("Usage: %v", createSecretCmdUsage)
+		return "", "", fmt.Errorf("Usage: %v", createDataSecretCmdUsage)
 	}
 
 	secretId := args[0]
 	secretData := args[1]
 
 	return secretId, secretData, nil
+}
+
+func createRSAPrivateKeySecretCheckUsage(args []string) (string, int, error) {
+	if len(args) != 2 {
+		return "", 0, fmt.Errorf("Usage: %v", createRSAPrivateKeySecretCmdUsage)
+	}
+
+	secretId := args[0]
+	keyLengthStr := args[1]
+
+	keyLength, err := strconv.Atoi(keyLengthStr)
+	if err != nil {
+		return "", 0, fmt.Errorf("failed to convert %s to an int: %v", keyLengthStr, err)
+	}
+
+	return secretId, keyLength, nil
+}
+
+func createX509CertificateSecretCheckUsage(args []string) (string, string, string, string, string, error) {
+	if len(args) != 5 {
+		return "", "", "", "", "", fmt.Errorf("Usage: %v", createX509CertificateSecretCmdUsage)
+	}
+
+	secretId := args[0]
+	privKeyId := args[1]
+	commonName := args[2]
+	organization := args[3]
+	country := args[4]
+
+	return secretId, privKeyId, commonName, organization, country, nil
 }
 
 func deleteSecretCheckUsage(args []string) (string, error) {
@@ -143,15 +237,43 @@ func getSecretCheckUsage(args []string) (string, error) {
 	return secretId, nil
 }
 
-func apiCreateSecret(secretId, secretData string) (string, error) {
+func apiCreateDataSecret(secretId, secretData string) (string, error) {
+	return apiCreateSecret(secretId, secret.DataSecretTypeName, "{}", []byte(secretData))
+}
+
+func apiCreateRSAPrivateKeySecret(secretId string, keyLength int) (string, error) {
+	secretMetaData := fmt.Sprintf("{\"keyLength\": %v}", keyLength)
+	return apiCreateSecret(secretId, secret.RSAPrivateKeySecretTypeName, secretMetaData, []byte{})
+}
+
+func apiCreateX509CertificateSecret(secretId, privKeyId, commonName, organization, country string) (string, error) {
+	secretMetaData := secret.X509CertificateSecretMetaData{
+		CommonName:         commonName,
+		Organization:       organization,
+		OrganizationalUnit: "",
+		Country:            country,
+		Locality:           "",
+		PrivateKeyId:       privKeyId,
+	}
+
+	secretMetaDataBytes, err := json.Marshal(secretMetaData)
+	if err != nil {
+		return "", err
+	}
+
+	return apiCreateSecret(secretId, secret.X509CertificateSecretTypeName, string(secretMetaDataBytes), []byte{})
+}
+
+func apiCreateSecret(secretId, secretType, secretMetaData string, secretData []byte) (string, error) {
 	if Token == "" {
 		return "", fmt.Errorf("authn token is empty")
 	}
 
 	se := &model.SecretEntry{
 		Id:         secretId,
-		Type:       secret.DataSecretTypeName,
-		SecretData: []byte(secretData),
+		Type:       secretType,
+		MetaData:   secretMetaData,
+		SecretData: secretData,
 	}
 
 	body := new(bytes.Buffer)

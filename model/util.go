@@ -11,16 +11,12 @@ func SecretsEqual(s, t *SecretEntry) bool {
 		return s == t
 	}
 
-	if !s.ExpirationTime.Equal(t.ExpirationTime) ||
-		!(s.Id == t.Id) ||
-		!(s.Type == t.Type) ||
-		!(s.Owner == t.Owner) ||
-		!bytes.Equal(s.SecretData, t.SecretData) {
-
-		return false
-	}
-
-	return true
+	return s.ExpirationTime.Equal(t.ExpirationTime) &&
+		(s.Id == t.Id) &&
+		(s.Type == t.Type) &&
+		(s.MetaData == t.MetaData) &&
+		(s.Owner == t.Owner) &&
+		bytes.Equal(s.SecretData, t.SecretData)
 }
 
 func NewUserEntry(ue *UserEntry) *UserEntry {
@@ -42,6 +38,7 @@ func NewSecretEntry(se *SecretEntry) *SecretEntry {
 	return &SecretEntry{
 		Id:             se.Id,
 		Type:           se.Type,
+		MetaData:       se.MetaData,
 		SecretData:     se.SecretData,
 		Owner:          se.Owner,
 		ExpirationTime: se.ExpirationTime,
