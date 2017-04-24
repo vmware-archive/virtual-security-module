@@ -86,6 +86,28 @@ func ReadRSAPrivateKey(filename string) (*rsa.PrivateKey, error) {
 	return privKey, nil
 }
 
+func ReadCertificate(filename string) (*x509.Certificate, error) {
+	b, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to read certificate from file %v: %v", filename, err)
+	}
+
+	block, _ := pem.Decode(b)
+	if block == nil || block.Type != "CERTIFICATE" {
+		return nil, fmt.Errorf("Failed to decode certificate from file %v", filename)
+	}
+
+	certs, err := x509.ParseCertificates(block.Bytes)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to parse certificate from file %v: %v", filename, err)
+	}
+	if len(certs) == 0 {
+		return nil, fmt.Errorf("Failed to parse certificate from file %v", filename)
+	}
+
+	return certs[0], nil
+}
+
 func JSONPrettyPrint(v interface{}) (string, error) {
 	b, err := json.MarshalIndent(v, "", " ")
 	if err != nil {

@@ -3,6 +3,8 @@
 package secret
 
 import (
+	gocontext "context"
+
 	"github.com/vmware/virtual-security-module/context"
 	"github.com/vmware/virtual-security-module/model"
 )
@@ -10,7 +12,7 @@ import (
 type SecretType interface {
 	Type() string
 	Init(*context.ModuleInitContext) error
-	CreateSecret(*model.SecretEntry) (string, error)
-	GetSecret(*model.SecretEntry) (*model.SecretEntry, error)
-	DeleteSecret(*model.SecretEntry) error
+	CreateSecret(gocontext.Context, *model.SecretEntry) (string, error)
+	GetSecret(gocontext.Context, *model.SecretEntry) (*model.SecretEntry, error)
+	DeleteSecret(gocontext.Context, *model.SecretEntry) error
 }

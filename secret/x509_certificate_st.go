@@ -3,6 +3,7 @@
 package secret
 
 import (
+	gocontext "context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -11,8 +12,10 @@ import (
 	"encoding/pem"
 	"fmt"
 	"math/big"
+	"path"
 	"time"
 
+	"github.com/vmware/virtual-security-module/config"
 	"github.com/vmware/virtual-security-module/context"
 	"github.com/vmware/virtual-security-module/crypt"
 	"github.com/vmware/virtual-security-module/model"
@@ -33,6 +36,7 @@ type X509CertificateSecretType struct {
 	dataStore    vds.DataStoreAdapter
 	keyStore     vks.KeyStoreAdapter
 	authzManager context.AuthorizationManager
+	cfg          *config.Config
 }
 
 type X509CertificateSecretMetaData struct {
@@ -56,11 +60,12 @@ func (certST *X509CertificateSecretType) Init(moduleInitContext *context.ModuleI
 	certST.dataStore = moduleInitContext.DataStore
 	certST.keyStore = moduleInitContext.KeyStore
 	certST.authzManager = moduleInitContext.AuthzManager
+	certST.cfg = moduleInitContext.Config
 
 	return nil
 }
 
-func (certST *X509CertificateSecretType) CreateSecret(secretEntry *model.SecretEntry) (string, error) {
+func (certST *X509CertificateSecretType) CreateSecret(ctx gocontext.Context, secretEntry *model.SecretEntry) (string, error) {
 	// get certificate meta-data
 	var certMetaData X509CertificateSecretMetaData
 	if err := json.Unmarshal([]byte(secretEntry.MetaData), &certMetaData); err != nil {
@@ -84,7 +89,7 @@ func (certST *X509CertificateSecretType) CreateSecret(secretEntry *model.SecretE
 	defer util.Memzero(key)
 
 	// generate secret data (certificate in this case) and encrypt it using key
-	certPEM, err := certST.generateCert(&certMetaData)
+	certPEM, err := certST.generateCert(ctx, &certMetaData)
 	if err != nil {
 		return "", err
 	}
@@ -114,7 +119,7 @@ func (certST *X509CertificateSecretType) CreateSecret(secretEntry *model.SecretE
 	return secretEntry.Id, nil
 }
 
-func (certST *X509CertificateSecretType) GetSecret(secretEntry *model.SecretEntry) (*model.SecretEntry, error) {
+func (certST *X509CertificateSecretType) GetSecret(ctx gocontext.Context, secretEntry *model.SecretEntry) (*model.SecretEntry, error) {
 	secretPath := vds.SecretIdToPath(secretEntry.Id)
 
 	// fetch encryption key
@@ -138,7 +143,7 @@ func (certST *X509CertificateSecretType) GetSecret(secretEntry *model.SecretEntr
 	return secretEntry, nil
 }
 
-func (certST *X509CertificateSecretType) DeleteSecret(secretEntry *model.SecretEntry) error {
+func (certST *X509CertificateSecretType) DeleteSecret(ctx gocontext.Context, secretEntry *model.SecretEntry) error {
 	secretPath := vds.SecretIdToPath(secretEntry.Id)
 
 	if err := certST.dataStore.DeleteEntry(secretPath); err != nil {
@@ -152,12 +157,12 @@ func (certST *X509CertificateSecretType) DeleteSecret(secretEntry *model.SecretE
 	return nil
 }
 
-func (certST *X509CertificateSecretType) generateCert(certMetaData *X509CertificateSecretMetaData) ([]byte, error) {
+func (certST *X509CertificateSecretType) generateCert(ctx gocontext.Context, certMetaData *X509CertificateSecretMetaData) ([]byte, error) {
 	if certMetaData.PrivateKeyId == "" {
 		return []byte{}, util.ErrInputValidation
 	}
 
-	privKey, err := certST.getSubjectPrivKey(certMetaData.PrivateKeyId)
+	privKey, err := certST.getSubjectPrivKey(ctx, certMetaData.PrivateKeyId)
 	if err != nil {
 		return []byte{}, err
 	}
@@ -174,9 +179,12 @@ func (certST *X509CertificateSecretType) generateCert(certMetaData *X509Certific
 
 	template := getCertTemplate(serialNumber, subject)
 
-	parent := template
-	parentPrivKey := privKey // self-signed for now
-	certDER, err := x509.CreateCertificate(rand.Reader, template, parent, privKey.Public(), parentPrivKey)
+	caCert, caPrivKey, err := getCACertAndKey(certST.cfg)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	certDER, err := x509.CreateCertificate(rand.Reader, template, caCert, privKey.Public(), caPrivKey)
 	if err != nil {
 		return []byte{}, err
 	}
@@ -185,15 +193,13 @@ func (certST *X509CertificateSecretType) generateCert(certMetaData *X509Certific
 	return pem.EncodeToMemory(&block), nil
 }
 
-func (certST *X509CertificateSecretType) getSubjectPrivKey(privKeyId string) (*rsa.PrivateKey, error) {
+func (certST *X509CertificateSecretType) getSubjectPrivKey(ctx gocontext.Context, privKeyId string) (*rsa.PrivateKey, error) {
 	privKeyPath := vds.SecretIdToPath(privKeyId)
 
-	// TODO: verify that the caller has access to the private key - need to pass ctx
-	/*
-		if err := certST.authzManager.Allowed(ctx, model.Operation{Label: model.OpCreate}, path.Dir(privKeyPath)); err != nil {
-			return nil, err
-		}
-	*/
+	// verify that the caller has access to the private key
+	if err := certST.authzManager.Allowed(ctx, model.Operation{Label: model.OpRead}, path.Dir(privKeyPath)); err != nil {
+		return nil, err
+	}
 
 	dataStoreEntry, err := certST.dataStore.ReadEntry(privKeyPath)
 	if err != nil {
@@ -254,4 +260,25 @@ func getCertTemplate(serialNumber *big.Int, subject *pkix.Name) *x509.Certificat
 		KeyUsage:           x509.KeyUsageCertSign | x509.KeyUsageDigitalSignature,
 		ExtKeyUsage:        []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
 	}
+}
+
+func getCACertAndKey(cfg *config.Config) (*x509.Certificate, *rsa.PrivateKey, error) {
+	caCertFile := cfg.HttpsConfig.CaCert
+	caKeyFile := cfg.HttpsConfig.CaKey
+
+	if caCertFile == "" || caKeyFile == "" {
+		return nil, nil, util.ErrInputValidation
+	}
+
+	caCert, err := util.ReadCertificate(caCertFile)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	caPrivKey, err := util.ReadRSAPrivateKey(caKeyFile)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return caCert, caPrivKey, nil
 }

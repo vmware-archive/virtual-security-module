@@ -441,14 +441,14 @@ going to demonstrate the value of those through an example:
 
 Let's generate a RSA private key (note that we're providing the key length):
 ```
-./vsm-cli --token $TOKEN secrets create rsa-private-key my-priv-key 2048
+./vsm-cli --token $TOKEN secrets create rsa-private-key pk1 2048
 ```
 
 Unlike using client-side tools like openssl, when you're using VSM to create
 a private key, the private key stays in VSM. Of course, you're allowed to retrieve
 your own private key, so let's do that:
 ```
-./vsm-cli --token $TOKEN secrets get my-priv-key
+./vsm-cli --token $TOKEN secrets get pk1
 ```
 
 You should see the PEM-encoding of the private key you've created.
@@ -457,15 +457,22 @@ Now let's create a certificate that corresponds to the private key you've create
 (note that you need to provide, in addition to the certificate id, the id of the
 private key and additional parameters like common name, organization and country):
 ```
-./vsm-cli --token $TOKEN secrets create x509-certificate my-cert my-priv-key my.example.com MyOrg IL
+./vsm-cli --token $TOKEN secrets create x509-certificate cert1 pk1 my.example.com example-org US
 ``` 
 
 The certificate you've created lives in the server as well, and it wraps the public key that
 corresponds to the private key you've created.
 
-At this point the certificate is 'self-signed' by the private key. This is going to change soon -
-it's going to be signed by the server acting as a Certificate Authority. Then if you configure clients
-to trust certificates signed by the VSM server, VSM acts as a CA in your environment.
+The certificate is signed by the VSM server acting as a CA (Certificate Authority). If you configure
+clients to trust certificates signed by the VSM server, VSM acts as a CA in your environment.
 
-Also, shortly you're going to have to have access to the private key in order to retrieve a certificate
-signed by the server.
+Note: you must have read access to the private key in order to generate the certificate - this is
+to prevent you claiming ownership of a public key you don't own!
+
+Let's retrieve the certificate:
+```
+./vsm-cli --token $TOKEN secrets get cert1
+```
+
+You should see the PEM-encoded certificate. You can grab it and paste it in
+https://www.sslshopper.com/certificate-decoder.html to view the details of your certificate.
