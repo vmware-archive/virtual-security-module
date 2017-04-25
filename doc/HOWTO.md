@@ -394,7 +394,7 @@ Now let's try some operations as user1. **Open a new window and log-in as user1*
 ./vsm-cli login user1 user1-private.pem
 ...
 TOKEN="..."
-./vsm-cli --token $TOKEN secrets create namespace1/user1-secret user1-data
+./vsm-cli --token $TOKEN secrets create data namespace1/user1-secret user1-data
 ./vsm-cli --token $TOKEN secrets get namespace1/user1-secret
 ```
 
@@ -402,7 +402,7 @@ Now let's try some operations as user2. **Open a new window and log-in as user2*
 ```
 ./vsm-cli login user2 user2-private.pem
 TOKEN="..."
-./vsm-cli --token $TOKEN secrets create namespace2/user2-secret user2-data
+./vsm-cli --token $TOKEN secrets create data namespace2/user2-secret user2-data
 ./vsm-cli --token $TOKEN secrets get namespace2/user2-secret
 ./vsm-cli --token $TOKEN secrets get namespace1/user1-secret
 ```
@@ -425,7 +425,7 @@ user2 should not be able to delete or create a secret in namespace1:
 ...
 Response status is different than 201 StatusCreated: 403 Forbidden
 ...
-./vsm-cli --token $TOKEN secrets create namespace1/user2-secret user2-data
+./vsm-cli --token $TOKEN secrets create data namespace1/user2-secret user2-data
 ...
 Response status is different than 201 StatusCreated: 403 Forbidden
 ```
