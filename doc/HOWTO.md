@@ -133,7 +133,7 @@ Here are a few important top-level options:
 
 Let's give it a try - make sure the server is started and then run:
 ```
-./vsm-cli secrets create hello world
+./vsm-cli secrets create data hello world
 ```
 This should fail with an error message like: "authn token is empty". You need to
 provide an auth token. But to get a token you need to log-in, which we haven't
