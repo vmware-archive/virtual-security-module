@@ -1,0 +1,40 @@
+{
+	"ImportPath": "github.com/vmware/virtual-security-module",
+	"GoVersion": "go1.8",
+	"GodepVersion": "v79",
+	"Packages": [
+		"./..."
+	],
+	"Deps": [
+		{
+			"ImportPath": "github.com/dgrijalva/jwt-go",
+			"Comment": "v3.0.0-17-g2268707",
+			"Rev": "2268707a8f0843315e2004ee4f1d021dc08baedf"
+		},
+		{
+			"ImportPath": "github.com/inconshreveable/mousetrap",
+			"Rev": "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75"
+		},
+		{
+			"ImportPath": "github.com/naoina/denco",
+			"Rev": "a2656d3ed566ac9912ba18fcfc942c562d9463c7"
+		},
+		{
+			"ImportPath": "github.com/satori/go.uuid",
+			"Comment": "v1.1.0-8-g5bf94b6",
+			"Rev": "5bf94b69c6b68ee1b541973bb8e1144db23a194b"
+		},
+		{
+			"ImportPath": "github.com/spf13/cobra",
+			"Rev": "7be4beda01ec05d0b93d80b3facd2b6f44080d94"
+		},
+		{
+			"ImportPath": "github.com/spf13/pflag",
+			"Rev": "d16db1e50e33dff1b6cdf37596cef36742128670"
+		},
+		{
+			"ImportPath": "gopkg.in/yaml.v2",
+			"Rev": "a3f3340b5840cee44f372bddb5880fcbc419b46a"
+		}
+	]
+}

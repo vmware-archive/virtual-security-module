@@ -15,6 +15,7 @@ DOC := $(DOC_DIR)/swagger.json
 
 GO_ENV := GOPATH=$(GOPATH)
 GO_LINT := PATH=${PATH}:$(GOPATH)/bin golint
+GO_DEP := PATH=${PATH}:$(GOPATH)/bin godep go
 GO := $(GO_ENV) go
 
 ifeq ($(CI),1)
@@ -28,31 +29,28 @@ endif
 default: build
 
 install-deps:
-	$(GO) get -u github.com/satori/go.uuid
-	$(GO) get -u github.com/naoina/denco
-	$(GO) get -u gopkg.in/yaml.v2
-	$(GO) get -u github.com/dgrijalva/jwt-go
-	$(GO) get -u github.com/spf13/cobra/cobra
 	$(GO) get -u github.com/golang/lint/golint
-	
+	$(GO) get -u github.com/tools/godep
+
 build: fmt vet
-	$(GO) build ./...
 	$(GO) build -o $(DIST_DIR)/$(SERVER_TARGET) ./server/main
 	$(GO) build -o $(DIST_DIR)/$(CLI_TARGET) ./cli/main
 
 vet:
-	$(GO) vet ./...
+	$(GO) vet $$($(GO) list ./... | grep -v vendor)
 
 lint:
-	if [ $$($(GO_LINT) ./... | wc -l) != 0 ]; then \
-	        if $(is_ci); then \
-	                echo "FATAL: you should run 'make lint' on your local system"; \
-	                exit 1; \
-	        fi; \
-	fi
+	for p in $$($(GO) list ./... | grep -v vendor); do \
+		if [ $$($(GO_LINT) $${p} | wc -l) != 0 ]; then \
+		        if $(is_ci); then \
+		                echo "FATAL: you should run 'make lint' on your local system"; \
+		                exit 1; \
+		        fi; \
+		fi; \
+	done
 
 fmt:
-	if [ $$($(GO) fmt ./... | wc -l) != 0 ]; then \
+	if [ $$($(GO) fmt $$($(GO) list ./... | grep -v vendor) | wc -l) != 0 ]; then \
 		if $(is_ci); then \
 			echo "FATAL: you should run 'make fmt' on your local system"; \
 			exit 1; \
@@ -69,7 +67,7 @@ cross: fmt vet
 	done
 
 test:
-	$(GO) test ./...
+	$(GO) test $$($(GO) list ./... | grep -v vendor)
 
 doc:
 	swagger generate spec -o $(DOC) -b ./server/main
