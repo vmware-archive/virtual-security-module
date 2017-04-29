@@ -25,7 +25,7 @@ type DataStoreAdapter interface {
 	WriteEntry(entry *DataStoreEntry) error
 	ReadEntry(entryId string) (*DataStoreEntry, error)
 	DeleteEntry(entryId string) error
-	SearchEntries(entryIdPattern string) ([]*DataStoreEntry, error)
+	SearchChildEntries(parentEntryId string) ([]*DataStoreEntry, error)
 
 	Type() string
 	Location() string
