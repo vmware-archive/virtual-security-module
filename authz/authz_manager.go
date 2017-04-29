@@ -66,7 +66,7 @@ func (authzManager *AuthzManager) CreatePolicy(ctx gocontext.Context, policyEntr
 		if err != nil {
 			return "", err
 		}
-		if err := authzManager.dataStore.WriteEntry(dataStoreEntry); err != nil {
+		if err := authzManager.dataStore.CreateEntry(dataStoreEntry); err != nil {
 			return "", err
 		}
 	} else {
@@ -80,7 +80,7 @@ func (authzManager *AuthzManager) CreatePolicy(ctx gocontext.Context, policyEntr
 	if err != nil {
 		return "", err
 	}
-	if err := authzManager.dataStore.WriteEntry(dataStoreEntry); err != nil {
+	if err := authzManager.dataStore.CreateEntry(dataStoreEntry); err != nil {
 		return "", err
 	}
 

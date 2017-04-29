@@ -51,11 +51,6 @@ func (dataST *DataSecretType) CreateSecret(ctx gocontext.Context, secretEntry *m
 
 	secretPath := vds.SecretIdToPath(secretEntry.Id)
 
-	// verify id doesn't exist
-	if _, err := dataST.dataStore.ReadEntry(secretPath); err == nil {
-		return "", util.ErrAlreadyExists
-	}
-
 	// generate encryption key for secret
 	key, err := crypt.GenerateKey()
 	if err != nil {
@@ -79,7 +74,7 @@ func (dataST *DataSecretType) CreateSecret(ctx gocontext.Context, secretEntry *m
 	if err != nil {
 		return "", err
 	}
-	if err := dataST.dataStore.WriteEntry(dataStoreEntry); err != nil {
+	if err := dataST.dataStore.CreateEntry(dataStoreEntry); err != nil {
 		return "", err
 	}
 

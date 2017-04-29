@@ -198,7 +198,7 @@ func (p *BuiltinProvider) CreateUser(userEntry *model.UserEntry) (string, error)
 	if err != nil {
 		return "", err
 	}
-	if err := p.dataStore.WriteEntry(dataStoreEntry); err != nil {
+	if err := p.dataStore.CreateEntry(dataStoreEntry); err != nil {
 		return "", err
 	}
 

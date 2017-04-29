@@ -60,7 +60,7 @@ func (namespaceManager *NamespaceManager) CreateNamespace(ctx gocontext.Context,
 	if err != nil {
 		return "", err
 	}
-	if err := namespaceManager.dataStore.WriteEntry(dataStoreEntry); err != nil {
+	if err := namespaceManager.dataStore.CreateEntry(dataStoreEntry); err != nil {
 		return "", err
 	}
 
