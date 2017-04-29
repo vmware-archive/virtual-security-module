@@ -21,7 +21,7 @@ var p *BuiltinProvider
 
 func builtinProviderTestSetup() {
 	p = NewBuiltinProvider()
-	if err := p.Init(nil, vds.New(), vks.New()); err != nil {
+	if err := p.Init(nil, vds.NewInMemoryDS(), vks.New()); err != nil {
 		fmt.Printf("Failed to initialize builtin provider: %v\n", err)
 		os.Exit(1)
 	}

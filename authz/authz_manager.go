@@ -176,8 +176,7 @@ func (authzManager *AuthzManager) allowed(ue *model.UserEntry, op model.Operatio
 
 	// find closest policy/policies on path from namespace to root
 	policiesPath := path.Join(nsEntry.Path, vds.PoliciesDirname)
-	policiesSearchPattern := util.GetChildSearchPattern(policiesPath)
-	policyDsEntries, err := authzManager.dataStore.SearchEntries(policiesSearchPattern)
+	policyDsEntries, err := authzManager.dataStore.SearchChildEntries(policiesPath)
 	if err != nil {
 		return err
 	}

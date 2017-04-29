@@ -14,6 +14,7 @@ var (
 	ErrInputValidation = errors.New("input validation error")
 	ErrUnauthorized    = errors.New("unauthorized error")
 	ErrInternal        = errors.New("internal error")
+	ErrBadConfig       = errors.New("bad configuration")
 )
 
 func HttpStatus(err error) int {
@@ -26,9 +27,7 @@ func HttpStatus(err error) int {
 		return http.StatusBadRequest
 	case ErrUnauthorized:
 		return http.StatusForbidden
-	case ErrInternal:
+	default:
 		return http.StatusInternalServerError
 	}
-
-	return http.StatusInternalServerError
 }

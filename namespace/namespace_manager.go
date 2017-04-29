@@ -82,8 +82,7 @@ func (namespaceManager *NamespaceManager) GetNamespace(ctx gocontext.Context, pa
 		return nil, err
 	}
 
-	childSearchPattern := util.GetChildSearchPattern(path)
-	childEntries, err := namespaceManager.dataStore.SearchEntries(childSearchPattern)
+	childEntries, err := namespaceManager.dataStore.SearchChildEntries(path)
 	if err != nil {
 		return nil, err
 	}
@@ -106,8 +105,7 @@ func (namespaceManager *NamespaceManager) DeleteNamespace(ctx gocontext.Context,
 		return util.ErrInputValidation
 	}
 
-	childSearchPattern := util.GetChildSearchPattern(path)
-	childNamespaces, err := namespaceManager.dataStore.SearchEntries(childSearchPattern)
+	childNamespaces, err := namespaceManager.dataStore.SearchChildEntries(path)
 	if err != nil {
 		return err
 	}
