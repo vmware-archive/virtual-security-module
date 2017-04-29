@@ -22,7 +22,7 @@ type DataStoreAdapter interface {
 	CompleteInit(*config.Config) error
 	Initialized() bool
 
-	WriteEntry(entry *DataStoreEntry) error
+	CreateEntry(entry *DataStoreEntry) error
 	ReadEntry(entryId string) (*DataStoreEntry, error)
 	DeleteEntry(entryId string) error
 	SearchChildEntries(parentEntryId string) ([]*DataStoreEntry, error)

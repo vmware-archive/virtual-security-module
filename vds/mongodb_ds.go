@@ -58,41 +58,45 @@ func (ds *MongoDBDS) Initialized() bool {
 	return ds.dbSession != nil
 }
 
-func (ds *MongoDBDS) WriteEntry(entry *DataStoreEntry) error {
+func (ds *MongoDBDS) CreateEntry(entry *DataStoreEntry) error {
 	session, collection := ds.getSessionAndCollection()
 	defer session.Close()
 
-	_, err := collection.Upsert(bson.M{"id": entry.Id}, entry)
-
+	doc := translateToMongoDocument(entry)
+	err := collection.Insert(doc)
 	if err != nil {
-		err = translateError(err)
+		return translateError(err)
 	}
 
-	return err
+	return nil
 }
 
 func (ds *MongoDBDS) ReadEntry(entryId string) (*DataStoreEntry, error) {
 	session, collection := ds.getSessionAndCollection()
 	defer session.Close()
 
-	dsEntry := DataStoreEntry{}
-	err := collection.Find(bson.M{"id": entryId}).One(&dsEntry)
+	doc := bson.M{}
+	err := collection.Find(bson.M{"_id": entryId}).One(&doc)
 
 	if err != nil {
-		err = translateError(err)
+		return nil, translateError(err)
 	}
 
-	return &dsEntry, err
+	dsEntry, err := translatefromMongoDocument(&doc)
+	if err != nil {
+		return nil, err
+	}
+
+	return dsEntry, nil
 }
 
 func (ds *MongoDBDS) DeleteEntry(entryId string) error {
 	session, collection := ds.getSessionAndCollection()
 	defer session.Close()
 
-	err := collection.Remove(bson.M{"id": entryId})
-
+	err := collection.Remove(bson.M{"_id": entryId})
 	if err != nil {
-		err = translateError(err)
+		return translateError(err)
 	}
 
 	return err
@@ -108,11 +112,21 @@ func (ds *MongoDBDS) SearchChildEntries(parentEntryId string) ([]*DataStoreEntry
 	}
 	pattern := "^" + parentEntryId + suffix + "$"
 
-	var dsEntries []*DataStoreEntry
-	err := collection.Find(bson.M{"id": bson.M{"$regex": bson.RegEx{Pattern: pattern}}}).All(&dsEntries)
+	var docs []*bson.M
+	err := collection.Find(bson.M{"_id": bson.M{"$regex": bson.RegEx{Pattern: pattern}}}).All(&docs)
 
 	if err != nil {
-		err = translateError(err)
+		return []*DataStoreEntry{}, translateError(err)
+	}
+
+	dsEntries := make([]*DataStoreEntry, 0, len(docs))
+	for _, doc := range docs {
+		dsEntry, err := translatefromMongoDocument(doc)
+		if err != nil {
+			return []*DataStoreEntry{}, err
+		}
+
+		dsEntries = append(dsEntries, dsEntry)
 	}
 
 	return dsEntries, err
@@ -134,11 +148,48 @@ func (ds *MongoDBDS) getSessionAndCollection() (*mgo.Session, *mgo.Collection) {
 	return session, collection
 }
 
+func translateToMongoDocument(dsEntry *DataStoreEntry) *bson.M {
+	return &bson.M{
+		"_id":      dsEntry.Id,
+		"data":     dsEntry.Data,
+		"metaData": dsEntry.MetaData,
+	}
+}
+
+func translatefromMongoDocument(mongoDoc *bson.M) (*DataStoreEntry, error) {
+	doc := map[string]interface{}(*mongoDoc)
+
+	id, ok := doc["_id"].(string)
+	if !ok {
+		return nil, util.ErrInternal
+	}
+
+	data, ok := doc["data"].([]byte)
+	if !ok {
+		return nil, util.ErrInternal
+	}
+
+	metaData, ok := doc["metaData"].(string)
+	if !ok {
+		return nil, util.ErrInternal
+	}
+
+	return &DataStoreEntry{
+		Id:       id,
+		Data:     data,
+		MetaData: metaData,
+	}, nil
+}
+
 func translateError(mongoError error) error {
 	switch mongoError {
 	case mgo.ErrNotFound:
 		return util.ErrNotFound
 	default:
-		return mongoError
+		if strings.Contains(mongoError.Error(), "E11000 duplicate key error") {
+			return util.ErrAlreadyExists
+		}
+
+		return util.ErrInternal
 	}
 }

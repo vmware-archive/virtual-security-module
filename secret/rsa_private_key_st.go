@@ -69,13 +69,6 @@ func (rsaPrivKeyST *RSAPrivateKeySecretType) CreateSecret(ctx gocontext.Context,
 		return "", util.ErrInputValidation
 	}
 
-	secretPath := vds.SecretIdToPath(secretEntry.Id)
-
-	// verify id doesn't exist
-	if _, err := rsaPrivKeyST.dataStore.ReadEntry(secretPath); err == nil {
-		return "", util.ErrAlreadyExists
-	}
-
 	// generate encryption key for secret
 	key, err := crypt.GenerateKey()
 	if err != nil {
@@ -110,11 +103,12 @@ func (rsaPrivKeyST *RSAPrivateKeySecretType) CreateSecret(ctx gocontext.Context,
 	if err != nil {
 		return "", err
 	}
-	if err := rsaPrivKeyST.dataStore.WriteEntry(dataStoreEntry); err != nil {
+	if err := rsaPrivKeyST.dataStore.CreateEntry(dataStoreEntry); err != nil {
 		return "", err
 	}
 
 	// persist key using virtual key store
+	secretPath := vds.SecretIdToPath(secretEntry.Id)
 	if err := rsaPrivKeyST.keyStore.Write(secretPath, key); err != nil {
 		return "", err
 	}

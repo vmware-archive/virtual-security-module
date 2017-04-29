@@ -159,7 +159,7 @@ func createNamespace(namespacePath, owner string, roleLabels []string) error {
 		return err
 	}
 
-	if err := ds.WriteEntry(dsEntry); err != nil {
+	if err := ds.CreateEntry(dsEntry); err != nil {
 		return err
 	}
 

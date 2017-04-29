@@ -72,13 +72,6 @@ func (certST *X509CertificateSecretType) CreateSecret(ctx gocontext.Context, sec
 		return "", util.ErrInputValidation
 	}
 
-	secretPath := vds.SecretIdToPath(secretEntry.Id)
-
-	// verify id doesn't exist
-	if _, err := certST.dataStore.ReadEntry(secretPath); err == nil {
-		return "", util.ErrAlreadyExists
-	}
-
 	// generate encryption key for secret
 	key, err := crypt.GenerateKey()
 	if err != nil {
@@ -107,11 +100,12 @@ func (certST *X509CertificateSecretType) CreateSecret(ctx gocontext.Context, sec
 	if err != nil {
 		return "", err
 	}
-	if err := certST.dataStore.WriteEntry(dataStoreEntry); err != nil {
+	if err := certST.dataStore.CreateEntry(dataStoreEntry); err != nil {
 		return "", err
 	}
 
 	// persist key using virtual key store
+	secretPath := vds.SecretIdToPath(secretEntry.Id)
 	if err := certST.keyStore.Write(secretPath, key); err != nil {
 		return "", err
 	}

@@ -45,9 +45,14 @@ func (ds *InMemoryDS) Initialized() bool {
 	return true
 }
 
-func (ds *InMemoryDS) WriteEntry(entry *DataStoreEntry) error {
+func (ds *InMemoryDS) CreateEntry(entry *DataStoreEntry) error {
 	ds.mutex.Lock()
 	defer ds.mutex.Unlock()
+
+	_, ok := ds.entryMap[entry.Id]
+	if ok {
+		return util.ErrAlreadyExists
+	}
 
 	buf := make([]byte, len(entry.Data))
 	copy(buf, entry.Data)
