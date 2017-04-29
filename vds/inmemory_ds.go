@@ -5,17 +5,18 @@ package vds
 import (
 	"fmt"
 	"path"
+	"strings"
 	"sync"
 
 	"github.com/vmware/virtual-security-module/config"
 	"github.com/vmware/virtual-security-module/util"
 )
 
-const dsType = "InMemoryDataStore"
+const inMemoryDSType = "InMemoryDataStore"
 
 func init() {
-	if err := DataStoreRegistrar.Register(dsType, New()); err != nil {
-		panic(fmt.Sprintf("Failed to register data store type %v: %v", dsType, err))
+	if err := DataStoreRegistrar.Register(inMemoryDSType, NewInMemoryDS()); err != nil {
+		panic(fmt.Sprintf("Failed to register data store type %v: %v", inMemoryDSType, err))
 	}
 }
 
@@ -26,7 +27,7 @@ type InMemoryDS struct {
 	mutex    sync.Mutex
 }
 
-func New() *InMemoryDS {
+func NewInMemoryDS() *InMemoryDS {
 	return &InMemoryDS{
 		entryMap: make(map[string]*DataStoreEntry),
 	}
@@ -97,14 +98,19 @@ func (ds *InMemoryDS) DeleteEntry(entryId string) error {
 	return nil
 }
 
-func (ds *InMemoryDS) SearchEntries(entryIdPattern string) ([]*DataStoreEntry, error) {
+func (ds *InMemoryDS) SearchChildEntries(parentEntryId string) ([]*DataStoreEntry, error) {
 	ds.mutex.Lock()
 	defer ds.mutex.Unlock()
+
+	pattern := parentEntryId + "/?*"
+	if strings.HasSuffix(parentEntryId, "/") {
+		pattern = parentEntryId + "?*"
+	}
 
 	dsEntries := make([]*DataStoreEntry, 0)
 
 	for entryId, entry := range ds.entryMap {
-		matched, err := path.Match(entryIdPattern, entryId)
+		matched, err := path.Match(pattern, entryId)
 		if err != nil {
 			return dsEntries, err
 		}
@@ -127,7 +133,7 @@ func (ds *InMemoryDS) SearchEntries(entryIdPattern string) ([]*DataStoreEntry, e
 }
 
 func (ds *InMemoryDS) Type() string {
-	return dsType
+	return inMemoryDSType
 }
 
 func (ds *InMemoryDS) Location() string {

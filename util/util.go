@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strings"
 
 	"github.com/satori/go.uuid"
 )
@@ -115,14 +114,6 @@ func JSONPrettyPrint(v interface{}) (string, error) {
 	}
 
 	return string(b), nil
-}
-
-func GetChildSearchPattern(path string) string {
-	if strings.HasSuffix(path, "/") {
-		return path + "?*"
-	} else {
-		return path + "/?*"
-	}
 }
 
 func CheckPort(port int) error {

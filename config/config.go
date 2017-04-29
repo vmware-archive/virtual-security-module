@@ -32,7 +32,8 @@ type HttpsConfig struct {
 }
 
 type DataStoreConfig struct {
-	StoreType string `yaml:"type"`
+	StoreType        string `yaml:"type"`
+	ConnectionString string `yaml:"connectionString"`
 }
 
 type KeyStoreConfig struct {
