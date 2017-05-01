@@ -203,7 +203,7 @@ func (p *BuiltinProvider) CreateUser(userEntry *model.UserEntry) (string, error)
 	}
 
 	// persist key using virtual key store
-	if err := p.keyStore.Write(userpath, key); err != nil {
+	if err := p.keyStore.Create(userpath, key); err != nil {
 		return "", err
 	}
 

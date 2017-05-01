@@ -106,7 +106,7 @@ func (certST *X509CertificateSecretType) CreateSecret(ctx gocontext.Context, sec
 
 	// persist key using virtual key store
 	secretPath := vds.SecretIdToPath(secretEntry.Id)
-	if err := certST.keyStore.Write(secretPath, key); err != nil {
+	if err := certST.keyStore.Create(secretPath, key); err != nil {
 		return "", err
 	}
 

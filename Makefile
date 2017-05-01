@@ -34,6 +34,7 @@ install-deps:
 	$(GO) get -u github.com/dgrijalva/jwt-go
 	$(GO) get -u github.com/spf13/cobra/cobra
 	$(GO) get -u gopkg.in/mgo.v2
+	$(GO) get -u github.com/boltdb/bolt/...
 	$(GO) get -u github.com/golang/lint/golint
 	
 build: fmt vet

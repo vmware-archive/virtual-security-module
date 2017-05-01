@@ -37,5 +37,6 @@ type DataStoreConfig struct {
 }
 
 type KeyStoreConfig struct {
-	StoreType string `yaml:"type"`
+	StoreType        string `yaml:"type"`
+	ConnectionString string `yaml:"connectionString"`
 }

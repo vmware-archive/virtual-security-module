@@ -16,7 +16,7 @@ type KeyStoreAdapter interface {
 	CompleteInit(*config.Config) error
 	Initialized() bool
 
-	Write(alias string, key []byte) error
+	Create(alias string, key []byte) error
 	Read(alias string) ([]byte, error)
 	Delete(alias string) error
 
