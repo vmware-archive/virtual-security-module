@@ -13,5 +13,7 @@ server:
   rootInitPriKey: certs/test-root-init-private.pem
 dataStore:
   type: InMemoryDataStore
+  connectionString:
 keyStore:
   type: InMemoryKeyStore
+  connectionString:

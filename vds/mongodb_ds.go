@@ -65,7 +65,7 @@ func (ds *MongoDBDS) CreateEntry(entry *DataStoreEntry) error {
 	doc := translateToMongoDocument(entry)
 	err := collection.Insert(doc)
 	if err != nil {
-		return translateError(err)
+		return translateMongoError(err)
 	}
 
 	return nil
@@ -79,7 +79,7 @@ func (ds *MongoDBDS) ReadEntry(entryId string) (*DataStoreEntry, error) {
 	err := collection.Find(bson.M{"_id": entryId}).One(&doc)
 
 	if err != nil {
-		return nil, translateError(err)
+		return nil, translateMongoError(err)
 	}
 
 	dsEntry, err := translatefromMongoDocument(&doc)
@@ -96,7 +96,7 @@ func (ds *MongoDBDS) DeleteEntry(entryId string) error {
 
 	err := collection.Remove(bson.M{"_id": entryId})
 	if err != nil {
-		return translateError(err)
+		return translateMongoError(err)
 	}
 
 	return err
@@ -116,7 +116,7 @@ func (ds *MongoDBDS) SearchChildEntries(parentEntryId string) ([]*DataStoreEntry
 	err := collection.Find(bson.M{"_id": bson.M{"$regex": bson.RegEx{Pattern: pattern}}}).All(&docs)
 
 	if err != nil {
-		return []*DataStoreEntry{}, translateError(err)
+		return []*DataStoreEntry{}, translateMongoError(err)
 	}
 
 	dsEntries := make([]*DataStoreEntry, 0, len(docs))
@@ -181,7 +181,7 @@ func translatefromMongoDocument(mongoDoc *bson.M) (*DataStoreEntry, error) {
 	}, nil
 }
 
-func translateError(mongoError error) error {
+func translateMongoError(mongoError error) error {
 	switch mongoError {
 	case mgo.ErrNotFound:
 		return util.ErrNotFound

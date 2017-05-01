@@ -79,7 +79,7 @@ func (dataST *DataSecretType) CreateSecret(ctx gocontext.Context, secretEntry *m
 	}
 
 	// persist key using virtual key store
-	if err := dataST.keyStore.Write(secretPath, key); err != nil {
+	if err := dataST.keyStore.Create(secretPath, key); err != nil {
 		return "", err
 	}
 

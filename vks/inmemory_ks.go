@@ -10,11 +10,11 @@ import (
 	"github.com/vmware/virtual-security-module/util"
 )
 
-const ksType = "InMemoryKeyStore"
+const inMemoryKSType = "InMemoryKeyStore"
 
 func init() {
-	if err := KeyStoreRegistrar.Register(ksType, New()); err != nil {
-		panic(fmt.Sprintf("Failed to register key store type %v: %v", ksType, err))
+	if err := KeyStoreRegistrar.Register(inMemoryKSType, NewInMemoryKS()); err != nil {
+		panic(fmt.Sprintf("Failed to register key store type %v: %v", inMemoryKSType, err))
 	}
 }
 
@@ -25,7 +25,7 @@ type InMemoryKS struct {
 	mutex  sync.Mutex
 }
 
-func New() *InMemoryKS {
+func NewInMemoryKS() *InMemoryKS {
 	return &InMemoryKS{
 		keyMap: make(map[string][]byte),
 	}
@@ -43,9 +43,14 @@ func (ks *InMemoryKS) Initialized() bool {
 	return true
 }
 
-func (ks *InMemoryKS) Write(alias string, key []byte) error {
+func (ks *InMemoryKS) Create(alias string, key []byte) error {
 	ks.mutex.Lock()
 	defer ks.mutex.Unlock()
+
+	_, ok := ks.keyMap[alias]
+	if ok {
+		return util.ErrAlreadyExists
+	}
 
 	buf := make([]byte, len(key))
 	copy(buf, key)
@@ -84,7 +89,7 @@ func (ks *InMemoryKS) Delete(alias string) error {
 }
 
 func (ks *InMemoryKS) Type() string {
-	return ksType
+	return inMemoryKSType
 }
 
 func (ks *InMemoryKS) Location() string {

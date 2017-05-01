@@ -109,7 +109,7 @@ func (rsaPrivKeyST *RSAPrivateKeySecretType) CreateSecret(ctx gocontext.Context,
 
 	// persist key using virtual key store
 	secretPath := vds.SecretIdToPath(secretEntry.Id)
-	if err := rsaPrivKeyST.keyStore.Write(secretPath, key); err != nil {
+	if err := rsaPrivKeyST.keyStore.Create(secretPath, key); err != nil {
 		return "", err
 	}
 
