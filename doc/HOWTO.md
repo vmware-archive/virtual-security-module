@@ -34,6 +34,59 @@ from; until then you need to make sure the configuration file is in the current
 directory.
 
 Now let's go over some of the main configuration properties (open "config.yaml"):
+```
+# Server
+server:
+
+  # Listeners
+  http:
+    enabled: true
+    port: 8080
+  https:
+    enabled: true
+    port: 8443
+
+    # Root server certificate, also used to sign certificates when the server acts as a Certificate Authority
+    caCert: certs/test-root-cert.pem
+
+    # Private key corresponding to root server certificate
+    caKey:  certs/test-root-key.pem
+
+    # Certificate used by the server in SSL handshake. Must be signed by key in caKey
+    serverCert: certs/test-server-cert.pem
+
+    # Private key of serverCert
+    serverKey: certs/test-server-key.pem
+
+  # Public key to create user "root" during server initialization
+  rootInitPubKey: certs/test-root-init-public.pem
+
+  # Private key of user "root". Recommended to remove from server when moving from testing to production.
+  rootInitPriKey: certs/test-root-init-private.pem
+
+# Data Store - this is where encrypted secrets are stored
+dataStore:
+  type: InMemoryDataStore
+  connectionString:
+
+# Virtual Key Store - manages keys' storage and retrieval
+virtualKeyStore:
+  # Number of key stores
+  keyStoreCount: 3
+
+  # Minimum number of key stores required to create and retrieve keys
+  keyStoreThreshold: 2
+
+  # Key stores that will keep the actual keys
+  keyStores:
+  - type: InMemoryKeyStore
+    connectionString:
+  - type: InMemoryKeyStore
+    connectionString:
+  - type: InMemoryKeyStore
+    connectionString:
+```
+
 * **http** and **https** - both of them are enabled by default, which means the
   server will accept both types of connections. This is convenient in testing
   and experimentation. In production we recommend disabling http and enabling
@@ -65,9 +118,11 @@ Now let's go over some of the main configuration properties (open "config.yaml")
 * **dataStore** - controls the type and location of the server's data store,
     where (encrypted) data is persisted. By default we use an in-memory data
     store, which is convenient for testing and experimentation.
-* **keyStore** - controls the type and location of the server's virtual
-    key store, where encryption keys are persisted. By default we use an
-    in-memory key store, which is convenient for testing and experimentation.
+* **virtualkeyStore** - controls the number of configured key stores,
+    the minimum number of key stores required for creation and retrival of
+    secrets, and the key stores' configuration (type and location of each
+    key store, where encryption keys' shares are persisted. By default we use an
+    in-memory key store, which is convenient for testing and experimentation).
  
 
 ## Starting the server
