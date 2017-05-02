@@ -16,9 +16,9 @@ func TestSecretSharer(t *testing.T) {
 
 	ss := NewSecretSharerRandField(1024, n, k)
 
-	shares := ss.breakSecret(secret)
+	shares := ss.BreakSecret(secret)
 
-	data, err := ss.reconstructSecret(shares[:k])
+	data, err := ss.ReconstructSecret(shares[:k])
 
 	if err != nil {
 		t.Fatalf("Failed to reconstruct secret: %s", err.Error())

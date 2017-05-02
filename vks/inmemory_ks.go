@@ -21,8 +21,9 @@ func init() {
 // An implementation of a keystore in-memory.
 // Useful for testing. Not recommended for production!!
 type InMemoryKS struct {
-	keyMap map[string][]byte
-	mutex  sync.Mutex
+	keyMap   map[string][]byte
+	mutex    sync.Mutex
+	location string
 }
 
 func NewInMemoryKS() *InMemoryKS {
@@ -31,12 +32,18 @@ func NewInMemoryKS() *InMemoryKS {
 	}
 }
 
-func (ks *InMemoryKS) Init(*config.Config) error {
+func (ks *InMemoryKS) Init(cfg *config.KeyStoreConfig) error {
+	ks.location = cfg.ConnectionString
+
 	return nil
 }
 
-func (ks *InMemoryKS) CompleteInit(*config.Config) error {
+func (ks *InMemoryKS) CompleteInit(*config.KeyStoreConfig) error {
 	return nil
+}
+
+func (ks *InMemoryKS) NewInstance() KeyStoreAdapter {
+	return NewInMemoryKS()
 }
 
 func (ks *InMemoryKS) Initialized() bool {
@@ -93,5 +100,5 @@ func (ks *InMemoryKS) Type() string {
 }
 
 func (ks *InMemoryKS) Location() string {
-	return ""
+	return ks.location
 }

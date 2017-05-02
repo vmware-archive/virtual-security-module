@@ -47,7 +47,7 @@ func NewSecretSharer(field *big.Int, n int, k int) *SecretSharer {
 	return ss
 }
 
-func (s *SecretSharer) breakSecret(secret []byte) []*SecretShare {
+func (s *SecretSharer) BreakSecret(secret []byte) []*SecretShare {
 	bin := make([]byte, len(secret)+sha256.Size)
 	copy(bin, secret)
 	sha := sha256.Sum256(secret)
@@ -109,7 +109,7 @@ func integrate(index int64, shares []*SecretShare, k int, field *big.Int) (*big.
 	return num, nil
 }
 
-func (s *SecretSharer) reconstructSecret(shares []*SecretShare) ([]byte, error) {
+func (s *SecretSharer) ReconstructSecret(shares []*SecretShare) ([]byte, error) {
 	// Check that all shares have the same field
 	if len(shares) < 2 {
 		return nil, errors.New("Expected at least two shares")

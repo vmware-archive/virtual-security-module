@@ -23,8 +23,14 @@ func GenerateTestConfig() *Config {
 		DataStoreConfig: DataStoreConfig{
 			StoreType: "InMemoryDataStore",
 		},
-		KeyStoreConfig: KeyStoreConfig{
-			StoreType: "InMemoryKeyStore",
+		VirtualKeyStoreConfig: VirtualKeyStoreConfig{
+			KeyStoreCount:     3,
+			KeyStoreThreshold: 2,
+			KeyStores: []KeyStoreConfig{
+				KeyStoreConfig{StoreType: "InMemoryKeyStore"},
+				KeyStoreConfig{StoreType: "InMemoryKeyStore"},
+				KeyStoreConfig{StoreType: "InMemoryKeyStore"},
+			},
 		},
 	}
 

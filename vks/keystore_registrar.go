@@ -54,5 +54,5 @@ func (ksRegistrar *keyStoreRegistrar) Get(ksType string) (KeyStoreAdapter, error
 		return nil, util.ErrNotFound
 	}
 
-	return ksAdapter, nil
+	return ksAdapter.NewInstance(), nil
 }

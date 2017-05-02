@@ -12,8 +12,9 @@ const (
 )
 
 type KeyStoreAdapter interface {
-	Init(*config.Config) error
-	CompleteInit(*config.Config) error
+	Init(storeConfig *config.KeyStoreConfig) error
+	CompleteInit(*config.KeyStoreConfig) error
+	NewInstance() KeyStoreAdapter
 	Initialized() bool
 
 	Create(alias string, key []byte) error

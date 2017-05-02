@@ -30,14 +30,14 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 
-	ks, err := vks.GetKeyStoreFromConfig(cfg)
+	vKeyStore, err := vks.GetVirtualKeyStoreFromConfig(cfg)
 	if err != nil {
 		fmt.Printf("Failed to get key store from config: %v\n", err)
 		os.Exit(1)
 	}
 
 	az = New()
-	if err := az.Init(context.NewModuleInitContext(cfg, ds, ks, context.GetTestAuthzManager())); err != nil {
+	if err := az.Init(context.NewModuleInitContext(cfg, ds, vKeyStore, context.GetTestAuthzManager())); err != nil {
 		fmt.Printf("Failed to initialize authz manager: %v\n", err)
 		os.Exit(1)
 	}

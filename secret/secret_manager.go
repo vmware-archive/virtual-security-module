@@ -10,12 +10,10 @@ import (
 	"github.com/vmware/virtual-security-module/model"
 	"github.com/vmware/virtual-security-module/util"
 	"github.com/vmware/virtual-security-module/vds"
-	"github.com/vmware/virtual-security-module/vks"
 )
 
 type SecretManager struct {
 	dataStore    vds.DataStoreAdapter
-	keyStore     vks.KeyStoreAdapter
 	authzManager context.AuthorizationManager
 }
 
@@ -29,7 +27,6 @@ func (secretManager *SecretManager) Type() string {
 
 func (secretManager *SecretManager) Init(moduleInitContext *context.ModuleInitContext) error {
 	secretManager.dataStore = moduleInitContext.DataStore
-	secretManager.keyStore = moduleInitContext.KeyStore
 	secretManager.authzManager = moduleInitContext.AuthzManager
 
 	if err := SecretTypeRegistrar.InitSecretTypes(moduleInitContext); err != nil {

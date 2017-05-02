@@ -21,7 +21,7 @@ const (
 )
 
 type AuthnProvider interface {
-	Init(*config.Config, vds.DataStoreAdapter, vks.KeyStoreAdapter) error
+	Init(*config.Config, vds.DataStoreAdapter, *vks.VirtualKeyStore) error
 	Authenticated(r *http.Request) (username string, e error)
 	Login(l *model.LoginRequest) (token string, e error)
 	CreateUser(*model.UserEntry) (string, error)
@@ -48,7 +48,7 @@ func (authnManager *AuthnManager) Type() string {
 
 func (authnManager *AuthnManager) Init(moduleInitContext *context.ModuleInitContext) error {
 	authnProvider := NewBuiltinProvider()
-	if err := authnProvider.Init(nil, moduleInitContext.DataStore, moduleInitContext.KeyStore); err != nil {
+	if err := authnProvider.Init(nil, moduleInitContext.DataStore, moduleInitContext.VirtualKeyStore); err != nil {
 		return err
 	}
 

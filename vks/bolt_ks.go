@@ -31,8 +31,8 @@ func NewBoltKS() *BoltKS {
 	return &BoltKS{}
 }
 
-func (ks *BoltKS) Init(cfg *config.Config) error {
-	connectionString := cfg.KeyStoreConfig.ConnectionString
+func (ks *BoltKS) Init(cfg *config.KeyStoreConfig) error {
+	connectionString := cfg.ConnectionString
 	if connectionString == "" {
 		return util.ErrBadConfig
 	}
@@ -59,8 +59,12 @@ func (ks *BoltKS) Init(cfg *config.Config) error {
 	return nil
 }
 
-func (ks *BoltKS) CompleteInit(*config.Config) error {
+func (ks *BoltKS) CompleteInit(*config.KeyStoreConfig) error {
 	return nil
+}
+
+func (ks *BoltKS) NewInstance() KeyStoreAdapter {
+	return NewBoltKS()
 }
 
 func (ks *BoltKS) Initialized() bool {

@@ -34,7 +34,7 @@ func init() {
 
 type X509CertificateSecretType struct {
 	dataStore    vds.DataStoreAdapter
-	keyStore     vks.KeyStoreAdapter
+	keyStore     *vks.VirtualKeyStore
 	authzManager context.AuthorizationManager
 	cfg          *config.Config
 }
@@ -58,7 +58,7 @@ func (certST *X509CertificateSecretType) Type() string {
 
 func (certST *X509CertificateSecretType) Init(moduleInitContext *context.ModuleInitContext) error {
 	certST.dataStore = moduleInitContext.DataStore
-	certST.keyStore = moduleInitContext.KeyStore
+	certST.keyStore = moduleInitContext.VirtualKeyStore
 	certST.authzManager = moduleInitContext.AuthzManager
 	certST.cfg = moduleInitContext.Config
 

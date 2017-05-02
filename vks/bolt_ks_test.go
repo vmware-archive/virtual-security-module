@@ -15,9 +15,10 @@ const testdbFilename = "testBoltKS.db"
 var boltKS *BoltKS
 
 func boltKSTestSetup() {
-	tCfg := config.GenerateTestConfig()
-	tCfg.KeyStoreConfig.StoreType = boltKSType
-	tCfg.KeyStoreConfig.ConnectionString = testdbFilename
+	tCfg := &config.KeyStoreConfig{
+		StoreType:        boltKSType,
+		ConnectionString: testdbFilename,
+	}
 
 	boltKS = NewBoltKS()
 	boltKS.Init(tCfg)

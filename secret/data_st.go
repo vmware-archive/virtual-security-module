@@ -26,7 +26,7 @@ func init() {
 // This is the simplest secret type.
 type DataSecretType struct {
 	dataStore vds.DataStoreAdapter
-	keyStore  vks.KeyStoreAdapter
+	keyStore  *vks.VirtualKeyStore
 }
 
 func NewDataSecretType() *DataSecretType {
@@ -39,7 +39,7 @@ func (dataST *DataSecretType) Type() string {
 
 func (dataST *DataSecretType) Init(moduleInitContext *context.ModuleInitContext) error {
 	dataST.dataStore = moduleInitContext.DataStore
-	dataST.keyStore = moduleInitContext.KeyStore
+	dataST.keyStore = moduleInitContext.VirtualKeyStore
 
 	return nil
 }
