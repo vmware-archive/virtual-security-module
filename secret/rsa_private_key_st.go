@@ -29,7 +29,7 @@ func init() {
 
 type RSAPrivateKeySecretType struct {
 	dataStore vds.DataStoreAdapter
-	keyStore  vks.KeyStoreAdapter
+	keyStore  *vks.VirtualKeyStore
 }
 
 type RSAPrivateKeySecretMetaData struct {
@@ -46,7 +46,7 @@ func (rsaPrivKeyST *RSAPrivateKeySecretType) Type() string {
 
 func (rsaPrivKeyST *RSAPrivateKeySecretType) Init(moduleInitContext *context.ModuleInitContext) error {
 	rsaPrivKeyST.dataStore = moduleInitContext.DataStore
-	rsaPrivKeyST.keyStore = moduleInitContext.KeyStore
+	rsaPrivKeyST.keyStore = moduleInitContext.VirtualKeyStore
 
 	return nil
 }

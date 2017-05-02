@@ -57,7 +57,7 @@ type Server struct {
 	httpsPort    int
 	tlsConfig    *TlsConfig
 	dataStore    vds.DataStoreAdapter
-	keyStore     vks.KeyStoreAdapter
+	keyStore     *vks.VirtualKeyStore
 }
 
 func New() *Server {
@@ -119,12 +119,12 @@ func (server *Server) initDataStoreFromConfig(configuration *config.Config) erro
 }
 
 func (server *Server) initKeyStoreFromConfig(configuration *config.Config) error {
-	ksAdapter, err := vks.GetKeyStoreFromConfig(configuration)
+	vKeyStore, err := vks.GetVirtualKeyStoreFromConfig(configuration)
 	if err != nil {
 		return err
 	}
 
-	server.keyStore = ksAdapter
+	server.keyStore = vKeyStore
 
 	return nil
 }

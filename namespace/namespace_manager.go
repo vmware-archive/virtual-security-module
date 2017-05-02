@@ -16,7 +16,7 @@ import (
 
 type NamespaceManager struct {
 	dataStore    vds.DataStoreAdapter
-	keyStore     vks.KeyStoreAdapter
+	keyStore     *vks.VirtualKeyStore
 	authzManager context.AuthorizationManager
 }
 
@@ -30,7 +30,7 @@ func (namespaceManager *NamespaceManager) Type() string {
 
 func (namespaceManager *NamespaceManager) Init(moduleInitContext *context.ModuleInitContext) error {
 	namespaceManager.dataStore = moduleInitContext.DataStore
-	namespaceManager.keyStore = moduleInitContext.KeyStore
+	namespaceManager.keyStore = moduleInitContext.VirtualKeyStore
 	namespaceManager.authzManager = moduleInitContext.AuthzManager
 
 	if err := namespaceManager.initNamespaces(); err != nil {

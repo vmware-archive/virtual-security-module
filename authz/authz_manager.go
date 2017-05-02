@@ -16,7 +16,7 @@ import (
 
 type AuthzManager struct {
 	dataStore       vds.DataStoreAdapter
-	keyStore        vks.KeyStoreAdapter
+	keyStore        *vks.VirtualKeyStore
 	ctxAuthzManager context.AuthorizationManager
 }
 
@@ -30,7 +30,7 @@ func (authzManager *AuthzManager) Type() string {
 
 func (authzManager *AuthzManager) Init(moduleInitContext *context.ModuleInitContext) error {
 	authzManager.dataStore = moduleInitContext.DataStore
-	authzManager.keyStore = moduleInitContext.KeyStore
+	authzManager.keyStore = moduleInitContext.VirtualKeyStore
 	authzManager.ctxAuthzManager = moduleInitContext.AuthzManager
 
 	return nil

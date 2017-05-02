@@ -12,6 +12,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/vmware/virtual-security-module/config"
 	"github.com/vmware/virtual-security-module/model"
 	"github.com/vmware/virtual-security-module/vds"
 	"github.com/vmware/virtual-security-module/vks"
@@ -20,8 +21,15 @@ import (
 var p *BuiltinProvider
 
 func builtinProviderTestSetup() {
+	cfg := config.GenerateTestConfig()
+	vKeyStore, err := vks.GetVirtualKeyStoreFromConfig(cfg)
+	if err != nil {
+		fmt.Printf("Failed to initialize builtin provider: %v\n", err)
+		os.Exit(1)
+	}
+
 	p = NewBuiltinProvider()
-	if err := p.Init(nil, vds.NewInMemoryDS(), vks.NewInMemoryKS()); err != nil {
+	if err := p.Init(nil, vds.NewInMemoryDS(), vKeyStore); err != nil {
 		fmt.Printf("Failed to initialize builtin provider: %v\n", err)
 		os.Exit(1)
 	}

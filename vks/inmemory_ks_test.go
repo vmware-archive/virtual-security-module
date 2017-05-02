@@ -12,8 +12,9 @@ import (
 var inMemoryKS *InMemoryKS
 
 func inMemoryKSTestSetup() {
-	tCfg := config.GenerateTestConfig()
-	tCfg.KeyStoreConfig.StoreType = inMemoryKSType
+	tCfg := &config.KeyStoreConfig{
+		StoreType: inMemoryKSType,
+	}
 
 	inMemoryKS = NewInMemoryKS()
 	inMemoryKS.Init(tCfg)

@@ -31,7 +31,7 @@ func init() {
 
 type BuiltinProvider struct {
 	dataStore       vds.DataStoreAdapter
-	keyStore        vks.KeyStoreAdapter
+	keyStore        *vks.VirtualKeyStore
 	tokenSigningKey []byte
 }
 
@@ -39,7 +39,7 @@ func NewBuiltinProvider() *BuiltinProvider {
 	return &BuiltinProvider{}
 }
 
-func (p *BuiltinProvider) Init(config *config.Config, ds vds.DataStoreAdapter, ks vks.KeyStoreAdapter) error {
+func (p *BuiltinProvider) Init(config *config.Config, ds vds.DataStoreAdapter, ks *vks.VirtualKeyStore) error {
 	tokenSigningKey, err := crypt.GenerateKey()
 	if err != nil {
 		return err

@@ -1,19 +1,50 @@
+# Server
 server:
+
+  # Listeners
   http:
     enabled: true
     port: 8080
   https:
     enabled: true
     port: 8443
+
+    # Root server certificate, also used to sign certificates when the server acts as a Certificate Authority
     caCert: certs/test-root-cert.pem
+
+    # Private key corresponding to root server certificate
     caKey:  certs/test-root-key.pem
+
+    # Certificate used by the server in SSL handshake. Must be signed by key in caKey
     serverCert: certs/test-server-cert.pem
+
+    # Private key of serverCert
     serverKey: certs/test-server-key.pem
+
+  # Public key to create user "root" during server initialization
   rootInitPubKey: certs/test-root-init-public.pem
+
+  # Private key of user "root". Recommended to remove from server when moving from testing to production.
   rootInitPriKey: certs/test-root-init-private.pem
+
+# Data Store - this is where encrypted secrets are stored
 dataStore:
   type: InMemoryDataStore
   connectionString:
-keyStore:
-  type: InMemoryKeyStore
-  connectionString:
+
+# Virtual Key Store - manages keys' storage and retrieval
+virtualKeyStore:
+  # Number of key stores
+  keyStoreCount: 3
+
+  # Minimum number of key stores required to create and retrieve keys
+  keyStoreThreshold: 2
+
+  # Key stores that will keep the actual keys
+  keyStores:
+  - type: InMemoryKeyStore
+    connectionString:
+  - type: InMemoryKeyStore
+    connectionString:
+  - type: InMemoryKeyStore
+    connectionString:

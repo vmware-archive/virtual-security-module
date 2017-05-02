@@ -10,11 +10,13 @@ import (
 func TestMain(m *testing.M) {
 	inMemoryKSTestSetup()
 	boltKSTestSetup()
+	vKeyStoreTestSetup()
 
 	exitCode := m.Run()
 
 	inMemoryKSTestCleanup()
 	boltKSTestCleanup()
+	vKeyStoreTestCleanup()
 
 	os.Exit(exitCode)
 }

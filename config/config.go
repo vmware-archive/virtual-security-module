@@ -5,9 +5,9 @@ package config
 var DefaultConfigFile = "config.yaml"
 
 type Config struct {
-	ServerConfig    `yaml:"server"`
-	DataStoreConfig `yaml:"dataStore"`
-	KeyStoreConfig  `yaml:"keyStore"`
+	ServerConfig          `yaml:"server"`
+	DataStoreConfig       `yaml:"dataStore"`
+	VirtualKeyStoreConfig `yaml:"virtualKeyStore"`
 }
 
 type ServerConfig struct {
@@ -34,6 +34,12 @@ type HttpsConfig struct {
 type DataStoreConfig struct {
 	StoreType        string `yaml:"type"`
 	ConnectionString string `yaml:"connectionString"`
+}
+
+type VirtualKeyStoreConfig struct {
+	KeyStoreCount     int              `yaml:"keyStoreCount"`
+	KeyStoreThreshold int              `yaml:"keyStoreThreshold"`
+	KeyStores         []KeyStoreConfig `yaml:"keyStores"`
 }
 
 type KeyStoreConfig struct {
