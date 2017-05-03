@@ -1,5 +1,8 @@
 language: go
 
+services:
+  - docker
+
 go:
   - 1.7.x
   - 1.8.x
@@ -12,6 +15,7 @@ install:
 
 script:
   - make CI=1
+  - make CI=1 build-docker
   - ./ci/coverage.sh --coveralls
 
 branches:

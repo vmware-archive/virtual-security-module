@@ -3,6 +3,7 @@ OS := linux darwin windows
 
 SERVER_TARGET := vsmd
 CLI_TARGET := vsm-cli
+DOCKER_IMAGE_NAME := vsm
 
 PROJECT_DIR := $(shell pwd)
 GOPATH := $(abspath $(PROJECT_DIR)/../../../../)
@@ -66,9 +67,15 @@ cross: fmt vet
 		for arch in $(ARCH); do \
 			suffix=""; \
 			[ "$${os}" = "windows" ] && suffix=.exe; \
-			GOOS=$${os} GOARCH=$${arch} $(GO) build -o "$(DIST_DIR)/$(SERVER_TARGET)_$${os}_$${arch}{suffix}"; \
+			GOOS=$${os} GOARCH=$${arch} $(GO) build -o "$(DIST_DIR)/$(SERVER_TARGET)_$${os}_$${arch}$${suffix}" ./server/main; \
 		done; \
 	done
+
+clean-docker:
+	docker rmi $(DOCKER_IMAGE_NAME) || :
+
+build-docker: clean-docker cross
+	docker build -t $(DOCKER_IMAGE_NAME) .
 
 test:
 	$(GO) test ./...
