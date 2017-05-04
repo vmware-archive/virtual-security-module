@@ -16,6 +16,7 @@ In this section we're going to provide information about how to accomplish some 
  * [Namespace management](#namespace-management)
  * [Authorization policies](#authorization-policies)
  * [Secret types](#secret-types)
+ * [Data persistence](#data-persistence)
  * placeholder: Cluster management
  * placeholder: Internals
 
@@ -124,6 +125,9 @@ virtualKeyStore:
     key store, where encryption keys' shares are persisted. By default we use an
     in-memory key store, which is convenient for testing and experimentation).
  
+Once you've gone through the exprimentation phase, you should take a look at
+[Data persistence](#data-persistence) to understand how to configure a persistent
+data store and persistent key stores.
 
 ## Starting the server
 If the server, "vsmd", is already built, you can start it
@@ -531,3 +535,45 @@ Let's retrieve the certificate:
 
 You should see the PEM-encoded certificate. You can grab it and paste it in
 https://www.sslshopper.com/certificate-decoder.html to view the details of your certificate.
+
+## Data persistence
+To enable data persistence you need to configure the server's Data Store Adapter and Key Store Adapters in
+the virtualKeyStore section of the configuration.
+
+Let's start with the Data Store Adapter: VSM supports any data store that satisfies the DataStoreAdapter interface.
+The only implementation currently available (beyond the in-memory one), is "MongoDBDataStore", which is is an adapter
+to MongoDB (https://www.mongodb.com/). To use this adapter, you need to stand up a MongoDB server. The easiet way to do
+that is using the standard MongoDB docker image from MongoDB repo on Docker Hub (https://hub.docker.com/_/mongo/). Once
+you have MongoDB is up and running you need to provide its address (IP address or DNS name) to the VSM server. For
+example, if your MongoDB server IP address is 172.17.0.2, then you should set the following in "config.yaml":
+
+```
+dataStore:
+  type: MongoDBDataStore
+  connectionString: 172.17.0.2
+```
+
+Now let's continue to the Key Store Adapters. VSM supports any key store that satisfies the KeyStoreAdapter interface.
+The only implementation currently available (beyond the in-memory one), is "BoltKeyStore", which is an adapter based
+on Bolt (https://github.com/boltdb/bolt). On a per Key Store Adapter basis you need to set config settings (type and
+connectionString). In the case of BoltKeyStore, the type is "BoltKeyStore" and the connectionString is the filename
+where data will be kept. For example:
+```
+virtualKeyStore:
+  # Number of key stores
+  keyStoreCount: 3
+
+  # Minimum number of key stores required to create and retrieve keys
+  keyStoreThreshold: 2
+
+  # Key stores that will keep the actual keys
+  keyStores:
+  - type: BoltKeyStore
+    connectionString: ks1.db
+  - type: BoltKeyStore
+    connectionString: ks2.db
+  - type: BoltKeyStore
+    connectionString: ks3.db
+```
+
+After configuring the data store and key stores restart the VSM server.

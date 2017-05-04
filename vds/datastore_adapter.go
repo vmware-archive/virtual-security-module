@@ -18,8 +18,8 @@ type DataStoreEntry struct {
 }
 
 type DataStoreAdapter interface {
-	Init(*config.Config) error
-	CompleteInit(*config.Config) error
+	Init(*config.DataStoreConfig) error
+	CompleteInit(*config.DataStoreConfig) error
 	Initialized() bool
 
 	CreateEntry(entry *DataStoreEntry) error

@@ -12,7 +12,7 @@ const (
 )
 
 type KeyStoreAdapter interface {
-	Init(storeConfig *config.KeyStoreConfig) error
+	Init(*config.KeyStoreConfig) error
 	CompleteInit(*config.KeyStoreConfig) error
 	NewInstance() KeyStoreAdapter
 	Initialized() bool
