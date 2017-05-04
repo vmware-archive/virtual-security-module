@@ -33,8 +33,8 @@ func NewMongoDBDS() *MongoDBDS {
 	return &MongoDBDS{}
 }
 
-func (ds *MongoDBDS) Init(cfg *config.Config) error {
-	connectionString := cfg.DataStoreConfig.ConnectionString
+func (ds *MongoDBDS) Init(cfg *config.DataStoreConfig) error {
+	connectionString := cfg.ConnectionString
 	if connectionString == "" {
 		return util.ErrBadConfig
 	}
@@ -50,7 +50,7 @@ func (ds *MongoDBDS) Init(cfg *config.Config) error {
 	return nil
 }
 
-func (ds *MongoDBDS) CompleteInit(*config.Config) error {
+func (ds *MongoDBDS) CompleteInit(cfg *config.DataStoreConfig) error {
 	return nil
 }
 

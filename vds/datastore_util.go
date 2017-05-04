@@ -25,7 +25,7 @@ func GetDataStoreFromConfig(configuration *config.Config) (DataStoreAdapter, err
 		return nil, err
 	}
 
-	if err := dsAdapter.Init(configuration); err != nil {
+	if err := dsAdapter.Init(&dsConfigItem); err != nil {
 		return nil, err
 	}
 

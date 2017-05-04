@@ -16,7 +16,7 @@ func inMemoryDSTestSetup() {
 	tCfg.DataStoreConfig.StoreType = inMemoryDSType
 
 	inMemoryDS = NewInMemoryDS()
-	inMemoryDS.Init(tCfg)
+	inMemoryDS.Init(&tCfg.DataStoreConfig)
 }
 
 func inMemoryDSTestCleanup() {

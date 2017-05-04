@@ -33,11 +33,11 @@ func NewInMemoryDS() *InMemoryDS {
 	}
 }
 
-func (ds *InMemoryDS) Init(*config.Config) error {
+func (ds *InMemoryDS) Init(storeConfig *config.DataStoreConfig) error {
 	return nil
 }
 
-func (ds *InMemoryDS) CompleteInit(*config.Config) error {
+func (ds *InMemoryDS) CompleteInit(storeConfig *config.DataStoreConfig) error {
 	return nil
 }
 
