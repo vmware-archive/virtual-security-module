@@ -7,7 +7,17 @@ import (
 	"crypto/sha256"
 	"errors"
 	"math/big"
+	"sort"
 )
+
+/////// Share sorting ////////
+type byIndex []*SecretShare
+
+func (a byIndex) Len() int           { return len(a) }
+func (a byIndex) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a byIndex) Less(i, j int) bool { return a[i].Index < a[j].Index }
+
+/////// End of share sorting ////////
 
 type SecretSharer struct {
 	field *big.Int
@@ -122,6 +132,9 @@ func (s *SecretSharer) ReconstructSecret(shares []*SecretShare) ([]byte, error) 
 			return nil, errors.New("Shares must have the same field")
 		}
 	}
+
+	// Sort shares
+	sort.Sort(byIndex(shares))
 
 	resnum, err := integrate(0, shares, s.k, field)
 	if err != nil {
