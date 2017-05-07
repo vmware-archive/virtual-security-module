@@ -18,7 +18,12 @@ func TestSecretSharer(t *testing.T) {
 
 	shares := ss.BreakSecret(secret)
 
-	data, err := ss.ReconstructSecret(shares[:k])
+	shares_slice := shares[:k]
+	tmp := shares_slice[0]
+	shares_slice[0] = shares_slice[1]
+	shares_slice[1] = tmp
+
+	data, err := ss.ReconstructSecret(shares_slice)
 
 	if err != nil {
 		t.Fatalf("Failed to reconstruct secret: %s", err.Error())
