@@ -11,32 +11,11 @@ import (
 )
 
 /////// Share sorting ////////
-type By func(p1, p2 *SecretShare) bool
+type byIndex []*SecretShare
 
-func (by By) Sort(shares []*SecretShare) {
-	ps := &shareSorter{
-		shares: shares,
-		by:     by,
-	}
-	sort.Sort(ps)
-}
-
-type shareSorter struct {
-	shares []*SecretShare
-	by     func(p1, p2 *SecretShare) bool
-}
-
-func (s *shareSorter) Len() int {
-	return len(s.shares)
-}
-
-func (s *shareSorter) Swap(i, j int) {
-	s.shares[i], s.shares[j] = s.shares[j], s.shares[i]
-}
-
-func (s *shareSorter) Less(i, j int) bool {
-	return s.by(s.shares[i], s.shares[j])
-}
+func (a byIndex) Len() int           { return len(a) }
+func (a byIndex) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a byIndex) Less(i, j int) bool { return a[i].Index < a[j].Index }
 
 /////// End of share sorting ////////
 
@@ -155,10 +134,7 @@ func (s *SecretSharer) ReconstructSecret(shares []*SecretShare) ([]byte, error) 
 	}
 
 	// Sort shares
-	share_sort_func := func(s1, s2 *SecretShare) bool {
-		return s1.Index < s2.Index
-	}
-	By(share_sort_func).Sort(shares)
+	sort.Sort(byIndex(shares))
 
 	resnum, err := integrate(0, shares, s.k, field)
 	if err != nil {
