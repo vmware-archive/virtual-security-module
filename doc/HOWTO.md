@@ -340,8 +340,8 @@ sub-namespace and a secret in it:
 ./vsm-cli --token $TOKEN namespaces create /secrets/sub1
 ./vsm-cli --token $TOKEN namespaces create /secrets/sub2
 ./vsm-cli --token $TOKEN namespaces create /secrets/sub2/sub3
-./vsm-cli --token $TOKEN secrets create sub1/first-secret hello-first
-./vsm-cli --token $TOKEN secrets create sub2/sub3/second-secret hello-second
+./vsm-cli --token $TOKEN secrets create data sub1/first-secret hello-first
+./vsm-cli --token $TOKEN secrets create data sub2/sub3/second-secret hello-second
 ```
 
 Now try to read the secrets:
