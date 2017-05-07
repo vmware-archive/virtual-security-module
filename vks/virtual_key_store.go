@@ -7,7 +7,6 @@ import (
 	"github.com/vmware/virtual-security-module/config"
 	"github.com/vmware/virtual-security-module/crypt"
 	"log"
-	"sort"
 )
 
 // An implementation of a virtual key store over a collection of key stores using Polynomial Secret Sharing.
@@ -18,13 +17,6 @@ type VirtualKeyStore struct {
 	secretSharer      *crypt.SecretSharer
 	initialized       bool
 }
-
-// byIndex implements sort.Interface
-type byIndex []*crypt.SecretShare
-
-func (a byIndex) Len() int           { return len(a) }
-func (a byIndex) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a byIndex) Less(i, j int) bool { return a[i].Index < a[j].Index }
 
 func NewVirtualKeyStore() *VirtualKeyStore {
 	return &VirtualKeyStore{}
@@ -115,9 +107,6 @@ func (vks *VirtualKeyStore) Read(alias string) ([]byte, error) {
 	if successCount < vks.keyStoreThreshold {
 		return []byte{}, lastError
 	}
-
-	// workaround a bug in crypt package that requires the shares to be in the original order
-	sort.Sort(byIndex(shares))
 
 	return vks.secretSharer.ReconstructSecret(shares)
 }
