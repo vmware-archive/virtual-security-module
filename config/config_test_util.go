@@ -27,9 +27,9 @@ func GenerateTestConfig() *Config {
 			KeyStoreCount:     3,
 			KeyStoreThreshold: 2,
 			KeyStores: []KeyStoreConfig{
-				KeyStoreConfig{StoreType: "InMemoryKeyStore"},
-				KeyStoreConfig{StoreType: "InMemoryKeyStore"},
-				KeyStoreConfig{StoreType: "InMemoryKeyStore"},
+				KeyStoreConfig{StoreType: "InMemoryKeyStore", ConnectionString: "mem1"},
+				KeyStoreConfig{StoreType: "InMemoryKeyStore", ConnectionString: "mem2"},
+				KeyStoreConfig{StoreType: "InMemoryKeyStore", ConnectionString: "mem3"},
 			},
 		},
 	}

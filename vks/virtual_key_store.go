@@ -7,6 +7,7 @@ import (
 	"github.com/vmware/virtual-security-module/config"
 	"github.com/vmware/virtual-security-module/crypt"
 	"log"
+	"sort"
 )
 
 // An implementation of a virtual key store over a collection of key stores using Polynomial Secret Sharing.
@@ -17,6 +18,13 @@ type VirtualKeyStore struct {
 	secretSharer      *crypt.SecretSharer
 	initialized       bool
 }
+
+// byIndex implements sort.Interface
+type byIndex []*crypt.SecretShare
+
+func (a byIndex) Len() int           { return len(a) }
+func (a byIndex) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a byIndex) Less(i, j int) bool { return a[i].Index < a[j].Index }
 
 func NewVirtualKeyStore() *VirtualKeyStore {
 	return &VirtualKeyStore{}
@@ -46,8 +54,6 @@ func (vks *VirtualKeyStore) Initialized() bool {
 }
 
 func (vks *VirtualKeyStore) Create(alias string, key []byte) error {
-	// TODO: parallalize
-
 	shares := vks.secretSharer.BreakSecret(key)
 
 	successCount := 0
@@ -56,14 +62,14 @@ func (vks *VirtualKeyStore) Create(alias string, key []byte) error {
 	// concurrently create shares in underlying key stores
 	errors := make(chan error, len(shares))
 	for i, share := range shares {
-		createShareInKeyStore(vks.keyStores[i], alias, share, errors)
+		go createShareInKeyStore(vks.keyStores[i], alias, share, errors)
 	}
 
 	// collect results
 	for i := 0; i < len(shares); i++ {
 		err := <-errors
 		if err != nil {
-			log.Printf("WARNING: failed to create alias %s in key store %s: %v", alias, vks.keyStores[i].Location(), err)
+			log.Printf("WARNING: failed to create alias %s in a key store: %v", alias, err)
 			lastError = err
 		} else {
 			successCount++
@@ -79,8 +85,6 @@ func (vks *VirtualKeyStore) Create(alias string, key []byte) error {
 }
 
 func (vks *VirtualKeyStore) Read(alias string) ([]byte, error) {
-	// TODO: parallalize
-
 	shares := []*crypt.SecretShare{}
 
 	successCount := 0
@@ -90,7 +94,7 @@ func (vks *VirtualKeyStore) Read(alias string) ([]byte, error) {
 	sharesCh := make(chan *crypt.SecretShare, vks.keyStoreCount)
 	errors := make(chan error, vks.keyStoreCount)
 	for _, ks := range vks.keyStores {
-		readShareFromKeyStore(ks, alias, sharesCh, errors)
+		go readShareFromKeyStore(ks, alias, sharesCh, errors)
 	}
 
 	// collect results
@@ -98,7 +102,7 @@ func (vks *VirtualKeyStore) Read(alias string) ([]byte, error) {
 		err := <-errors
 		share := <-sharesCh
 		if err != nil {
-			log.Printf("WARNING: failed to read alias %s in key store %s: %v", alias, vks.keyStores[i].Location(), err)
+			log.Printf("WARNING: failed to read alias %s: %v", alias, err)
 			lastError = err
 		} else {
 			shares = append(shares, share)
@@ -112,26 +116,27 @@ func (vks *VirtualKeyStore) Read(alias string) ([]byte, error) {
 		return []byte{}, lastError
 	}
 
+	// workaround a bug in crypt package that requires the shares to be in the original order
+	sort.Sort(byIndex(shares))
+
 	return vks.secretSharer.ReconstructSecret(shares)
 }
 
 func (vks *VirtualKeyStore) Delete(alias string) error {
-	// TODO: parallalize
-
 	successCount := 0
 	var lastError error = nil
 
 	// concurrently delete shares from underlying key stores
 	errors := make(chan error, vks.keyStoreCount)
 	for _, ks := range vks.keyStores {
-		deleteShareFromKeyStore(ks, alias, errors)
+		go deleteShareFromKeyStore(ks, alias, errors)
 	}
 
 	// collect results
 	for i := 0; i < vks.keyStoreCount; i++ {
 		err := <-errors
 		if err != nil {
-			log.Printf("WARNING: failed to delete alias %s in key store %s: %v", alias, vks.keyStores[i].Location(), err)
+			log.Printf("WARNING: failed to delete alias %s: %v", alias, err)
 			lastError = err
 		} else {
 			successCount++
@@ -155,7 +160,8 @@ func createShareInKeyStore(ks KeyStoreAdapter, alias string, share *crypt.Secret
 		return
 	}
 
-	errors <- ks.Create(alias, b)
+	err = ks.Create(alias, b)
+	errors <- err
 }
 
 func readShareFromKeyStore(ks KeyStoreAdapter, alias string, shares chan *crypt.SecretShare, errors chan error) {
