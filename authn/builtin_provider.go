@@ -152,12 +152,6 @@ func (p *BuiltinProvider) Type() string {
 }
 
 func (p *BuiltinProvider) CreateUser(userEntry *model.UserEntry) (string, error) {
-	// verify user doesn't exist
-	userpath := vds.UsernameToPath(userEntry.Username)
-	if _, err := p.dataStore.ReadEntry(userpath); err == nil {
-		return "", util.ErrAlreadyExists
-	}
-
 	// verify roles' scopes exist
 	for _, role := range userEntry.Roles {
 		namespacePath := role.Scope
@@ -203,6 +197,7 @@ func (p *BuiltinProvider) CreateUser(userEntry *model.UserEntry) (string, error)
 	}
 
 	// persist key using virtual key store
+	userpath := vds.UsernameToPath(userEntry.Username)
 	if err := p.keyStore.Create(userpath, key); err != nil {
 		return "", err
 	}
