@@ -460,6 +460,7 @@ TOKEN="..."
 Now let's try some operations as user2. **Open a new window and log-in as user2**:
 ```
 ./vsm-cli login user2 user2-private.pem
+...
 TOKEN="..."
 ./vsm-cli --token $TOKEN secrets create data namespace2/user2-secret user2-data
 ./vsm-cli --token $TOKEN secrets get namespace2/user2-secret
@@ -541,10 +542,13 @@ To enable data persistence you need to configure the server's Data Store Adapter
 the virtualKeyStore section of the configuration.
 
 Let's start with the Data Store Adapter: VSM supports any data store that satisfies the DataStoreAdapter interface.
-The only implementation currently available (beyond the in-memory one), is "MongoDBDataStore", which is is an adapter
-to MongoDB (https://www.mongodb.com/). To use this adapter, you need to stand up a MongoDB server. The easiet way to do
-that is using the standard MongoDB docker image from MongoDB repo on Docker Hub (https://hub.docker.com/_/mongo/). Once
-you have MongoDB is up and running you need to provide its address (IP address or DNS name) to the VSM server. For
+There are two implementations currently available (beyond the in-memory one):
+* **MongoDBDataStore** - an adapter to MongoDB (https://www.mongodb.com/)
+* **CassandraDataStore** - an adapter to Apache Cassandra (http://cassandra.apache.org/)
+
+To use the MongoDBDataStore adapter, you need to stand up a MongoDB server. The easiet way to do
+that is using the standard MongoDB docker image from Docker Hub (https://hub.docker.com/_/mongo/). Once
+your MongoDB is up and running you need to provide its address (IP address or DNS name) to the VSM server. For
 example, if your MongoDB server IP address is 172.17.0.2, then you should set the following in "config.yaml":
 
 ```
@@ -552,6 +556,27 @@ dataStore:
   type: MongoDBDataStore
   connectionString: 172.17.0.2
 ```
+
+To use the CassandraDataStore adapter, you need to stand up a Cassandra cluster. The easiet way to do
+that is using the standard Cassandra docker image from Docker Hub (https://hub.docker.com/_/cassandra/). Once
+your Cassandra is up and running you need to provide its address (IP address or DNS name) to the VSM server. For
+example, if your Cassandra server IP address is 172.17.0.2, then you should set the following in "config.yaml":
+
+```
+dataStore:
+  type: CassandraDataStore
+  connectionString: 172.17.0.2
+```
+
+You need to create the VSM schema in Cassandra. Connect to your Cassandra using cqlsh and invoke:
+
+```
+CREATE KEYSPACE vsm WITH replication = {'class': 'SimpleStrategy', 'replication_factor' : 1};
+CREATE TABLE vsm.vsm_entries (id text PRIMARY KEY, parent_id text, data blob, meta_data text);
+```
+
+This will create the vsm keyspace and its vsm_entries table in Cassandra.
+
 
 Now let's continue to the Key Store Adapters. VSM supports any key store that satisfies the KeyStoreAdapter interface.
 The only implementation currently available (beyond the in-memory one), is "BoltKeyStore", which is an adapter based

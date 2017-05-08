@@ -51,11 +51,6 @@ func (namespaceManager *NamespaceManager) CreateNamespace(ctx gocontext.Context,
 		}
 	}
 
-	_, err := namespaceManager.dataStore.ReadEntry(namespaceEntry.Path)
-	if err == nil {
-		return "", util.ErrAlreadyExists
-	}
-
 	dataStoreEntry, err := vds.NamespaceEntryToDataStoreEntry(namespaceEntry)
 	if err != nil {
 		return "", err
