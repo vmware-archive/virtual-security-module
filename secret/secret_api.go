@@ -37,6 +37,7 @@ func (secretManager *SecretManager) RegisterEndpoints(mux *denco.Mux) []denco.Ha
 
 		id, err := secretManager.CreateSecret(r.Context(), secretEntry)
 		if err != nil {
+			log.Printf("Error: %s\n", err.Error())
 			if e := util.WriteErrorResponse(w, err); e != nil {
 				log.Printf("failed to write error response: %v\n", e)
 			}
@@ -66,6 +67,7 @@ func (secretManager *SecretManager) RegisterEndpoints(mux *denco.Mux) []denco.Ha
 
 		secretEntry, err := secretManager.GetSecret(r.Context(), secretPath)
 		if err != nil {
+			log.Printf("Error: %s\n", err.Error())
 			if e := util.WriteErrorResponse(w, err); e != nil {
 				log.Printf("failed to write error response: %v\n", e)
 			}
@@ -94,6 +96,7 @@ func (secretManager *SecretManager) RegisterEndpoints(mux *denco.Mux) []denco.Ha
 		}
 
 		if err := secretManager.DeleteSecret(r.Context(), secretPath); err != nil {
+			log.Printf("Error: %s\n", err.Error())
 			util.WriteErrorStatus(w, err)
 			return
 		}
