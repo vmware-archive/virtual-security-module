@@ -10,6 +10,7 @@ import (
 	"github.com/gocql/gocql"
 	"github.com/vmware/virtual-security-module/config"
 	"github.com/vmware/virtual-security-module/util"
+	"log"
 )
 
 const (
@@ -48,21 +49,59 @@ func NewCassandraDS() *CassandraDS {
 func (ds *CassandraDS) Init(cfg *config.DataStoreConfig) error {
 	connectionString := cfg.ConnectionString
 	if connectionString == "" {
+		log.Printf("%s: connectionString is empty\n", cassandraDSType)
 		return util.ErrBadConfig
 	}
 
-	hosts := strings.Split(connectionString, ",")
+	hostsAndSettings := strings.Split(connectionString, ";")
+	if len(hostsAndSettings) == 0 {
+		return util.ErrBadConfig
+	}
+
+	hosts := strings.Split(hostsAndSettings[0], ",")
 	if len(hosts) == 0 {
+		log.Printf("%s: connectionString: host is missing\n", cassandraDSType)
 		return util.ErrBadConfig
 	}
 
 	cluster := gocql.NewCluster(hosts...)
 	cluster.Keyspace = cassandraVSMKeySpace
+	cluster.CQLVersion = "3.0.0"
+
+	for i := 1; i < len(hostsAndSettings); i++ {
+		keyVal := strings.SplitN(hostsAndSettings[i], "=", 2)
+		if len(keyVal) != 2 {
+			log.Printf("%s: bad key-val %v\n", cassandraDSType, keyVal)
+			return util.ErrBadConfig
+		}
+
+		key := keyVal[0]
+		val := keyVal[1]
+
+		switch strings.ToUpper(key) {
+		case "CONSISTENCY":
+			consistency, err := gocql.ParseConsistencyWrapper(val)
+			if err != nil {
+				log.Printf("%s: connectionString: unrecognized consistency %s: %s\n", cassandraDSType, consistency, err.Error())
+				return util.ErrBadConfig
+			}
+			cluster.Consistency = consistency
+
+		case "DATACENTER":
+			cluster.HostFilter = gocql.DataCentreHostFilter(val)
+
+		default:
+			log.Printf("%s: connectionString: unrecognized key: %s\n", cassandraDSType, key)
+			return util.ErrBadConfig
+		}
+	}
 
 	session, err := cluster.CreateSession()
 	if err != nil {
+		log.Printf("DEBUG: %s: failed to create session: %s\n", cassandraDSType, err.Error())
 		return err
 	}
+	session.SetConsistency(cluster.Consistency)
 
 	ds.dbSession = session
 	ds.location = connectionString
@@ -82,10 +121,12 @@ func (ds *CassandraDS) CreateEntry(entry *DataStoreEntry) error {
 	query := ds.buildInsertStatement(entry)
 	defer query.Release()
 
+	query.SerialConsistency(gocql.LocalSerial)
 	var id, parentId, metaData string
 	var data []byte
 	applied, err := query.ScanCAS(&id, &parentId, &data, &metaData)
 	if err != nil {
+		log.Printf("DEBUG: %s: failed to create entry: %s\n", cassandraDSType, err.Error())
 		return translateCassandraError(err)
 	}
 
@@ -104,6 +145,7 @@ func (ds *CassandraDS) ReadEntry(entryId string) (*DataStoreEntry, error) {
 	var metaData string
 	err := query.Scan(&data, &metaData)
 	if err != nil {
+		log.Printf("DEBUG: %s: failed to read entry: %s\n", cassandraDSType, err.Error())
 		return nil, translateCassandraError(err)
 	}
 
@@ -120,6 +162,7 @@ func (ds *CassandraDS) DeleteEntry(entryId string) error {
 
 	err := query.Exec()
 	if err != nil {
+		log.Printf("DEBUG: %s: failed to delete entry: %s\n", cassandraDSType, err.Error())
 		return translateCassandraError(err)
 	}
 
@@ -128,8 +171,9 @@ func (ds *CassandraDS) DeleteEntry(entryId string) error {
 
 func (ds *CassandraDS) SearchChildEntries(parentEntryId string) ([]*DataStoreEntry, error) {
 	query := ds.buildFindChildrenQuery(parentEntryId)
-	iter := query.Iter()
+	defer query.Release()
 
+	iter := query.Iter()
 	dsEntries := make([]*DataStoreEntry, 0)
 	for {
 		var id string
@@ -149,6 +193,7 @@ func (ds *CassandraDS) SearchChildEntries(parentEntryId string) ([]*DataStoreEnt
 
 	err := iter.Close()
 	if err != nil {
+		log.Printf("DEBUG: %s: failed to search for child entries: %s\n", cassandraDSType, err.Error())
 		return []*DataStoreEntry{}, translateCassandraError(err)
 	}
 

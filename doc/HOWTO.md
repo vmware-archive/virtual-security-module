@@ -577,6 +577,15 @@ CREATE TABLE vsm.vsm_entries (id text PRIMARY KEY, parent_id text, data blob, me
 
 This will create the vsm keyspace and its vsm_entries table in Cassandra.
 
+The CassandraDataStore adapter suppors more advanced settings:
+* You can filter the datacenter of hosts to connect to using the "datacenter" attribute in the connection string
+* You can set the consistency level of operations using the "consistency" attribute in the connection string
+
+For example:
+```
+connectionString: 192.168.211.138;datacenter=uswest;consistency=LOCAL_QUORUM
+```
+
 
 Now let's continue to the Key Store Adapters. VSM supports any key store that satisfies the KeyStoreAdapter interface.
 The only implementation currently available (beyond the in-memory one), is "BoltKeyStore", which is an adapter based
