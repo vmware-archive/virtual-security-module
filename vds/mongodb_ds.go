@@ -4,6 +4,7 @@ package vds
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/vmware/virtual-security-module/config"
@@ -39,13 +40,41 @@ func (ds *MongoDBDS) Init(cfg *config.DataStoreConfig) error {
 		return util.ErrBadConfig
 	}
 
-	session, err := mgo.Dial(connectionString)
+	connectStrAndSettings := strings.Split(connectionString, ";")
+	if len(connectStrAndSettings) == 0 {
+		return util.ErrBadConfig
+	}
+
+	connectStr := connectStrAndSettings[0]
+	session, err := mgo.Dial(connectStr)
 	if err != nil {
 		return err
 	}
 
+	for i := 1; i < len(connectStrAndSettings); i++ {
+		keyVal := strings.SplitN(connectStrAndSettings[i], "=", 2)
+		if len(keyVal) != 2 {
+			log.Printf("%s: bad key-val %v\n", mongoDSType, keyVal)
+			return util.ErrBadConfig
+		}
+
+		key := keyVal[0]
+		val := keyVal[1]
+
+		switch strings.ToUpper(key) {
+		case "WRITE_CONCERN":
+			safe := session.Safe()
+			safe.WMode = val
+			session.SetSafe(safe)
+
+		default:
+			log.Printf("%s: connectionString: unrecognized key: %s\n", mongoDSType, key)
+			return util.ErrBadConfig
+		}
+	}
+
 	ds.dbSession = session
-	ds.location = connectionString
+	ds.location = connectStr
 
 	return nil
 }
@@ -190,6 +219,6 @@ func translateMongoError(mongoError error) error {
 			return util.ErrAlreadyExists
 		}
 
-		return util.ErrInternal
+		return mongoError
 	}
 }
