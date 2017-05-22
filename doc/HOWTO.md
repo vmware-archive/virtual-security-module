@@ -557,6 +557,14 @@ dataStore:
   connectionString: 172.17.0.2
 ```
 
+The MongoDBDataStore adapter suppors more advanced settings:
+* You can specify a custom write concern for write operations.
+
+For example:
+```
+connectionString: 172.17.0.2,172.17.0.3,172.17.0.4;write_concern=MultipleDC
+```
+
 To use the CassandraDataStore adapter, you need to stand up a Cassandra cluster. The easiet way to do
 that is using the standard Cassandra docker image from Docker Hub (https://hub.docker.com/_/cassandra/). Once
 your Cassandra is up and running you need to provide its address (IP address or DNS name) to the VSM server. For

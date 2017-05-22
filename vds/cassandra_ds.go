@@ -98,7 +98,6 @@ func (ds *CassandraDS) Init(cfg *config.DataStoreConfig) error {
 
 	session, err := cluster.CreateSession()
 	if err != nil {
-		log.Printf("DEBUG: %s: failed to create session: %s\n", cassandraDSType, err.Error())
 		return err
 	}
 	session.SetConsistency(cluster.Consistency)
@@ -126,7 +125,6 @@ func (ds *CassandraDS) CreateEntry(entry *DataStoreEntry) error {
 	var data []byte
 	applied, err := query.ScanCAS(&id, &parentId, &data, &metaData)
 	if err != nil {
-		log.Printf("DEBUG: %s: failed to create entry: %s\n", cassandraDSType, err.Error())
 		return translateCassandraError(err)
 	}
 
@@ -145,7 +143,6 @@ func (ds *CassandraDS) ReadEntry(entryId string) (*DataStoreEntry, error) {
 	var metaData string
 	err := query.Scan(&data, &metaData)
 	if err != nil {
-		log.Printf("DEBUG: %s: failed to read entry: %s\n", cassandraDSType, err.Error())
 		return nil, translateCassandraError(err)
 	}
 
@@ -162,7 +159,6 @@ func (ds *CassandraDS) DeleteEntry(entryId string) error {
 
 	err := query.Exec()
 	if err != nil {
-		log.Printf("DEBUG: %s: failed to delete entry: %s\n", cassandraDSType, err.Error())
 		return translateCassandraError(err)
 	}
 
@@ -193,7 +189,6 @@ func (ds *CassandraDS) SearchChildEntries(parentEntryId string) ([]*DataStoreEnt
 
 	err := iter.Close()
 	if err != nil {
-		log.Printf("DEBUG: %s: failed to search for child entries: %s\n", cassandraDSType, err.Error())
 		return []*DataStoreEntry{}, translateCassandraError(err)
 	}
 
