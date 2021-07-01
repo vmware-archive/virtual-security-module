@@ -1,5 +1,6 @@
 [![Build Status](https://travis-ci.org/vmware/virtual-security-module.svg?branch=master)](https://travis-ci.org/vmware/virtual-security-module)
 [![Coverage Status](https://coveralls.io/repos/github/vmware/virtual-security-module/badge.svg?branch=master)](https://coveralls.io/github/vmware/virtual-security-module?branch=master)
+# VMware has ended active development of this project, this repository will no longer be updated.
 
 # virtual-security-module
 
